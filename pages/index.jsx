@@ -1,4 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 // ── Brand tokens ──────────────────────────────────────────────────────────────
 const C = {
@@ -16,7 +23,7 @@ const C = {
   white: "#ffffff",
 };
 
-// ── Data ──────────────────────────────────────────────────────────────────────
+// ── Static data ───────────────────────────────────────────────────────────────
 const ALL_POLITICIANS = [
   { id: "mitch-mcconnell", initials: "MM", party: "rep", name: "Mitch McConnell", meta: "R · KY · Senate", das: 84, dasColor: C.red, avg: "$2.4k", avgColor: C.red, events: 47, strip: C.red, donationDate: "Mar 14, 2024", voteType: "no", voteLabel: "VOTED NO · 89 days later", voteColor: C.red, summary: '"$1.2M from pharma PACs — then voted against Medicare drug pricing caps."', followers: "3,847" },
   { id: "bernie-sanders", initials: "BS", party: "dem", name: "Bernie Sanders", meta: "D · VT · Senate", das: 12, dasColor: C.green, avg: "$27", avgColor: C.green, events: 8, strip: C.blue, donationDate: "Jan 9, 2024", voteType: "yes", voteLabel: "VOTED YES · 12 days later", voteColor: C.green, summary: '"Small donor-funded — voted yes on minimum wage increase consistent with stated positions."', followers: "5,112" },
@@ -29,29 +36,21 @@ const ALL_POLITICIANS = [
 ];
 
 const ALL_ISSUES = [
-  { id: "economic",   label: "Economic Policy",   color: "#c9a84c", border: "rgba(201,168,76,0.4)",  bg: "rgba(201,168,76,0.08)" },
-  { id: "climate",    label: "Climate & Energy",   color: "#4ca87c", border: "rgba(76,168,124,0.4)", bg: "rgba(76,168,124,0.08)" },
-  { id: "healthcare", label: "Healthcare",          color: "#c94c78", border: "rgba(201,76,120,0.4)", bg: "rgba(201,76,120,0.08)" },
-  { id: "immigration",label: "Immigration",         color: "#4c78c9", border: "rgba(76,120,201,0.4)", bg: "rgba(76,120,201,0.08)" },
-  { id: "guns",       label: "Gun Policy",          color: "#c94c4c", border: "rgba(201,76,76,0.4)",  bg: "rgba(201,76,76,0.08)" },
-  { id: "foreign",    label: "Foreign Policy",      color: "#7c4cc9", border: "rgba(124,76,201,0.4)", bg: "rgba(124,76,201,0.08)" },
-  { id: "freedom",    label: "Personal Freedom",    color: "#4cc9c9", border: "rgba(76,201,201,0.4)", bg: "rgba(76,201,201,0.08)" },
-  { id: "housing",    label: "Housing & Urban",     color: "#78c94c", border: "rgba(120,201,76,0.4)", bg: "rgba(120,201,76,0.08)" },
-  { id: "education",  label: "Education",           color: "#c98e4c", border: "rgba(201,142,76,0.4)", bg: "rgba(201,142,76,0.08)" },
-  { id: "tech",       label: "Tech & Privacy",      color: "#4c8ec9", border: "rgba(76,142,201,0.4)", bg: "rgba(76,142,201,0.08)" },
-  { id: "voting",     label: "Electoral Rights",    color: "#c94c9e", border: "rgba(201,76,158,0.4)", bg: "rgba(201,76,158,0.08)" },
-  { id: "criminal",   label: "Criminal Justice",    color: "#c97c4c", border: "rgba(201,124,76,0.4)", bg: "rgba(201,124,76,0.08)" },
+  { id: "economic",    label: "Economic Policy",  color: "#c9a84c", border: "rgba(201,168,76,0.4)",  bg: "rgba(201,168,76,0.08)" },
+  { id: "climate",     label: "Climate & Energy",  color: "#4ca87c", border: "rgba(76,168,124,0.4)", bg: "rgba(76,168,124,0.08)" },
+  { id: "healthcare",  label: "Healthcare",         color: "#c94c78", border: "rgba(201,76,120,0.4)", bg: "rgba(201,76,120,0.08)" },
+  { id: "immigration", label: "Immigration",        color: "#4c78c9", border: "rgba(76,120,201,0.4)", bg: "rgba(76,120,201,0.08)" },
+  { id: "guns",        label: "Gun Policy",         color: "#c94c4c", border: "rgba(201,76,76,0.4)",  bg: "rgba(201,76,76,0.08)" },
+  { id: "foreign",     label: "Foreign Policy",     color: "#7c4cc9", border: "rgba(124,76,201,0.4)", bg: "rgba(124,76,201,0.08)" },
+  { id: "freedom",     label: "Personal Freedom",   color: "#4cc9c9", border: "rgba(76,201,201,0.4)", bg: "rgba(76,201,201,0.08)" },
+  { id: "housing",     label: "Housing & Urban",    color: "#78c94c", border: "rgba(120,201,76,0.4)", bg: "rgba(120,201,76,0.08)" },
+  { id: "education",   label: "Education",          color: "#c98e4c", border: "rgba(201,142,76,0.4)", bg: "rgba(201,142,76,0.08)" },
+  { id: "tech",        label: "Tech & Privacy",     color: "#4c8ec9", border: "rgba(76,142,201,0.4)", bg: "rgba(76,142,201,0.08)" },
+  { id: "voting",      label: "Electoral Rights",   color: "#c94c9e", border: "rgba(201,76,158,0.4)", bg: "rgba(201,76,158,0.08)" },
+  { id: "criminal",    label: "Criminal Justice",   color: "#c97c4c", border: "rgba(201,124,76,0.4)", bg: "rgba(201,124,76,0.08)" },
 ];
 
-const SEARCH_RESULTS = [
-  { initials: "BS", party: "dem", name: "Bernie Sanders",   meta: "D · VT · Senate", das: 12,  dasColor: C.green },
-  { initials: "MM", party: "rep", name: "Mitch McConnell",  meta: "R · KY · Senate", das: 84,  dasColor: C.red   },
-  { initials: "AK", party: "dem", name: "Amy Klobuchar",    meta: "D · MN · Senate", das: 48,  dasColor: C.gold  },
-  { initials: "TC", party: "rep", name: "Ted Cruz",         meta: "R · TX · Senate", das: 77,  dasColor: C.red   },
-  { initials: "EW", party: "dem", name: "Elizabeth Warren", meta: "D · MA · Senate", das: 22,  dasColor: C.green },
-];
-
-// ── Travelling dot animation (CSS keyframes injected once) ────────────────────
+// ── Global styles ─────────────────────────────────────────────────────────────
 const GLOBAL_STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;800&family=Playfair+Display:ital,wght@1,400;1,700&family=Inter:wght@400;500&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -67,39 +66,13 @@ const GLOBAL_STYLES = `
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-  @keyframes pillOut {
-    to { opacity: 0; transform: scale(0.88); }
-  }
 `;
 
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function ThroughlineMini({ donationDate, voteType, voteLabel, voteColor }) {
-  return (
-    <div style={{ background: C.bgDeep, border: `1px solid rgba(201,168,76,0.08)`, borderRadius: 2, padding: "9px 11px", marginBottom: 12 }}>
-      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: C.parchmentDim, marginBottom: 7 }}>
-        Latest throughline
-      </div>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
-        <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.gold, flexShrink: 0 }} />
-        <div style={{ flex: 1, height: 1, background: "rgba(201,168,76,0.2)", position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: -3, width: 7, height: 7, borderRadius: "50%", background: C.gold, animation: "tlTravel 2.8s ease-in-out infinite" }} />
-        </div>
-        <div style={{ width: 8, height: 8, borderRadius: "50%", background: voteType === "yes" ? C.green : C.red, flexShrink: 0 }} />
-      </div>
-      <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Inter', sans-serif", fontSize: 9, color: C.parchmentDim }}>
-        <span>{donationDate}</span>
-        <span style={{ color: voteColor }}>{voteLabel}</span>
-      </div>
-      <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 11.5, color: C.parchment, lineHeight: 1.45, marginTop: 6 }}>
-        {/* summary passed via prop below */}
-      </div>
-    </div>
-  );
-}
+// ── Components ────────────────────────────────────────────────────────────────
 
 function PoliticianCard({ pol, onFollow, animateIn }) {
-  const avatarBg = pol.party === "dem" ? "rgba(76,120,201,0.18)" : "rgba(201,76,76,0.18)";
+  const router = useRouter();
+  const avatarBg    = pol.party === "dem" ? "rgba(76,120,201,0.18)" : "rgba(201,76,76,0.18)";
   const avatarColor = pol.party === "dem" ? "#6a96e8" : "#e87070";
 
   return (
@@ -110,11 +83,9 @@ function PoliticianCard({ pol, onFollow, animateIn }) {
       overflow: "hidden",
       animation: animateIn ? "cardIn 0.35s ease forwards" : "none",
     }}>
-      {/* colour strip */}
       <div style={{ height: 5, background: pol.strip }} />
-
       <div style={{ padding: 14 }}>
-        {/* top row: avatar + name + follow button */}
+        {/* top row */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 14 }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flex: 1, minWidth: 0 }}>
             <div style={{ width: 44, height: 44, borderRadius: "50%", background: avatarBg, color: avatarColor, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 14, flexShrink: 0, border: "1.5px solid rgba(201,168,76,0.2)" }}>
@@ -128,30 +99,12 @@ function PoliticianCard({ pol, onFollow, animateIn }) {
               </div>
             </div>
           </div>
-
-          {/* FOLLOW BUTTON — solid white */}
           <button
             onClick={() => onFollow(pol.id, pol.name, "pol")}
-            style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 800,
-              fontSize: 13,
-              letterSpacing: "0.1em",
-              color: "#0a0b0d",
-              backgroundColor: "#ffffff",
-              border: "2px solid #ffffff",
-              borderRadius: 2,
-              padding: "7px 14px",
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-              transition: "transform 0.1s, box-shadow 0.1s",
-            }}
+            style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 13, letterSpacing: "0.1em", color: "#0a0b0d", backgroundColor: "#ffffff", border: "2px solid #ffffff", borderRadius: 2, padding: "7px 14px", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0, transition: "transform 0.1s, box-shadow 0.1s" }}
             onMouseEnter={e => { e.currentTarget.style.transform = "scale(0.96)"; e.currentTarget.style.boxShadow = "inset 0 2px 5px rgba(0,0,0,0.2)"; }}
             onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
-          >
-            + FOLLOW
-          </button>
+          >+ FOLLOW</button>
         </div>
 
         {/* stat chips */}
@@ -159,7 +112,7 @@ function PoliticianCard({ pol, onFollow, animateIn }) {
           {[
             { label: "Donor Alignment", value: pol.das,    color: pol.dasColor },
             { label: "Avg Gift",        value: pol.avg,    color: pol.avgColor },
-            { label: "Events",          value: pol.events, color: C.gold       },
+            { label: "Events",          value: pol.events, color: C.gold },
           ].map(s => (
             <div key={s.label} style={{ background: C.bgDeep, border: "1px solid rgba(201,168,76,0.08)", borderRadius: 2, padding: "8px", textAlign: "center" }}>
               <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, letterSpacing: "0.08em", textTransform: "uppercase", color: C.parchmentDim, marginBottom: 3 }}>{s.label}</div>
@@ -189,24 +142,11 @@ function PoliticianCard({ pol, onFollow, animateIn }) {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid rgba(201,168,76,0.08)", paddingTop: 10 }}>
           <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim }}>{pol.followers} followers</span>
           <button
-            style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 700,
-              fontSize: 12,
-              letterSpacing: "0.1em",
-              color: "#0a0b0d",
-              backgroundColor: C.gold,
-              border: `2px solid ${C.gold}`,
-              borderRadius: 2,
-              padding: "6px 14px",
-              cursor: "pointer",
-              transition: "transform 0.1s, box-shadow 0.1s",
-            }}
+            onClick={() => router.push(`/politician/${pol.id}`)}
+            style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.1em", color: "#0a0b0d", backgroundColor: C.gold, border: `2px solid ${C.gold}`, borderRadius: 2, padding: "6px 14px", cursor: "pointer", transition: "transform 0.1s, box-shadow 0.1s" }}
             onMouseEnter={e => { e.currentTarget.style.transform = "scale(0.96)"; e.currentTarget.style.boxShadow = "inset 0 2px 5px rgba(0,0,0,0.25)"; }}
             onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
-          >
-            VIEW RECEIPT →
-          </button>
+          >VIEW RECEIPT →</button>
         </div>
       </div>
     </div>
@@ -219,29 +159,10 @@ function IssuePill({ issue, onFollow }) {
       <span>{issue.label}</span>
       <button
         onClick={() => onFollow(issue.id, issue.label, "issue")}
-        style={{
-          width: 22,
-          height: 22,
-          borderRadius: "50%",
-          backgroundColor: "#ffffff",
-          color: "#0a0b0d",
-          fontSize: 16,
-          fontWeight: 800,
-          lineHeight: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-          border: "none",
-          flexShrink: 0,
-          padding: 0,
-          transition: "transform 0.1s, box-shadow 0.1s",
-        }}
+        style={{ width: 22, height: 22, borderRadius: "50%", backgroundColor: "#ffffff", color: "#0a0b0d", fontSize: 16, fontWeight: 800, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", border: "none", flexShrink: 0, padding: 0, transition: "transform 0.1s, box-shadow 0.1s" }}
         onMouseEnter={e => { e.currentTarget.style.transform = "scale(0.9)"; e.currentTarget.style.boxShadow = "inset 0 2px 4px rgba(0,0,0,0.2)"; }}
         onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
-      >
-        +
-      </button>
+      >+</button>
     </div>
   );
 }
@@ -249,14 +170,8 @@ function IssuePill({ issue, onFollow }) {
 function SignInModal({ target, onCreateAccount, onSignIn, onDismiss }) {
   if (!target) return null;
   return (
-    <div
-      onClick={onDismiss}
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{ background: C.bgCard, border: `1px solid ${C.goldBorder}`, borderRadius: 2, padding: "32px 28px", maxWidth: 340, width: "90%", textAlign: "center" }}
-      >
+    <div onClick={onDismiss} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: C.bgCard, border: `1px solid ${C.goldBorder}`, borderRadius: 2, padding: "32px 28px", maxWidth: 340, width: "90%", textAlign: "center" }}>
         <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 10, letterSpacing: "0.3em", color: C.gold, marginBottom: 10 }}>ONE QUICK STEP</div>
         <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 21, color: C.parchment, lineHeight: 1.25, marginBottom: 8 }}>
           Follow <span style={{ color: C.gold }}>{target}</span>
@@ -265,26 +180,13 @@ function SignInModal({ target, onCreateAccount, onSignIn, onDismiss }) {
           Free account. We'll alert you whenever a new donation-to-vote connection is found for who you follow.
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
-          <button
-            onClick={onCreateAccount}
-            style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 15, letterSpacing: "0.12em", color: "#0a0b0d", backgroundColor: "#ffffff", border: "2px solid #ffffff", borderRadius: 2, padding: 13, cursor: "pointer", width: "100%" }}
-            onMouseEnter={e => { e.currentTarget.style.transform = "scale(0.98)"; e.currentTarget.style.boxShadow = "inset 0 2px 5px rgba(0,0,0,0.15)"; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
-          >
-            CREATE FREE ACCOUNT
-          </button>
-          <button
-            onClick={onSignIn}
-            style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 15, letterSpacing: "0.12em", color: C.gold, backgroundColor: "transparent", border: `2px solid rgba(201,168,76,0.5)`, borderRadius: 2, padding: 13, cursor: "pointer", width: "100%" }}
+          <button onClick={onCreateAccount} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 15, letterSpacing: "0.12em", color: "#0a0b0d", backgroundColor: "#ffffff", border: "2px solid #ffffff", borderRadius: 2, padding: 13, cursor: "pointer", width: "100%" }}>CREATE FREE ACCOUNT</button>
+          <button onClick={onSignIn} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 15, letterSpacing: "0.12em", color: C.gold, backgroundColor: "transparent", border: `2px solid rgba(201,168,76,0.5)`, borderRadius: 2, padding: 13, cursor: "pointer", width: "100%" }}
             onMouseEnter={e => e.currentTarget.style.borderColor = C.gold}
             onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(201,168,76,0.5)"}
-          >
-            SIGN IN
-          </button>
+          >SIGN IN</button>
         </div>
-        <button onClick={onDismiss} style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, background: "none", border: "none", textDecoration: "underline", textUnderlineOffset: 3, cursor: "pointer" }}>
-          maybe later
-        </button>
+        <button onClick={onDismiss} style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, background: "none", border: "none", textDecoration: "underline", textUnderlineOffset: 3, cursor: "pointer" }}>maybe later</button>
       </div>
     </div>
   );
@@ -292,14 +194,43 @@ function SignInModal({ target, onCreateAccount, onSignIn, onDismiss }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function HomePage() {
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [shownPols, setShownPols] = useState(["mitch-mcconnell", "bernie-sanders", "amy-klobuchar", "rand-paul"]);
-  const [shownIssues, setShownIssues] = useState(ALL_ISSUES.slice(0, 8).map(i => i.id));
+  const router = useRouter();
+
+  // search state
+  const [searchQuery, setSearchQuery]   = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchOpen, setSearchOpen]     = useState(false);
+  const [searching, setSearching]       = useState(false);
+
+  // page state
+  const [shownPols, setShownPols]       = useState(["mitch-mcconnell", "bernie-sanders", "amy-klobuchar", "rand-paul"]);
+  const [shownIssues, setShownIssues]   = useState(ALL_ISSUES.slice(0, 8).map(i => i.id));
   const [followedPols, setFollowedPols] = useState(new Set());
   const [followedIssues, setFollowedIssues] = useState(new Set());
-  const [animatingIn, setAnimatingIn] = useState(new Set());
-  const [modal, setModal] = useState(null); // { id, name, type }
+  const [animatingIn, setAnimatingIn]   = useState(new Set());
+  const [modal, setModal]               = useState(null);
 
+  // ── Live search against Supabase ──────────────────────────────────────────
+  useEffect(() => {
+    if (!searchQuery || searchQuery.length < 2) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    const timer = setTimeout(async () => {
+      const { data, error } = await supabase
+        .from("politicians")
+        .select("name, party, state, chamber, slug, donor_alignment_score")
+        .ilike("name", `%${searchQuery}%`)
+        .limit(6);
+      if (!error) setSearchResults(data || []);
+      setSearching(false);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // ── Follow logic ──────────────────────────────────────────────────────────
   const nextPol   = () => ALL_POLITICIANS.find(p => !shownPols.includes(p.id)   && !followedPols.has(p.id));
   const nextIssue = () => ALL_ISSUES.find(i =>    !shownIssues.includes(i.id)   && !followedIssues.has(i.id));
 
@@ -309,7 +240,6 @@ export default function HomePage() {
     if (!modal) return;
     const { id, type } = modal;
     setModal(null);
-
     if (type === "pol") {
       const next = nextPol();
       setFollowedPols(prev => new Set([...prev, id]));
@@ -341,7 +271,6 @@ export default function HomePage() {
   return (
     <>
       <style>{GLOBAL_STYLES}</style>
-
       <div style={{ minHeight: "100vh", background: C.bg, color: C.parchment, fontFamily: "'Inter', sans-serif", position: "relative", overflow: "hidden" }}>
 
         {/* ambient glow */}
@@ -356,20 +285,14 @@ export default function HomePage() {
               <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, marginTop: 2 }}>Every vote has a price. We show you the receipt.</div>
             </div>
             <div style={{ display: "flex", gap: 10 }}>
-              <button
-                style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: "#ffffff", backgroundColor: "transparent", border: "2px solid #ffffff", borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}
-                onMouseEnter={e => { e.currentTarget.style.transform = "scale(0.97)"; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
-              >
-                SIGN IN
-              </button>
-              <button
-                style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: "#0a0b0d", backgroundColor: C.gold, border: `2px solid ${C.gold}`, borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}
+              <button style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: "#ffffff", backgroundColor: "transparent", border: "2px solid #ffffff", borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}
+                onMouseEnter={e => e.currentTarget.style.transform = "scale(0.97)"}
+                onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+              >SIGN IN</button>
+              <button style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: "#0a0b0d", backgroundColor: C.gold, border: `2px solid ${C.gold}`, borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}
                 onMouseEnter={e => { e.currentTarget.style.transform = "scale(0.97)"; e.currentTarget.style.boxShadow = "inset 0 2px 5px rgba(0,0,0,0.2)"; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
-              >
-                TAKE THE QUIZ
-              </button>
+              >TAKE THE QUIZ</button>
             </div>
           </nav>
 
@@ -388,27 +311,50 @@ export default function HomePage() {
               <input
                 type="text"
                 placeholder="Search any senator or representative…"
+                value={searchQuery}
+                onChange={e => { setSearchQuery(e.target.value); setSearchOpen(true); }}
                 onFocus={() => setSearchOpen(true)}
-                onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
+                onBlur={() => setTimeout(() => setSearchOpen(false), 200)}
                 style={{ width: "100%", background: C.bgCard, border: `2px solid rgba(201,168,76,0.35)`, borderRadius: 2, padding: "13px 48px 13px 16px", fontSize: 14, color: C.parchment, outline: "none", fontFamily: "'Inter', sans-serif" }}
               />
-              <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: C.gold, fontSize: 18, pointerEvents: "none" }}>⌕</span>
+              <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: searching ? C.parchmentDim : C.gold, fontSize: 18, pointerEvents: "none" }}>
+                {searching ? "…" : "⌕"}
+              </span>
 
-              {searchOpen && (
+              {/* LIVE DROPDOWN */}
+              {searchOpen && searchQuery.length >= 2 && (
                 <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: C.bgCard, border: `2px solid rgba(201,168,76,0.35)`, borderTop: "none", borderRadius: "0 0 2px 2px", zIndex: 100 }}>
-                  {SEARCH_RESULTS.map(r => (
-                    <div key={r.name} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid rgba(201,168,76,0.07)" }}
-                      onMouseEnter={e => e.currentTarget.style.background = "#161922"}
-                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                    >
-                      <div style={{ width: 30, height: 30, borderRadius: "50%", background: r.party === "dem" ? "rgba(76,120,201,0.18)" : "rgba(201,76,76,0.18)", color: r.party === "dem" ? "#6a96e8" : "#e87070", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 10, flexShrink: 0 }}>{r.initials}</div>
-                      <div>
-                        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 15, color: C.parchment }}>{r.name}</div>
-                        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim }}>{r.meta}</div>
-                      </div>
-                      <div style={{ marginLeft: "auto", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 15, color: r.dasColor }}>DAS {r.das}</div>
+                  {searchResults.length === 0 && !searching && (
+                    <div style={{ padding: "14px 16px", fontFamily: "'Inter', sans-serif", fontSize: 13, color: C.parchmentDim }}>
+                      No results for "{searchQuery}"
                     </div>
-                  ))}
+                  )}
+                  {searchResults.map(r => {
+                    const party     = r.party?.toLowerCase().startsWith("r") ? "rep" : "dem";
+                    const initials  = r.name.split(" ").map(w => w[0]).slice(0, 2).join("");
+                    const das       = r.donor_alignment_score;
+                    const dasColor  = das == null ? C.parchmentDim : das < 34 ? C.green : das < 67 ? C.gold : C.red;
+                    return (
+                      <div
+                        key={r.slug}
+                        onMouseDown={() => router.push(`/politician/${r.slug}`)}
+                        style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid rgba(201,168,76,0.07)" }}
+                        onMouseEnter={e => e.currentTarget.style.background = "#161922"}
+                        onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                      >
+                        <div style={{ width: 30, height: 30, borderRadius: "50%", background: party === "dem" ? "rgba(76,120,201,0.18)" : "rgba(201,76,76,0.18)", color: party === "dem" ? "#6a96e8" : "#e87070", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 10, flexShrink: 0 }}>
+                          {initials}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 15, color: C.parchment }}>{r.name}</div>
+                          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim }}>{r.party} · {r.state} · {r.chamber}</div>
+                        </div>
+                        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 15, color: dasColor, flexShrink: 0 }}>
+                          {das != null ? `DAS ${das}` : "—"}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -442,14 +388,7 @@ export default function HomePage() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12, padding: "0 24px", marginBottom: 32 }}>
             {shownPols.map(id => {
               const pol = ALL_POLITICIANS.find(p => p.id === id);
-              return pol ? (
-                <PoliticianCard
-                  key={id}
-                  pol={pol}
-                  onFollow={requestFollow}
-                  animateIn={animatingIn.has(id)}
-                />
-              ) : null;
+              return pol ? <PoliticianCard key={id} pol={pol} onFollow={requestFollow} animateIn={animatingIn.has(id)} /> : null;
             })}
           </div>
 
