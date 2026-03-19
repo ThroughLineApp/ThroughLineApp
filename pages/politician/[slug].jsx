@@ -9,7 +9,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-// ── Brand tokens ──────────────────────────────────────────────────────────────
 const C = {
   bg:            "#0a0b0d",
   bgCard:        "#11131a",
@@ -37,50 +36,26 @@ const TABS = [
   { id: "timeline",   label: "Timeline"        },
 ];
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
 const MOCK_DONORS = [
-  { pac: "PhRMA PAC",          industry: "Pharmaceutical", dimension: "healthcare", amount: 1200000, goal: "Block Medicare drug price negotiation",  date: "Mar 14, 2024", color: "#c94c78" },
+  { pac: "PhRMA PAC", industry: "Pharmaceutical", dimension: "healthcare", amount: 1200000, goal: "Block Medicare drug price negotiation", date: "Mar 14, 2024", color: "#c94c78" },
   { pac: "American Petroleum Institute PAC", industry: "Oil & Gas", dimension: "climate", amount: 840000, goal: "Oppose clean energy mandates", date: "Nov 2, 2023", color: "#4ca87c" },
-  { pac: "Wall Street PAC",    industry: "Finance",        dimension: "economic",  amount: 620000, goal: "Weaken Dodd-Frank consumer protections",   date: "Aug 8, 2023",  color: "#c9a84c" },
+  { pac: "Wall Street PAC", industry: "Finance", dimension: "economic", amount: 620000, goal: "Weaken Dodd-Frank consumer protections", date: "Aug 8, 2023", color: "#c9a84c" },
 ];
 
 const MOCK_THROUGHLINES = [
-  {
-    pac: "PhRMA PAC", industry: "Pharmaceutical",
-    mission: "The pharmaceutical industry's primary lobbying arm, representing over 30 major drug companies.",
-    goal: "Block legislation allowing Medicare to negotiate drug prices directly with manufacturers.",
-    totalDonated: "$1.2M", donationDate: "Mar 14, 2024",
-    billName: "Medicare Drug Price Negotiation Act", billSection: "Section 1192",
-    billId: "HR-5376", voteDate: "Jun 11, 2024", daysBetween: 89, howVoted: "NO",
-    voteImpact: "Blocked Medicare from negotiating lower drug prices for 64 million seniors.",
-    excerpt: "…the Secretary shall negotiate directly with manufacturers to establish maximum fair prices for selected drugs…",
-    narrative: "Eighty-nine days after receiving $1.2 million from the pharmaceutical industry's top lobbying arm, Sen. McConnell cast the deciding vote against a bill that would have allowed Medicare to negotiate lower drug prices for seniors. The vote saved pharmaceutical companies an estimated $100 billion in revenue over the next decade.",
-    corruptionPoints: 18, dimension: "healthcare", color: "#c94c78",
-  },
-  {
-    pac: "American Petroleum Institute PAC", industry: "Oil & Gas",
-    mission: "The oil and gas industry's largest trade association, representing ExxonMobil, Chevron, and BP.",
-    goal: "Defeat clean energy mandates and protect fossil fuel subsidies.",
-    totalDonated: "$840K", donationDate: "Nov 2, 2023",
-    billName: "Clean Energy Transition Act", billSection: "Section 45Q",
-    billId: "S-2332", voteDate: "Jan 29, 2024", daysBetween: 88, howVoted: "NO",
-    voteImpact: "Eliminated $42 billion in clean energy tax credits and delayed offshore wind development.",
-    excerpt: "…establishes a tax credit of $50 per metric ton of qualified carbon oxide captured and disposed of in secure geological storage…",
-    narrative: "Less than three months after a $840,000 contribution from the oil and gas industry's largest trade group, the senator voted to strip clean energy tax credits that would have accelerated the US transition away from fossil fuels.",
-    corruptionPoints: 15, dimension: "climate", color: "#4ca87c",
-  },
+  { pac: "PhRMA PAC", industry: "Pharmaceutical", mission: "The pharmaceutical industry's primary lobbying arm, representing over 30 major drug companies.", goal: "Block legislation allowing Medicare to negotiate drug prices directly with manufacturers.", totalDonated: "$1.2M", donationDate: "Mar 14, 2024", billName: "Medicare Drug Price Negotiation Act", billSection: "Section 1192", billId: "HR-5376", voteDate: "Jun 11, 2024", daysBetween: 89, howVoted: "NO", voteImpact: "Blocked Medicare from negotiating lower drug prices for 64 million seniors.", excerpt: "…the Secretary shall negotiate directly with manufacturers to establish maximum fair prices for selected drugs…", narrative: "Eighty-nine days after receiving $1.2 million from the pharmaceutical industry's top lobbying arm, Sen. McConnell cast the deciding vote against a bill that would have allowed Medicare to negotiate lower drug prices for seniors.", corruptionPoints: 18, dimension: "healthcare", color: "#c94c78" },
+  { pac: "American Petroleum Institute PAC", industry: "Oil & Gas", mission: "The oil and gas industry's largest trade association, representing ExxonMobil, Chevron, and BP.", goal: "Defeat clean energy mandates and protect fossil fuel subsidies.", totalDonated: "$840K", donationDate: "Nov 2, 2023", billName: "Clean Energy Transition Act", billSection: "Section 45Q", billId: "S-2332", voteDate: "Jan 29, 2024", daysBetween: 88, howVoted: "NO", voteImpact: "Eliminated $42 billion in clean energy tax credits and delayed offshore wind development.", excerpt: "…establishes a tax credit of $50 per metric ton of qualified carbon oxide captured and disposed of in secure geological storage…", narrative: "Less than three months after a $840,000 contribution from the oil and gas industry's largest trade group, the senator voted to strip clean energy tax credits.", corruptionPoints: 15, dimension: "climate", color: "#4ca87c" },
 ];
 
 const MOCK_VOTES = [
-  { bill: "Medicare Drug Price Negotiation Act", date: "Jun 11, 2024", vote: "NO",  dimension: "healthcare", impact: "Blocked Medicare drug price negotiation for seniors."      },
-  { bill: "Clean Energy Transition Act",         date: "Jan 29, 2024", vote: "NO",  dimension: "climate",    impact: "Eliminated $42B in clean energy tax credits."             },
-  { bill: "Bipartisan Infrastructure Law",       date: "Aug 10, 2023", vote: "YES", dimension: "housing",    impact: "Authorized $1.2T for roads, bridges, and broadband."      },
-  { bill: "SAFE Banking Act",                    date: "May 2, 2023",  vote: "NO",  dimension: "economic",   impact: "Blocked federal cannabis banking protections."            },
-  { bill: "Electoral Count Reform Act",          date: "Dec 22, 2022", vote: "YES", dimension: "voting",     impact: "Clarified VP role in certifying election results."        },
+  { bill: "Medicare Drug Price Negotiation Act", date: "Jun 11, 2024", vote: "NO",  dimension: "healthcare", impact: "Blocked Medicare drug price negotiation for seniors." },
+  { bill: "Clean Energy Transition Act",         date: "Jan 29, 2024", vote: "NO",  dimension: "climate",    impact: "Eliminated $42B in clean energy tax credits." },
+  { bill: "Bipartisan Infrastructure Law",       date: "Aug 10, 2023", vote: "YES", dimension: "housing",    impact: "Authorized $1.2T for roads, bridges, and broadband." },
+  { bill: "SAFE Banking Act",                    date: "May 2, 2023",  vote: "NO",  dimension: "economic",   impact: "Blocked federal cannabis banking protections." },
+  { bill: "Electoral Count Reform Act",          date: "Dec 22, 2022", vote: "YES", dimension: "voting",     impact: "Clarified VP role in certifying election results." },
   { bill: "Assault Weapons Ban",                 date: "Jul 29, 2022", vote: "NO",  dimension: "guns",       impact: "Failed to ban semi-automatic rifles and large magazines." },
 ];
 
-// ── Global styles ─────────────────────────────────────────────────────────────
 const GLOBAL_STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;800&family=Playfair+Display:ital,wght@1,400;1,700&family=Inter:wght@400;500&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -99,7 +74,6 @@ const GLOBAL_STYLES = `
   }
 `;
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 function dasColor(score) {
   if (score === null || score === undefined) return C.parchmentDim;
   if (score <= 33) return C.green;
@@ -114,87 +88,70 @@ function avgDonationColor(avg) {
   return C.red;
 }
 
-const btnWhite = {
-  fontFamily: "'Barlow Condensed', sans-serif",
-  fontWeight: 800, fontSize: 13, letterSpacing: "0.1em",
-  color: "#0a0b0d", backgroundColor: "#ffffff",
-  border: "2px solid #ffffff", borderRadius: 2,
-  padding: "7px 16px", cursor: "pointer",
-  transition: "transform 0.1s, box-shadow 0.1s",
-};
-const btnGold = {
-  fontFamily: "'Barlow Condensed', sans-serif",
-  fontWeight: 700, fontSize: 13, letterSpacing: "0.1em",
-  color: "#0a0b0d", backgroundColor: C.gold,
-  border: `2px solid ${C.gold}`, borderRadius: 2,
-  padding: "7px 16px", cursor: "pointer",
-  transition: "transform 0.1s, box-shadow 0.1s",
-};
-const btnFollowing = {
-  fontFamily: "'Barlow Condensed', sans-serif",
-  fontWeight: 700, fontSize: 13, letterSpacing: "0.1em",
-  color: C.green, backgroundColor: "rgba(76,168,124,0.1)",
-  border: `2px solid ${C.green}`, borderRadius: 2,
-  padding: "7px 16px", cursor: "pointer",
-};
+const btnWhite    = { fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 13, letterSpacing: "0.1em", color: "#0a0b0d", backgroundColor: "#ffffff", border: "2px solid #ffffff", borderRadius: 2, padding: "7px 16px", cursor: "pointer" };
+const btnGold     = { fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: "#0a0b0d", backgroundColor: C.gold, border: `2px solid ${C.gold}`, borderRadius: 2, padding: "7px 16px", cursor: "pointer" };
+const btnFollowing = { fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.green, backgroundColor: "rgba(76,168,124,0.1)", border: `2px solid ${C.green}`, borderRadius: 2, padding: "7px 16px", cursor: "pointer" };
 
 function sinkHover(e)  { e.currentTarget.style.transform = "scale(0.96)"; e.currentTarget.style.boxShadow = "inset 0 2px 5px rgba(0,0,0,0.25)"; }
 function sinkLeave(e)  { e.currentTarget.style.transform = "scale(1)";    e.currentTarget.style.boxShadow = "none"; }
 
-// ── Auth modal ────────────────────────────────────────────────────────────────
 function AuthModal({ message, onDismiss }) {
-  const [email, setEmail]     = useState("");
-  const [sent, setSent]       = useState(false);
-  const [error, setError]     = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [mode, setMode]         = useState("signin");
+  const [email, setEmail]       = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError]       = useState(null);
+  const [loading, setLoading]   = useState(false);
 
   const handleSubmit = async () => {
     if (!email || !email.includes("@")) { setError("Enter a valid email address."); return; }
+    if (!password || password.length < 6) { setError("Password must be at least 6 characters."); return; }
     setLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.href },
-    });
+    if (mode === "signup") {
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) { setError(error.message); setLoading(false); return; }
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) { setError(error.message); setLoading(false); return; }
+    }
     setLoading(false);
-    if (error) { setError(error.message); return; }
-    setSent(true);
+    onDismiss();
   };
 
   return (
     <div onClick={onDismiss} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div onClick={e => e.stopPropagation()} style={{ background: C.bgCard, border: `1px solid ${C.goldBorder}`, borderRadius: 2, padding: "32px 28px", maxWidth: 340, width: "90%", textAlign: "center" }}>
         <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 10, letterSpacing: "0.3em", color: C.gold, marginBottom: 10 }}>FREE ACCOUNT</div>
-        {!sent ? (
-          <>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 20, color: C.parchment, lineHeight: 1.25, marginBottom: 8 }}>{message || "Sign in to Throughline"}</div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim, lineHeight: 1.6, marginBottom: 22 }}>Enter your email and we'll send you a one-click sign in link. No password needed.</div>
-            <input
-              type="email" placeholder="your@email.com" value={email}
-              onChange={e => { setEmail(e.target.value); setError(null); }}
-              onKeyDown={e => e.key === "Enter" && handleSubmit()}
-              style={{ width: "100%", background: C.bgDeep, border: `1.5px solid ${error ? C.red : C.goldBorder}`, borderRadius: 2, padding: "12px 14px", fontSize: 14, color: C.parchment, outline: "none", fontFamily: "'Inter', sans-serif", marginBottom: 10 }}
-            />
-            {error && <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.red, marginBottom: 10 }}>{error}</div>}
-            <button onClick={handleSubmit} disabled={loading}
-              style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 15, letterSpacing: "0.12em", color: "#0a0b0d", backgroundColor: loading ? C.goldDim : C.gold, border: "none", borderRadius: 2, padding: 13, cursor: loading ? "default" : "pointer", width: "100%", marginBottom: 14 }}
-            >{loading ? "SENDING…" : "SEND SIGN IN LINK →"}</button>
-          </>
-        ) : (
-          <>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>✉️</div>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 20, color: C.parchment, lineHeight: 1.25, marginBottom: 10 }}>Check your email</div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim, lineHeight: 1.6, marginBottom: 22 }}>We sent a sign in link to <span style={{ color: C.parchment }}>{email}</span>. Click it and you'll be signed in instantly.</div>
-          </>
-        )}
-        <button onClick={onDismiss} style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, background: "none", border: "none", textDecoration: "underline", textUnderlineOffset: 3, cursor: "pointer" }}>{sent ? "close" : "maybe later"}</button>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 20, color: C.parchment, lineHeight: 1.25, marginBottom: 16 }}>
+          {message || (mode === "signup" ? "Create your account" : "Sign in to Throughline")}
+        </div>
+        <div style={{ display: "flex", gap: 0, marginBottom: 20, border: `1px solid ${C.goldBorder}`, borderRadius: 2, overflow: "hidden" }}>
+          {["signin", "signup"].map(m => (
+            <button key={m} onClick={() => { setMode(m); setError(null); }}
+              style={{ flex: 1, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.1em", padding: "8px", border: "none", cursor: "pointer", background: mode === m ? C.gold : "transparent", color: mode === m ? C.bg : C.parchmentDim }}
+            >{m === "signin" ? "SIGN IN" : "SIGN UP"}</button>
+          ))}
+        </div>
+        <input type="email" placeholder="your@email.com" value={email}
+          onChange={e => { setEmail(e.target.value); setError(null); }}
+          style={{ width: "100%", background: C.bgDeep, border: `1.5px solid ${C.goldBorder}`, borderRadius: 2, padding: "12px 14px", fontSize: 14, color: C.parchment, outline: "none", fontFamily: "'Inter', sans-serif", marginBottom: 10 }}
+        />
+        <input type="password" placeholder="password (6+ characters)" value={password}
+          onChange={e => { setPassword(e.target.value); setError(null); }}
+          onKeyDown={e => e.key === "Enter" && handleSubmit()}
+          style={{ width: "100%", background: C.bgDeep, border: `1.5px solid ${error ? C.red : C.goldBorder}`, borderRadius: 2, padding: "12px 14px", fontSize: 14, color: C.parchment, outline: "none", fontFamily: "'Inter', sans-serif", marginBottom: 10 }}
+        />
+        {error && <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.red, marginBottom: 10 }}>{error}</div>}
+        <button onClick={handleSubmit} disabled={loading}
+          style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 15, letterSpacing: "0.12em", color: "#0a0b0d", backgroundColor: loading ? C.goldDim : C.gold, border: "none", borderRadius: 2, padding: 13, cursor: loading ? "default" : "pointer", width: "100%", marginBottom: 14 }}
+        >{loading ? "LOADING…" : mode === "signup" ? "CREATE ACCOUNT →" : "SIGN IN →"}</button>
+        <button onClick={onDismiss} style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, background: "none", border: "none", textDecoration: "underline", textUnderlineOffset: 3, cursor: "pointer" }}>maybe later</button>
       </div>
     </div>
   );
 }
 
-// ── Tab: The Receipt ──────────────────────────────────────────────────────────
-function TabReceipt({ politician }) {
+function TabReceipt() {
   const total = MOCK_DONORS.reduce((s, d) => s + d.amount, 0);
   return (
     <div style={{ padding: "0 0 40px" }}>
@@ -224,7 +181,7 @@ function TabReceipt({ politician }) {
           <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, letterSpacing: "0.1em", textTransform: "uppercase" }}>Top 3 Donor Total</div>
           <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 28, color: C.gold }}>${(total / 1000000).toFixed(1)}M</div>
         </div>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 12, color: C.parchmentDim, lineHeight: 1.5 }}>This represents the top donor contributions tracked in our FEC data. Full donor breakdown available in journalist view.</div>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 12, color: C.parchmentDim, lineHeight: 1.5 }}>Top donor contributions tracked in our FEC data. Full breakdown available in journalist view.</div>
       </div>
       <div style={{ display: "flex", gap: 12, marginTop: 20, paddingTop: 16, borderTop: `1px solid ${C.goldBorderDim}` }}>
         {[{ icon: "🔗", label: "Copy link" }, { icon: "↑", label: "Share" }, { icon: "↓", label: "Save image" }, { icon: "📄", label: "Export PDF", premium: true }].map(a => (
@@ -237,7 +194,6 @@ function TabReceipt({ politician }) {
   );
 }
 
-// ── Tab: The Throughline ──────────────────────────────────────────────────────
 function TabThroughline() {
   const [activeIdx, setActiveIdx] = useState(0);
   const tl = MOCK_THROUGHLINES[activeIdx];
@@ -246,7 +202,7 @@ function TabThroughline() {
       <div style={{ display: "flex", gap: 0, marginBottom: 24, borderBottom: `1px solid ${C.goldBorderDim}`, overflowX: "auto" }}>
         {MOCK_THROUGHLINES.map((t, i) => (
           <button key={i} onClick={() => setActiveIdx(i)}
-            style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", padding: "10px 18px", background: "transparent", border: "none", cursor: "pointer", borderBottom: i === activeIdx ? `2px solid ${C.gold}` : "2px solid transparent", color: i === activeIdx ? C.gold : C.parchmentDim, whiteSpace: "nowrap", transition: "color 0.2s" }}
+            style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", padding: "10px 18px", background: "transparent", border: "none", cursor: "pointer", borderBottom: i === activeIdx ? `2px solid ${C.gold}` : "2px solid transparent", color: i === activeIdx ? C.gold : C.parchmentDim, whiteSpace: "nowrap" }}
           >{t.industry.toUpperCase()}</button>
         ))}
       </div>
@@ -292,10 +248,9 @@ function TabThroughline() {
   );
 }
 
-// ── Tab: Compare Me ───────────────────────────────────────────────────────────
 function TabCompare({ onRequireAuth }) {
   const { user } = useAuth();
-  const router   = useRouter();
+  const router = useRouter();
   const rows = [
     { issue: "Drug pricing",   stated: "Supports price controls",         actual: "Voted against Medicare negotiation", match: false },
     { issue: "Infrastructure", stated: "Supports investment",             actual: "Voted YES on bipartisan bill",        match: true  },
@@ -346,7 +301,6 @@ function TabCompare({ onRequireAuth }) {
   );
 }
 
-// ── Tab: Voting Record ────────────────────────────────────────────────────────
 function TabVoting() {
   const [filter, setFilter] = useState(null);
   const DIMS = ["healthcare", "climate", "economic", "housing", "voting", "guns"];
@@ -384,33 +338,20 @@ function TabPlaceholder({ label, description }) {
   );
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
 export default function PoliticianPage({ politician }) {
   const router = useRouter();
-  const {
-    user,
-    showAuthModal, setShowAuthModal,
-    authMessage,
-    followPolitician, unfollowPolitician,
-    isFollowingPolitician,
-    signOut,
-  } = useAuth();
-
+  const { user, showAuthModal, setShowAuthModal, authMessage, followPolitician, unfollowPolitician, isFollowingPolitician, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState("receipt");
   const [isSticky, setIsSticky]   = useState(false);
   const heroRef = useRef(null);
 
   useEffect(() => {
-    const onScroll = () => {
-      if (heroRef.current) setIsSticky(window.scrollY > heroRef.current.offsetHeight - 80);
-    };
+    const onScroll = () => { if (heroRef.current) setIsSticky(window.scrollY > heroRef.current.offsetHeight - 80); };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  if (router.isFallback) {
-    return <div style={{ background: C.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: C.parchment, fontFamily: "'Barlow Condensed', sans-serif", fontSize: 18 }}>LOADING…</div>;
-  }
+  if (router.isFallback) return <div style={{ background: C.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: C.parchment, fontFamily: "'Barlow Condensed', sans-serif", fontSize: 18 }}>LOADING…</div>;
 
   if (!politician) {
     return (
@@ -431,10 +372,7 @@ export default function PoliticianPage({ politician }) {
   const das        = donor_alignment_score;
   const following  = isFollowingPolitician(slug);
 
-  const handleFollow = async () => {
-    if (following) await unfollowPolitician(slug);
-    else await followPolitician(slug);
-  };
+  const handleFollow = async () => { if (following) await unfollowPolitician(slug); else await followPolitician(slug); };
 
   const followButton = following
     ? <button style={btnFollowing} onClick={handleFollow}>✓ FOLLOWING</button>
@@ -447,7 +385,6 @@ export default function PoliticianPage({ politician }) {
         <meta name="description" content={`Track ${name}'s donor relationships and voting record. Donor Alignment Score: ${das ?? "pending"}.`} />
       </Head>
       <style>{GLOBAL_STYLES}</style>
-
       <div style={{ background: C.bg, color: C.parchment, fontFamily: "'Inter', sans-serif", minHeight: "100vh" }}>
 
         {/* STICKY HEADER */}
@@ -470,11 +407,7 @@ export default function PoliticianPage({ politician }) {
 
         {/* HERO */}
         <div ref={heroRef} style={{ position: "relative", minHeight: 280, background: C.bgCard, overflow: "hidden" }}>
-          {photoUrl && (
-            <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-              <img src={photoUrl} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", opacity: 0.35 }} onError={e => e.target.style.display = "none"} />
-            </div>
-          )}
+          {photoUrl && <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}><img src={photoUrl} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", opacity: 0.35 }} onError={e => e.target.style.display = "none"} /></div>}
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 80, background: `linear-gradient(to bottom, ${C.bg}, transparent)` }} />
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 120, background: `linear-gradient(to top, ${C.bg}, transparent)` }} />
           <div style={{ position: "relative", zIndex: 2, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px" }}>
@@ -534,7 +467,7 @@ export default function PoliticianPage({ politician }) {
 
         {/* TAB CONTENT */}
         <div style={{ padding: "24px 20px", maxWidth: 640, margin: "0 auto" }}>
-          {activeTab === "receipt"     && <TabReceipt politician={politician} />}
+          {activeTab === "receipt"     && <TabReceipt />}
           {activeTab === "throughline" && <TabThroughline />}
           {activeTab === "compare"     && <TabCompare onRequireAuth={() => setShowAuthModal(true)} />}
           {activeTab === "voting"      && <TabVoting />}
@@ -543,22 +476,15 @@ export default function PoliticianPage({ politician }) {
           {activeTab === "timeline"    && <TabPlaceholder label="Timeline" description="Full career arc — donation events and corresponding votes plotted chronologically. Coming in Phase 4." />}
         </div>
 
-        {/* AUTH MODAL */}
         {showAuthModal && <AuthModal message={authMessage} onDismiss={() => setShowAuthModal(false)} />}
-
       </div>
     </>
   );
 }
 
-// ── Data fetching ─────────────────────────────────────────────────────────────
 export async function getServerSideProps({ params }) {
   const { slug } = params;
-  const { data, error } = await supabase
-    .from("politicians")
-    .select("*")
-    .eq("slug", slug)
-    .single();
+  const { data, error } = await supabase.from("politicians").select("*").eq("slug", slug).single();
   if (error || !data) return { props: { politician: null } };
   return { props: { politician: data } };
 }
