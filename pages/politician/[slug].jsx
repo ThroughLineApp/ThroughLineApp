@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import { createClient } from "@supabase/supabase-js";
-import { useAuth } from "../auth";
+import { useAuth } from "../../lib/auth";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
