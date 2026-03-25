@@ -1,12 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { createClient } from "@supabase/supabase-js";
 import { useAuth } from "../lib/auth";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import supabase from "../lib/supabase";
 
 const C = {
   bg: "#0a0b0d",
