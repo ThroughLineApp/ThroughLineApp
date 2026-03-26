@@ -368,7 +368,7 @@ export default function QuizPage() {
     });
   };
 
-  const runProcessing = async (rawAnswers, writtenInputs) => {
+const runProcessing = async (rawAnswers, writtenInputs) => {
     setProcessingMsg("Reading your answers…");
     const numeric = Object.fromEntries(Object.entries(rawAnswers).filter(([,v]) => v !== "skipped"));
     let refined = { ...numeric };
@@ -383,14 +383,14 @@ export default function QuizPage() {
             messages:[{ role:"user", content:`Refine political ideology scores (0=conservative,100=progressive).
 Base scores: ${Object.entries(numeric).map(([k,v])=>`${k}:${v}`).join(", ")}
 Written responses: ${Object.entries(writtenInputs).filter(([,v])=>v?.trim()).map(([k,v])=>`${k}:"${v}"`).join("\n")}
-Return ONLY JSON for dimensions that have written responses. Example: {"economic":72}
+Return ONLY JSON for dimensions with written responses. Example: {"economic":72}
 No markdown, no explanation.` }],
           }),
         });
         const data = await res.json();
         const parsed = JSON.parse((data.content?.[0]?.text || "{}").replace(/```json|```/g,"").trim());
         refined = { ...numeric, ...parsed };
-      } catch(e) { console.error("AI error",e); }
+      } catch(e) { console.error("AI error", e); }
     }
 
     setProcessingMsg("Building your political thumbprint…");
@@ -401,9 +401,11 @@ No markdown, no explanation.` }],
 
     setProcessingMsg("Finding your closest matches…");
     try {
-      const { data: pols } = await supabase.from("politicians")
+      const { data: pols } = await supabase
+        .from("politicians")
         .select("name,slug,party,state,chamber,bioguide_id,score_economic,score_healthcare,score_climate,score_criminal,score_immigration,score_foreign,score_education,score_freedom,score_guns,score_housing,score_tech,score_voting")
-        .not("score_economic","is",null).limit(538);
+        .not("score_economic", "is", null)
+        .limit(538);
       if (pols?.length) {
         const dims = Object.keys(DIMENSION_COLORS);
         const ranked = pols.map(p => ({
@@ -415,7 +417,7 @@ No markdown, no explanation.` }],
         })).sort((a,b) => a.distance - b.distance);
         setMatches(ranked.slice(0,3));
       }
-    } catch(e) { console.error("Match error",e); }
+    } catch(e) { console.error("Match error", e); }
 
     try {
       const row = {
@@ -435,7 +437,7 @@ No markdown, no explanation.` }],
         if (user?.id) await supabase.from("profiles").update({ quiz_result_id: data.id }).eq("id", user.id);
         else setShowSavePrompt(true);
       }
-    } catch(e) { console.error("Save error",e); }
+    } catch(e) { console.error("Save error", e); }
 
     setPhase("results");
   };
