@@ -4,7 +4,6 @@ import Head from "next/head";
 import supabase from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 
-
 const C = {
   bg:            "#0a0b0d",
   bgCard:        "#11131a",
@@ -52,8 +51,24 @@ const MOCK_VOTES = [
   { bill: "Assault Weapons Ban",                 date: "Jul 29, 2022", vote: "NO",  dimension: "guns",       impact: "Failed to ban semi-automatic rifles and large magazines." },
 ];
 
+const DIMENSION_COLORS = {
+  economic:"#c9a84c", healthcare:"#c94c78", climate:"#4ca87c",
+  criminal:"#c97c4c", immigration:"#4c78c9", foreign:"#8e4cc9",
+  education:"#c98e4c", freedom:"#4cc9c9", guns:"#c94c4c",
+  housing:"#78c94c", tech:"#4c8ec9", voting:"#c94c9e",
+};
+
+const DIMENSION_LABELS = {
+  economic:"Economic Policy", healthcare:"Healthcare", climate:"Climate & Energy",
+  criminal:"Criminal Justice", immigration:"Immigration", foreign:"Foreign Policy",
+  education:"Education", freedom:"Personal Freedom", guns:"Gun Policy",
+  housing:"Housing & Urban", tech:"Tech & Privacy", voting:"Electoral Rights",
+};
+
+const DIMS = Object.keys(DIMENSION_COLORS);
+
 const GLOBAL_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;800&family=Playfair+Display:ital,wght@1,400;1,700&family=Inter:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;800&family=Playfair+Display:ital,wght@1,400;1,700&family=Inter:wght@400;500&family=Figtree:wght@400;500;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #0a0b0d; }
   @keyframes tlTravel {
@@ -67,6 +82,14 @@ const GLOBAL_STYLES = `
     0%   { transform: scale(1); opacity: 1; }
     50%  { transform: scale(1.6); opacity: 0.5; }
     100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes thumbDraw {
+    from { stroke-dashoffset: 1400; }
+    to   { stroke-dashoffset: 0; }
+  }
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 `;
 
@@ -90,6 +113,52 @@ const btnFollowing = { fontFamily: "'Barlow Condensed', sans-serif", fontWeight:
 
 function sinkHover(e)  { e.currentTarget.style.transform = "scale(0.96)"; e.currentTarget.style.boxShadow = "inset 0 2px 5px rgba(0,0,0,0.25)"; }
 function sinkLeave(e)  { e.currentTarget.style.transform = "scale(1)";    e.currentTarget.style.boxShadow = "none"; }
+
+// Compute Euclidean match % between user scores and politician scores
+function computeMatch(userScores, polScores) {
+  const dims = DIMS;
+  const validDims = dims.filter(d => userScores[d] != null && polScores[d] != null);
+  if (!validDims.length) return null;
+  const dist = Math.sqrt(validDims.reduce((sum, d) => sum + Math.pow(userScores[d] - polScores[d], 2), 0));
+  const maxDist = Math.sqrt(validDims.length * 100 * 100);
+  return Math.round(100 - (dist / maxDist) * 100);
+}
+
+function ThumbprintOverlay({ userScores, polScores, size = 220 }) {
+  const cx = size / 2, cy = size / 2, r = size * 0.38;
+
+  const userPts = DIMS.map((dim, i) => {
+    const angle = (Math.PI * 2 * i) / DIMS.length - Math.PI / 2;
+    const rad = ((userScores[dim] ?? 50) / 100) * r;
+    return [cx + rad * Math.cos(angle), cy + rad * Math.sin(angle)];
+  });
+
+  const polPts = DIMS.map((dim, i) => {
+    const angle = (Math.PI * 2 * i) / DIMS.length - Math.PI / 2;
+    const rad = ((polScores[dim] ?? 50) / 100) * r;
+    return [cx + rad * Math.cos(angle), cy + rad * Math.sin(angle)];
+  });
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {[0.25,0.5,0.75,1.0].map(ring => {
+        const rp = DIMS.map((_,i) => { const a=(Math.PI*2*i)/DIMS.length-Math.PI/2; return [cx+ring*r*Math.cos(a),cy+ring*r*Math.sin(a)]; });
+        return <polygon key={ring} points={rp.map(p=>p.join(",")).join(" ")} fill="none" stroke="rgba(201,168,76,0.07)" strokeWidth="1"/>;
+      })}
+      {DIMS.map((_,i) => { const a=(Math.PI*2*i)/DIMS.length-Math.PI/2; return <line key={i} x1={cx} y1={cy} x2={cx+r*Math.cos(a)} y2={cy+r*Math.sin(a)} stroke="rgba(201,168,76,0.08)" strokeWidth="1"/>; })}
+      {/* Politician shape */}
+      <polygon points={polPts.map(p=>p.join(",")).join(" ")} fill="rgba(201,76,76,0.08)" stroke="rgba(201,76,76,0.5)" strokeWidth="1.5" strokeLinejoin="round"/>
+      {/* User shape */}
+      <polygon points={userPts.map(p=>p.join(",")).join(" ")} fill="rgba(76,168,124,0.1)" stroke="#4ca87c" strokeWidth="2" strokeLinejoin="round"
+        style={{ strokeDasharray:1400, strokeDashoffset:1400, animation:"thumbDraw 1.8s ease forwards 0.3s" }}/>
+      {DIMS.map((dim,i) => { const a=(Math.PI*2*i)/DIMS.length-Math.PI/2; const lr=r+20; return (
+        <text key={dim} x={cx+lr*Math.cos(a)} y={cy+lr*Math.sin(a)} textAnchor="middle" dominantBaseline="middle"
+          fontSize="7" fontFamily="'Barlow Condensed',sans-serif" fontWeight="700" fill={DIMENSION_COLORS[dim]} opacity={0.7}
+        >{dim.slice(0,3).toUpperCase()}</text>
+      );})}
+    </svg>
+  );
+}
 
 function AuthModal({ message, onDismiss }) {
   const [mode, setMode]         = useState("signin");
@@ -128,13 +197,10 @@ function AuthModal({ message, onDismiss }) {
             >{m === "signin" ? "SIGN IN" : "SIGN UP"}</button>
           ))}
         </div>
-        <input type="email" placeholder="your@email.com" value={email}
-          onChange={e => { setEmail(e.target.value); setError(null); }}
+        <input type="email" placeholder="your@email.com" value={email} onChange={e => { setEmail(e.target.value); setError(null); }}
           style={{ width: "100%", background: C.bgDeep, border: `1.5px solid ${C.goldBorder}`, borderRadius: 2, padding: "12px 14px", fontSize: 14, color: C.parchment, outline: "none", fontFamily: "'Inter', sans-serif", marginBottom: 10 }}
         />
-        <input type="password" placeholder="password (6+ characters)" value={password}
-          onChange={e => { setPassword(e.target.value); setError(null); }}
-          onKeyDown={e => e.key === "Enter" && handleSubmit()}
+        <input type="password" placeholder="password (6+ characters)" value={password} onChange={e => { setPassword(e.target.value); setError(null); }} onKeyDown={e => e.key === "Enter" && handleSubmit()}
           style={{ width: "100%", background: C.bgDeep, border: `1.5px solid ${error ? C.red : C.goldBorder}`, borderRadius: 2, padding: "12px 14px", fontSize: 14, color: C.parchment, outline: "none", fontFamily: "'Inter', sans-serif", marginBottom: 10 }}
         />
         {error && <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.red, marginBottom: 10 }}>{error}</div>}
@@ -244,20 +310,56 @@ function TabThroughline() {
   );
 }
 
-function TabCompare({ onRequireAuth }) {
-  const { user } = useAuth();
+function TabCompare({ onRequireAuth, politician }) {
+  const { user, profile } = useAuth();
   const router = useRouter();
-  const rows = [
+  const [quizResult, setQuizResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user || !profile?.quiz_result_id) return;
+    setLoading(true);
+    supabase.from("quiz_results").select("*").eq("id", profile.quiz_result_id).single()
+      .then(({ data }) => { setQuizResult(data || null); setLoading(false); });
+  }, [user, profile?.quiz_result_id]);
+
+  const statedVsActual = [
     { issue: "Drug pricing",   stated: "Supports price controls",         actual: "Voted against Medicare negotiation", match: false },
     { issue: "Infrastructure", stated: "Supports investment",             actual: "Voted YES on bipartisan bill",        match: true  },
     { issue: "Clean energy",   stated: "Supports energy independence",    actual: "Voted against clean energy credits",  match: false },
     { issue: "Banking reform", stated: "Supports strong financial rules", actual: "Voted NO on consumer protections",    match: false },
   ];
+
+  // User scores from quiz
+  const userScores = quizResult ? {
+    economic: quizResult.score_economic, healthcare: quizResult.score_healthcare,
+    climate: quizResult.score_climate, criminal: quizResult.score_criminal,
+    immigration: quizResult.score_immigration, foreign: quizResult.score_foreign,
+    education: quizResult.score_education, freedom: quizResult.score_freedom,
+    guns: quizResult.score_guns, housing: quizResult.score_housing,
+    tech: quizResult.score_tech, voting: quizResult.score_voting,
+  } : null;
+
+  // Politician scores (from DB — all null until FEC pipeline runs)
+  const polScores = politician ? {
+    economic: politician.score_economic, healthcare: politician.score_healthcare,
+    climate: politician.score_climate, criminal: politician.score_criminal,
+    immigration: politician.score_immigration, foreign: politician.score_foreign,
+    education: politician.score_education, freedom: politician.score_freedom,
+    guns: politician.score_guns, housing: politician.score_housing,
+    tech: politician.score_tech, voting: politician.score_voting,
+  } : null;
+
+  const hasPolScores = polScores && Object.values(polScores).some(v => v != null);
+  const matchPct = userScores && polScores && hasPolScores ? computeMatch(userScores, polScores) : null;
+
   return (
     <div style={{ paddingBottom: 40 }}>
+
+      {/* Section 1 — Stated vs Actual (always visible) */}
       <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.2em", color: C.parchmentDim, marginBottom: 12, textTransform: "uppercase" }}>Stated Position vs. Actual Votes</div>
       <div style={{ marginBottom: 32 }}>
-        {rows.map((row, i) => (
+        {statedVsActual.map((row, i) => (
           <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 0, borderBottom: `1px solid ${C.goldBorderDim}`, padding: "12px 0", alignItems: "start" }}>
             <div>
               <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, color: C.gold, marginBottom: 3 }}>{row.issue}</div>
@@ -270,42 +372,158 @@ function TabCompare({ onRequireAuth }) {
           </div>
         ))}
       </div>
-      <div style={{ position: "relative", borderRadius: 2, overflow: "hidden" }}>
-        <div style={{ filter: "blur(4px)", pointerEvents: "none", padding: 20, background: C.bgDeep, border: `1px solid ${C.goldBorderDim}` }}>
-          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 48, color: C.gold, textAlign: "center" }}>78%</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8 }}>
-            {["Economic Policy", "Healthcare", "Climate & Energy"].map(d => (
-              <div key={d} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, width: 120, flexShrink: 0 }}>{d}</div>
-                <div style={{ flex: 1, height: 4, background: C.bgCard, borderRadius: 2 }}><div style={{ width: "60%", height: "100%", background: C.gold, borderRadius: 2 }} /></div>
-              </div>
-            ))}
+
+      {/* Section 2 — Personal match */}
+      {!user ? (
+        // Not logged in
+        <div style={{ position: "relative", borderRadius: 2, overflow: "hidden" }}>
+          <div style={{ filter: "blur(4px)", pointerEvents: "none", padding: 20, background: C.bgDeep, border: `1px solid ${C.goldBorderDim}` }}>
+            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 48, color: C.gold, textAlign: "center" }}>78%</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8 }}>
+              {["Economic Policy", "Healthcare", "Climate & Energy"].map(d => (
+                <div key={d} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, width: 120, flexShrink: 0 }}>{d}</div>
+                  <div style={{ flex: 1, height: 4, background: C.bgCard, borderRadius: 2 }}><div style={{ width: "60%", height: "100%", background: C.gold, borderRadius: 2 }} /></div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,11,13,0.7)" }}>
-          <div style={{ textAlign: "center", padding: 24 }}>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 18, color: C.parchment, marginBottom: 8, lineHeight: 1.3 }}>How well does this politician<br />actually represent <em>you?</em></div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim, marginBottom: 18 }}>Take the quiz to see your personal match score across all 12 dimensions.</div>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-              <button style={btnGold} onMouseEnter={sinkHover} onMouseLeave={sinkLeave} onClick={() => router.push("/quiz")}>TAKE THE QUIZ</button>
-              {!user && <button style={{ ...btnWhite, fontSize: 12, padding: "7px 14px" }} onMouseEnter={sinkHover} onMouseLeave={sinkLeave} onClick={onRequireAuth}>SIGN IN</button>}
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,11,13,0.75)" }}>
+            <div style={{ textAlign: "center", padding: 24 }}>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 18, color: C.parchment, marginBottom: 8, lineHeight: 1.3 }}>How well does this politician<br />actually represent <em>you?</em></div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim, marginBottom: 18 }}>Sign in and take the quiz to see your personal match score.</div>
+              <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+                <button style={btnGold} onMouseEnter={sinkHover} onMouseLeave={sinkLeave} onClick={() => router.push("/quiz")}>TAKE THE QUIZ</button>
+                <button style={{ ...btnWhite, fontSize: 12, padding: "7px 14px" }} onMouseEnter={sinkHover} onMouseLeave={sinkLeave} onClick={onRequireAuth}>SIGN IN</button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      ) : !profile?.quiz_result_id ? (
+        // Logged in but no quiz
+        <div style={{ padding: 24, background: C.bgDeep, border: `1px solid ${C.goldBorderDim}`, borderRadius: 2, textAlign: "center" }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 18, color: C.parchment, marginBottom: 8, lineHeight: 1.3 }}>
+            How well does this politician represent <em>you?</em>
+          </div>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim, marginBottom: 18, lineHeight: 1.6 }}>
+            Take the quiz to see your personal match score across all 12 policy dimensions.
+          </div>
+          <button style={btnGold} onMouseEnter={sinkHover} onMouseLeave={sinkLeave} onClick={() => router.push("/quiz")}>TAKE THE QUIZ</button>
+        </div>
+      ) : loading ? (
+        <div style={{ padding: 24, background: C.bgDeep, border: `1px solid ${C.goldBorderDim}`, borderRadius: 2, textAlign: "center", fontFamily: "'Inter', sans-serif", fontSize: 13, color: C.parchmentDim }}>
+          Loading your match…
+        </div>
+      ) : userScores && !hasPolScores ? (
+        // Has quiz scores but politician scores not loaded yet
+        <div style={{ padding: 24, background: C.bgDeep, border: `1px solid ${C.goldBorderDim}`, borderRadius: 2, animation: "fadeSlideIn 0.4s ease forwards" }}>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 10, letterSpacing: "0.25em", color: C.gold, marginBottom: 12 }}>YOUR THUMBPRINT VS. THIS POLITICIAN</div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+            <ThumbprintOverlay
+              userScores={userScores}
+              polScores={Object.fromEntries(DIMS.map(d => [d, 50]))}
+              size={200}
+            />
+          </div>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim }}>
+              <div style={{ width: 12, height: 2, background: C.green }} /> Your values
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim }}>
+              <div style={{ width: 12, height: 2, background: C.red, opacity: 0.6 }} /> Their votes
+            </div>
+          </div>
+          <div style={{ textAlign: "center", padding: "12px 16px", background: C.bgCard, borderRadius: 2, border: `1px solid ${C.goldBorderDim}` }}>
+            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 12, color: C.gold, marginBottom: 4 }}>MATCH SCORE PENDING</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim, lineHeight: 1.6 }}>
+              Your thumbprint is ready. We're still processing voting record data for this politician — your match % will appear once FEC data is loaded.
+            </div>
+          </div>
+          {/* Dimension breakdown */}
+          <div style={{ marginTop: 20 }}>
+            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 10, letterSpacing: "0.2em", color: C.parchmentDim, marginBottom: 12 }}>YOUR SCORES ACROSS 12 DIMENSIONS</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px" }}>
+              {DIMS.map(dim => {
+                const score = userScores[dim] ?? 50;
+                const color = DIMENSION_COLORS[dim];
+                return (
+                  <div key={dim} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid rgba(201,168,76,0.05)" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
+                        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, color: C.parchmentDim }}>{DIMENSION_LABELS[dim]}</span>
+                        <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 12, color, marginLeft: 4 }}>{Math.round(score)}</span>
+                      </div>
+                      <div style={{ height: 3, background: "rgba(255,255,255,0.05)", borderRadius: 2, overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${score}%`, background: color, borderRadius: 2 }} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : userScores && hasPolScores ? (
+        // Full match — both user and politician have scores
+        <div style={{ padding: 24, background: C.bgDeep, border: `1px solid ${C.goldBorderDim}`, borderRadius: 2, animation: "fadeSlideIn 0.4s ease forwards" }}>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 10, letterSpacing: "0.25em", color: C.gold, marginBottom: 16 }}>YOUR THUMBPRINT VS. THIS POLITICIAN</div>
+          <div style={{ textAlign: "center", marginBottom: 20 }}>
+            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 56, color: matchPct >= 60 ? C.green : matchPct >= 40 ? C.gold : C.red, lineHeight: 1 }}>{matchPct}%</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim, marginTop: 4 }}>
+              {matchPct >= 70 ? "Strong alignment — they vote like you think." : matchPct >= 50 ? "Moderate alignment — some overlap, some divergence." : "Low alignment — their votes don't reflect your values."}
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+            <ThumbprintOverlay userScores={userScores} polScores={polScores} size={220} />
+          </div>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", marginBottom: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim }}>
+              <div style={{ width: 12, height: 2, background: C.green }} /> Your values
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim }}>
+              <div style={{ width: 12, height: 2, background: C.red, opacity: 0.6 }} /> Their votes
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px" }}>
+            {DIMS.map(dim => {
+              const uScore = userScores[dim] ?? 50;
+              const pScore = polScores[dim] ?? 50;
+              const diff = Math.abs(uScore - pScore);
+              const color = DIMENSION_COLORS[dim];
+              const aligned = diff < 20;
+              return (
+                <div key={dim} style={{ padding: "8px 10px", background: C.bgCard, borderRadius: 2, border: `1px solid ${aligned ? "rgba(76,168,124,0.15)" : "rgba(201,76,76,0.1)"}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, color: C.parchmentDim }}>{DIMENSION_LABELS[dim]}</span>
+                    <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 10, color: aligned ? C.green : C.red }}>{aligned ? "ALIGNED" : "GAP"}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                    <div style={{ flex: 1, height: 3, background: "rgba(76,168,124,0.2)", borderRadius: 2, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${uScore}%`, background: C.green, borderRadius: 2 }} />
+                    </div>
+                    <div style={{ flex: 1, height: 3, background: "rgba(201,76,76,0.2)", borderRadius: 2, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${pScore}%`, background: C.red, borderRadius: 2 }} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
 
 function TabVoting() {
   const [filter, setFilter] = useState(null);
-  const DIMS = ["healthcare", "climate", "economic", "housing", "voting", "guns"];
+  const FILTER_DIMS = ["healthcare", "climate", "economic", "housing", "voting", "guns"];
   const filtered = filter ? MOCK_VOTES.filter(v => v.dimension === filter) : MOCK_VOTES;
   return (
     <div style={{ paddingBottom: 40 }}>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 20 }}>
         <button onClick={() => setFilter(null)} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", padding: "5px 12px", borderRadius: 2, border: `1px solid ${filter === null ? C.gold : C.goldBorderDim}`, background: filter === null ? "rgba(201,168,76,0.12)" : "transparent", color: filter === null ? C.gold : C.parchmentDim, cursor: "pointer" }}>ALL</button>
-        {DIMS.map(d => (
+        {FILTER_DIMS.map(d => (
           <button key={d} onClick={() => setFilter(d === filter ? null : d)} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", padding: "5px 12px", borderRadius: 2, border: `1px solid ${filter === d ? C.gold : C.goldBorderDim}`, background: filter === d ? "rgba(201,168,76,0.12)" : "transparent", color: filter === d ? C.gold : C.parchmentDim, cursor: "pointer", textTransform: "uppercase" }}>{d}</button>
         ))}
       </div>
@@ -336,10 +554,39 @@ function TabPlaceholder({ label, description }) {
 
 export default function PoliticianPage({ politician }) {
   const router = useRouter();
-  const { user, showAuthModal, setShowAuthModal, authMessage, followPolitician, unfollowPolitician, isFollowingPolitician, signOut } = useAuth();
+  const { user, profile, showAuthModal, setShowAuthModal, authMessage, followPolitician, unfollowPolitician, isFollowingPolitician, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState("receipt");
   const [isSticky, setIsSticky]   = useState(false);
   const heroRef = useRef(null);
+
+  // Compute match for stat card
+  const [quizResult, setQuizResult] = useState(null);
+  useEffect(() => {
+    if (!user || !profile?.quiz_result_id) return;
+    supabase.from("quiz_results").select("*").eq("id", profile.quiz_result_id).single()
+      .then(({ data }) => setQuizResult(data || null));
+  }, [user, profile?.quiz_result_id]);
+
+  const userScores = quizResult ? {
+    economic: quizResult.score_economic, healthcare: quizResult.score_healthcare,
+    climate: quizResult.score_climate, criminal: quizResult.score_criminal,
+    immigration: quizResult.score_immigration, foreign: quizResult.score_foreign,
+    education: quizResult.score_education, freedom: quizResult.score_freedom,
+    guns: quizResult.score_guns, housing: quizResult.score_housing,
+    tech: quizResult.score_tech, voting: quizResult.score_voting,
+  } : null;
+
+  const polScores = politician ? {
+    economic: politician.score_economic, healthcare: politician.score_healthcare,
+    climate: politician.score_climate, criminal: politician.score_criminal,
+    immigration: politician.score_immigration, foreign: politician.score_foreign,
+    education: politician.score_education, freedom: politician.score_freedom,
+    guns: politician.score_guns, housing: politician.score_housing,
+    tech: politician.score_tech, voting: politician.score_voting,
+  } : null;
+
+  const hasPolScores = polScores && Object.values(polScores).some(v => v != null);
+  const matchPct = userScores && hasPolScores ? computeMatch(userScores, polScores) : null;
 
   useEffect(() => {
     const onScroll = () => { if (heroRef.current) setIsSticky(window.scrollY > heroRef.current.offsetHeight - 80); };
@@ -409,13 +656,13 @@ export default function PoliticianPage({ politician }) {
           <div style={{ position: "relative", zIndex: 2, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px" }}>
             <button onClick={() => router.push("/")} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.gold, background: "transparent", border: "none", cursor: "pointer" }}>← THROUGHLINE</button>
             {user ? (
-  <div style={{ display: "flex", gap: 8 }}>
-    <button onClick={() => router.push("/profile")} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", color: C.gold, background: "transparent", border: `1px solid ${C.goldBorder}`, borderRadius: 2, padding: "5px 12px", cursor: "pointer" }}>MY PROFILE</button>
-    <button onClick={signOut} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", color: C.parchmentDim, background: "transparent", border: `1px solid rgba(255,255,255,0.15)`, borderRadius: 2, padding: "5px 12px", cursor: "pointer" }}>SIGN OUT</button>
-  </div>
-) : (
-  <button onClick={() => setShowAuthModal(true)} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", color: C.gold, background: "transparent", border: `1px solid ${C.goldBorder}`, borderRadius: 2, padding: "5px 12px", cursor: "pointer" }}>SIGN IN</button>
-)}
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => router.push("/profile")} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", color: C.gold, background: "transparent", border: `1px solid ${C.goldBorder}`, borderRadius: 2, padding: "5px 12px", cursor: "pointer" }}>MY PROFILE</button>
+                <button onClick={signOut} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", color: C.parchmentDim, background: "transparent", border: `1px solid rgba(255,255,255,0.15)`, borderRadius: 2, padding: "5px 12px", cursor: "pointer" }}>SIGN OUT</button>
+              </div>
+            ) : (
+              <button onClick={() => setShowAuthModal(true)} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", color: C.gold, background: "transparent", border: `1px solid ${C.goldBorder}`, borderRadius: 2, padding: "5px 12px", cursor: "pointer" }}>SIGN IN</button>
+            )}
           </div>
           <div style={{ position: "relative", zIndex: 2, padding: "40px 20px 32px" }}>
             <div style={{ width: 72, height: 72, borderRadius: "50%", background: partyColor + "33", color: partyColor, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 24, border: `2px solid ${partyColor}66`, marginBottom: 14, overflow: "hidden" }}>
@@ -437,9 +684,17 @@ export default function PoliticianPage({ politician }) {
 
         {/* STAT CARDS */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, padding: "16px 20px" }}>
-          <div style={{ background: C.bgCard, border: `1px solid ${C.goldBorderDim}`, borderRadius: 2, padding: 12, textAlign: "center" }}>
+          <div style={{ background: C.bgCard, border: `1px solid ${C.goldBorderDim}`, borderRadius: 2, padding: 12, textAlign: "center", cursor: matchPct !== null ? "default" : "pointer" }}
+            onClick={() => { if (!user || !profile?.quiz_result_id) { setActiveTab("compare"); } }}
+          >
             <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: C.parchmentDim, marginBottom: 6 }}>Your Match</div>
-            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 11, color: C.parchmentDim }}>🔒 TAKE QUIZ</div>
+            {matchPct !== null ? (
+              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 22, color: matchPct >= 60 ? C.green : matchPct >= 40 ? C.gold : C.red }}>{matchPct}%</div>
+            ) : user && profile?.quiz_result_id ? (
+              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, color: C.parchmentDim }}>DATA PENDING</div>
+            ) : (
+              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 11, color: C.parchmentDim }}>🔒 TAKE QUIZ</div>
+            )}
           </div>
           <div style={{ background: C.bgCard, border: `1px solid ${C.goldBorderDim}`, borderRadius: 2, padding: 12, textAlign: "center" }}>
             <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: C.parchmentDim, marginBottom: 6 }}>Avg Gift</div>
@@ -469,7 +724,7 @@ export default function PoliticianPage({ politician }) {
         <div style={{ padding: "24px 20px", maxWidth: 640, margin: "0 auto" }}>
           {activeTab === "receipt"     && <TabReceipt />}
           {activeTab === "throughline" && <TabThroughline />}
-          {activeTab === "compare"     && <TabCompare onRequireAuth={() => setShowAuthModal(true)} />}
+          {activeTab === "compare"     && <TabCompare onRequireAuth={() => setShowAuthModal(true)} politician={politician} />}
           {activeTab === "voting"      && <TabVoting />}
           {activeTab === "district"    && <TabPlaceholder label="District" description="Constituent demographics and needs compared against voting record. Coming when Census data integration is live." />}
           {activeTab === "network"     && <TabPlaceholder label="Network" description="Politicians funded by the same PACs, and who votes in near-identical patterns. Coming in Phase 4." />}
