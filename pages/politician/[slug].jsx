@@ -408,10 +408,14 @@ export default function PoliticianPage({ politician }) {
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 120, background: `linear-gradient(to top, ${C.bg}, transparent)` }} />
           <div style={{ position: "relative", zIndex: 2, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px" }}>
             <button onClick={() => router.push("/")} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.gold, background: "transparent", border: "none", cursor: "pointer" }}>← THROUGHLINE</button>
-            {user
-              ? <button onClick={signOut} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", color: C.parchmentDim, background: "transparent", border: `1px solid rgba(255,255,255,0.15)`, borderRadius: 2, padding: "5px 12px", cursor: "pointer" }}>SIGN OUT</button>
-              : <button onClick={() => setShowAuthModal(true)} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", color: C.gold, background: "transparent", border: `1px solid ${C.goldBorder}`, borderRadius: 2, padding: "5px 12px", cursor: "pointer" }}>SIGN IN</button>
-            }
+            {user ? (
+  <div style={{ display: "flex", gap: 8 }}>
+    <button onClick={() => router.push("/profile")} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", color: C.gold, background: "transparent", border: `1px solid ${C.goldBorder}`, borderRadius: 2, padding: "5px 12px", cursor: "pointer" }}>MY PROFILE</button>
+    <button onClick={signOut} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", color: C.parchmentDim, background: "transparent", border: `1px solid rgba(255,255,255,0.15)`, borderRadius: 2, padding: "5px 12px", cursor: "pointer" }}>SIGN OUT</button>
+  </div>
+) : (
+  <button onClick={() => setShowAuthModal(true)} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", color: C.gold, background: "transparent", border: `1px solid ${C.goldBorder}`, borderRadius: 2, padding: "5px 12px", cursor: "pointer" }}>SIGN IN</button>
+)}
           </div>
           <div style={{ position: "relative", zIndex: 2, padding: "40px 20px 32px" }}>
             <div style={{ width: 72, height: 72, borderRadius: "50%", background: partyColor + "33", color: partyColor, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 24, border: `2px solid ${partyColor}66`, marginBottom: 14, overflow: "hidden" }}>

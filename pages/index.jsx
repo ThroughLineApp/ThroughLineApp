@@ -253,24 +253,25 @@ export default function HomePage() {
 
           {/* NAV */}
           <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", borderBottom: "1px solid rgba(201,168,76,0.12)" }}>
-            <div>
-              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 22, letterSpacing: "0.12em", color: C.gold }}>THROUGHLINE</div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, marginTop: 2 }}>Every vote has a price. We show you the receipt.</div>
-            </div>
-            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              {user ? (
-                <>
-                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</div>
-                  <button onClick={signOut} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.parchmentDim, backgroundColor: "transparent", border: `2px solid rgba(255,255,255,0.2)`, borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}>SIGN OUT</button>
-                </>
-              ) : (
-                <>
-                  <button onClick={() => setShowAuthModal(true)} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: "#ffffff", backgroundColor: "transparent", border: "2px solid #ffffff", borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}>SIGN IN</button>
-                  <button onClick={() => router.push("/quiz")} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: "#0a0b0d", backgroundColor: C.gold, border: `2px solid ${C.gold}`, borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}>TAKE THE QUIZ</button>
-                </>
-              )}
-            </div>
-          </nav>
+  <div>
+    <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 22, letterSpacing: "0.12em", color: C.gold }}>THROUGHLINE</div>
+    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, marginTop: 2 }}>Every vote has a price. We show you the receipt.</div>
+  </div>
+  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+    {user ? (
+      <>
+        <button onClick={() => router.push("/profile")} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.gold, backgroundColor: "transparent", border: `2px solid ${C.goldBorder}`, borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}>MY PROFILE</button>
+        <button onClick={() => router.push("/quiz")} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.parchment, backgroundColor: "transparent", border: `2px solid rgba(255,255,255,0.2)`, borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}>TAKE THE QUIZ</button>
+        <button onClick={signOut} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.parchmentDim, backgroundColor: "transparent", border: `2px solid rgba(255,255,255,0.15)`, borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}>SIGN OUT</button>
+      </>
+    ) : (
+      <>
+        <button onClick={() => setShowAuthModal(true)} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: "#ffffff", backgroundColor: "transparent", border: "2px solid #ffffff", borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}>SIGN IN</button>
+        <button onClick={() => router.push("/quiz")} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: "#0a0b0d", backgroundColor: C.gold, border: `2px solid ${C.gold}`, borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}>TAKE THE QUIZ</button>
+      </>
+    )}
+  </div>
+</nav>
 
           {/* HERO */}
           <div style={{ padding: "48px 24px 32px", textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
