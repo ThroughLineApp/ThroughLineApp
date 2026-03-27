@@ -259,11 +259,12 @@ export default function HomePage() {
   </div>
   <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
     {user ? (
-      <>
-        <button onClick={() => router.push("/profile")} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.gold, backgroundColor: "transparent", border: `2px solid ${C.goldBorder}`, borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}>MY PROFILE</button>
-        <button onClick={() => router.push("/quiz")} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.parchment, backgroundColor: "transparent", border: `2px solid rgba(255,255,255,0.2)`, borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}>TAKE THE QUIZ</button>
-        <button onClick={signOut} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.parchmentDim, backgroundColor: "transparent", border: `2px solid rgba(255,255,255,0.15)`, borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}>SIGN OUT</button>
-      </>
+  <>
+    <button onClick={() => router.push("/feed")} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.parchment, backgroundColor: "transparent", border: `2px solid rgba(255,255,255,0.2)`, borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}>MY FEED</button>
+    <button onClick={() => router.push("/profile")} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.gold, backgroundColor: "transparent", border: `2px solid ${C.goldBorder}`, borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}>MY PROFILE</button>
+    <button onClick={() => router.push("/quiz")} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.parchment, backgroundColor: "transparent", border: `2px solid rgba(255,255,255,0.2)`, borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}>TAKE THE QUIZ</button>
+    <button onClick={signOut} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.parchmentDim, backgroundColor: "transparent", border: `2px solid rgba(255,255,255,0.15)`, borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}>SIGN OUT</button>
+  </>
     ) : (
       <>
         <button onClick={() => setShowAuthModal(true)} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: "#ffffff", backgroundColor: "transparent", border: "2px solid #ffffff", borderRadius: 2, padding: "7px 16px", cursor: "pointer" }}>SIGN IN</button>
