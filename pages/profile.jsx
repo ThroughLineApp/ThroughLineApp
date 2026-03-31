@@ -135,7 +135,6 @@ export default function ProfilePage() {
 
   // Load followed politician details
   useEffect(() => {
-    console.log("followed_politicians array:", profile?.followed_politicians);
     if (!profile?.followed_politicians?.length) { setFollowedPols([]); return; }
     setLoadingPols(true);
     supabase.from("politicians")
