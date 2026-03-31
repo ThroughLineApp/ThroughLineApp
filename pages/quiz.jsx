@@ -406,7 +406,7 @@ export default function QuizPage(){
         };
         const { data: saved, error: se } = await supabase
           .from("quiz_results")
-          .insert(row)
+          .upsert(row, { onConflict: "user_id" })
           .select()
           .single();
         console.log("quiz_results save:", saved, se);
@@ -503,7 +503,7 @@ export default function QuizPage(){
           score_tech: refined.tech ?? 50, score_voting: refined.voting ?? 50,
           profile_summary: ps
         };
-        const { data: saved } = await supabase.from("quiz_results").insert(row).select().single();
+        const { data: saved } = await supabase.from("quiz_results").upsert(row, { onConflict: "user_id" }).select().single();
         if (saved && user?.id) await supabase.from("profiles").update({ quiz_result_id: saved.id }).eq("id", user.id);
         try { await supabase.from("quiz_history").insert({ ...row }); } catch (e) {}
       } catch (e) { console.log("L2 save skipped:", e.message); }
