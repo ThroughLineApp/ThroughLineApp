@@ -387,31 +387,7 @@ export default function QuizPage(){
       DIMS.forEach(d => { full[d] = refined[d] ?? numeric[d] ?? 50; });
       setL1Scores(full);
 
-      setProcMsg("Finding your closest matches…");
-      try {
-        const ac = new AbortController();
-        const tid = setTimeout(() => ac.abort(), 4000);
-        const { data: pols, error: me } = await supabase
-          .from("politicians")
-          .select("name,slug,party,state,chamber,bioguide_id,score_economic,score_healthcare,score_climate,score_criminal,score_immigration,score_foreign,score_education,score_freedom,score_guns,score_housing,score_tech,score_voting")
-          .limit(538)
-          .abortSignal(ac.signal);
-        clearTimeout(tid);
-        if (me) throw new Error(me.message);
-        if (pols?.length > 0) {
-          const ranked = pols
-            .map(p => ({
-              ...p,
-              distance: Math.sqrt(DIMS.reduce((s, d) => {
-                if (rawAnswers[d] === "skipped") return s;
-                const polScore = p[`score_${d}`] ?? 50;
-                return s + Math.pow((refined[d] ?? 50) - polScore, 2);
-              }, 0))
-            }))
-            .sort((a, b) => a.distance - b.distance);
-          setL1Matches(ranked.slice(0, 3));
-        }
-      } catch (e) { console.log("Match skipped:", e.message); }
+      setL1Matches([]);
 
       try {
         const ps = profileLabel(full);
