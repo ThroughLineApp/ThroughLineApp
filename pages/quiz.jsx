@@ -73,7 +73,17 @@ const BADGES=[
 function getScoreBand(s){if(s<=20)return"0-20";if(s<=40)return"21-40";if(s<=60)return"41-60";if(s<=80)return"61-80";return"81-100";}
 function shuffle(a){return[...a].sort(()=>Math.random()-0.5);}
 function buildL2(l1Scores){return DIMS.map(dim=>{const band=getScoreBand(l1Scores[dim]??50);const q=L2_QUESTIONS[dim][band];return{id:`l2_${dim}`,dimension:dim,label:q.label,scenario:q.scenario,question:q.question,answers:shuffle(q.answers)};});}
-function profileLabel(scores){const avg=Object.values(scores).reduce((a,b)=>a+b,0)/12;if(avg>78)return"Progressive";if(avg>62)return"Center-Left";if(avg>45)return"Moderate";if(avg>30)return"Center-Right";return"Conservative";}
+function profileLabel(scores){
+  const dims=Object.keys(scores);
+  const avg=dims.reduce((a,b)=>a+scores[b],0)/dims.length;
+  const spread=Math.max(...Object.values(scores))-Math.min(...Object.values(scores));
+  if(spread>60)return"Crosscurrent";
+  if(avg>72)return"Firmly Left-Leaning";
+  if(avg>58)return"Left-Leaning";
+  if(avg>42)return"Mixed";
+  if(avg>28)return"Right-Leaning";
+  return"Firmly Right-Leaning";
+}
 
 function ThumbprintSVG({scores,size=280,animate=true}){
   const cx=size/2,cy=size/2,r=size*0.40;
@@ -223,7 +233,7 @@ function ResultsScreen({scores,matches,onStartL2,onRetake,onExplore,user,showSav
       <div style={{maxWidth:580,margin:"0 auto",padding:"44px 24px 80px"}}>
         <div style={{textAlign:"center",marginBottom:36,animation:"fadeSlideIn 0.6s ease forwards"}}>
           <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:10,letterSpacing:"0.35em",color:C.gold,marginBottom:8}}>{level===1?"LEVEL 1 COMPLETE":"LEVEL 2 COMPLETE"}</div>
-          <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:800,fontSize:"clamp(28px,6vw,42px)",color:C.parchment,marginBottom:6}}>{label}</div>
+          <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:800,fontSize:"clamp(22px,5vw,32px)",letterSpacing:"0.08em",color:C.gold,marginBottom:6}}>YOUR POLITICAL THUMBPRINT</div>
           <p style={{fontFamily:"'Figtree',sans-serif",fontSize:14,color:C.parchmentDim,lineHeight:1.75,maxWidth:420,margin:"0 auto"}}>Each axis is one policy dimension. The further the point extends, the stronger your position on that issue.</p>
         </div>
         <div style={{display:"flex",justifyContent:"center",marginBottom:12,animation:"fadeSlideIn 0.6s ease forwards 0.2s",opacity:0}}>
@@ -426,9 +436,37 @@ export default function QuizPage(){
           score_tech: full.tech, score_voting: full.voting,
           profile_summary: ps
         };
-        const { data: saved, error: se } = await supabase.from("quiz_results").insert(row).select().single();
-        if (!se && saved && user?.id) await supabase.from("profiles").update({ quiz_result_id: saved.id }).eq("id", user.id);
-        if (!se && !user) setShowSave(true);
+        const { data: saved, error: se } = await supabase
+          .from("quiz_results")
+          .insert(row)
+          .select()
+          .single();
+        console.log("quiz_results save:", saved, se);
+        if (!se && saved) {
+          if (user?.id) {
+            const { error: pe } = await supabase
+              .from("profiles")
+              .update({
+                quiz_result_id: saved.id,
+                score_economic: full.economic,
+                score_healthcare: full.healthcare,
+                score_climate: full.climate,
+                score_criminal: full.criminal,
+                score_immigration: full.immigration,
+                score_foreign: full.foreign,
+                score_education: full.education,
+                score_freedom: full.freedom,
+                score_guns: full.guns,
+                score_housing: full.housing,
+                score_tech: full.tech,
+                score_voting: full.voting,
+              })
+              .eq("id", user.id);
+            console.log("profiles update:", pe);
+          } else {
+            setShowSave(true);
+          }
+        }
         try { await supabase.from("quiz_history").insert({ ...row }); } catch (e) {}
       } catch (e) { console.log("Save skipped:", e.message); }
 
@@ -437,14 +475,23 @@ export default function QuizPage(){
       if ((profile?.followed_issues?.length || 0) >= 3) ids.push("engaged");
       try {
         if (user?.id) {
-          const { count } = await supabase.from("quiz_history").select("*", { count: "exact", head: true }).eq("user_id", user.id);
+          const { count } = await supabase
+            .from("quiz_history")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id);
           if (count >= 3) ids.push("analyst");
         }
       } catch (e) {}
       if (user?.id) {
         const ex = profile?.badges || [];
         const add = ids.filter(b => !ex.includes(b));
-        if (add.length > 0) await supabase.from("profiles").update({ badges: [...ex, ...add] }).eq("id", user.id);
+        if (add.length > 0) {
+          const { error: be } = await supabase
+            .from("profiles")
+            .update({ badges: [...ex, ...add] })
+            .eq("id", user.id);
+          console.log("badges update:", be);
+        }
       }
       setEarnedBadges(BADGES.filter(b => ids.includes(b.id)));
 

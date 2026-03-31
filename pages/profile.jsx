@@ -154,6 +154,11 @@ export default function ProfilePage() {
     await unfollowIssue(issue);
   };
 
+  const hasQuiz = !!(
+    profile?.quiz_result_id ||
+    profile?.score_economic != null
+  );
+
   const scores = quizResult ? {
     economic:    quizResult.score_economic,
     healthcare:  quizResult.score_healthcare,
@@ -167,7 +172,20 @@ export default function ProfilePage() {
     housing:     quizResult.score_housing,
     tech:        quizResult.score_tech,
     voting:      quizResult.score_voting,
-  } : null;
+  } : (hasQuiz ? {
+    economic:    profile.score_economic,
+    healthcare:  profile.score_healthcare,
+    climate:     profile.score_climate,
+    criminal:    profile.score_criminal,
+    immigration: profile.score_immigration,
+    foreign:     profile.score_foreign,
+    education:   profile.score_education,
+    freedom:     profile.score_freedom,
+    guns:        profile.score_guns,
+    housing:     profile.score_housing,
+    tech:        profile.score_tech,
+    voting:      profile.score_voting,
+  } : null);
 
   const partyColor = p => p==="D" ? C.blue : p==="R" ? C.red : C.purple;
   const dasColor = s => s==null ? C.parchmentDim : s<=33 ? C.green : s<=66 ? C.gold : C.red;
@@ -213,7 +231,7 @@ export default function ProfilePage() {
           </div>
 
           {/* THUMBPRINT SECTION */}
-          {scores ? (
+          {hasQuiz ? (
             <div style={{ marginBottom:44, animation:"fadeSlideIn 0.5s ease forwards 0.1s", opacity:0 }}>
               <SectionLabel text="Your Political Thumbprint" />
               <div style={{ background:C.bgCard, border:`1px solid ${C.goldBorderDim}`, borderRadius:4, padding:"24px 20px" }}>
@@ -259,6 +277,25 @@ export default function ProfilePage() {
                 <button onClick={() => router.push("/quiz")}
                   style={{ fontFamily:"'Figtree',sans-serif", fontWeight:800, fontSize:15, color:C.bg, background:C.gold, border:"none", borderRadius:4, padding:"13px 36px", cursor:"pointer" }}
                 >Take the Quiz →</button>
+              </div>
+            </div>
+          )}
+
+          {/* BADGES */}
+          {profile?.badges?.length > 0 && (
+            <div style={{ marginBottom:32 }}>
+              <div style={{ fontSize:11, letterSpacing:"0.2em", color:C.gold, marginBottom:12, fontWeight:700, fontFamily:"'Barlow Condensed',sans-serif" }}>YOUR BADGES</div>
+              <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
+                {profile.badges.map(id => {
+                  const b = { voter:{icon:"🗳️",label:"Voter"}, informed:{icon:"📊",label:"Informed"}, wonk:{icon:"🏛️",label:"Wonk"}, activist:{icon:"✊",label:"Activist"}, engaged:{icon:"🔔",label:"Engaged"}, analyst:{icon:"🔍",label:"Analyst"} }[id];
+                  if (!b) return null;
+                  return (
+                    <div key={id} style={{ padding:"8px 14px", background:C.bgCard, border:`1px solid rgba(201,168,76,0.25)`, borderRadius:20, display:"flex", alignItems:"center", gap:7 }}>
+                      <span>{b.icon}</span>
+                      <span style={{ fontSize:12, fontWeight:600, color:C.parchment, fontFamily:"'Figtree',sans-serif" }}>{b.label}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
