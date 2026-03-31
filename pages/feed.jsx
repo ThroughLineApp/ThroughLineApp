@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import { useAuth } from "../lib/auth";
+import Nav from "../components/Nav";
 
 const C = {
   bg:            "#0a0b0d",
@@ -311,26 +312,8 @@ export default function FeedPage() {
         <meta name="description" content="Stories from the politicians you follow — donations, votes, and the throughlines between them." />
       </Head>
       <style>{GLOBAL_STYLES}</style>
+      <Nav />
       <div style={{ minHeight: "100vh", background: C.bg, color: C.parchment }}>
-
-        {/* NAV */}
-        <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", borderBottom: `1px solid ${C.goldBorderDim}`, position: "sticky", top: 0, background: C.bg, zIndex: 100 }}>
-          <button onClick={() => router.push("/")} style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 18, letterSpacing: "0.12em", color: C.gold, background: "none", border: "none", cursor: "pointer" }}>THROUGHLINE</button>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {user ? (
-              <>
-                <button onClick={() => router.push("/profile")} style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.1em", color: C.gold, background: "transparent", border: `2px solid ${C.goldBorder}`, borderRadius: 2, padding: "6px 14px", cursor: "pointer" }}>MY PROFILE</button>
-                <button onClick={() => router.push("/quiz")} style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.1em", color: C.parchment, background: "transparent", border: `2px solid rgba(255,255,255,0.2)`, borderRadius: 2, padding: "6px 14px", cursor: "pointer" }}>TAKE THE QUIZ</button>
-                <button onClick={signOut} style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.1em", color: C.parchmentDim, background: "transparent", border: `2px solid rgba(255,255,255,0.15)`, borderRadius: 2, padding: "6px 14px", cursor: "pointer" }}>SIGN OUT</button>
-              </>
-            ) : (
-              <>
-                <button onClick={() => router.push("/")} style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.1em", color: C.parchmentDim, background: "transparent", border: `2px solid rgba(255,255,255,0.15)`, borderRadius: 2, padding: "6px 14px", cursor: "pointer" }}>SIGN IN</button>
-                <button onClick={() => router.push("/quiz")} style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.1em", color: "#0a0b0d", background: C.gold, border: "none", borderRadius: 2, padding: "6px 14px", cursor: "pointer" }}>TAKE THE QUIZ</button>
-              </>
-            )}
-          </div>
-        </nav>
 
         <div style={{ maxWidth: 680, margin: "0 auto", padding: "32px 20px 80px" }}>
 

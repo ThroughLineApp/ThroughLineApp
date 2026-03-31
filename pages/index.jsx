@@ -24,7 +24,7 @@ const ALL_POLITICIANS = [
   { id: "bernie-sanders", initials: "BS", party: "dem", name: "Bernie Sanders", meta: "D · VT · Senate", das: 12, dasColor: C.green, avg: "$27", avgColor: C.green, events: 8, strip: C.blue, donationDate: "Jan 9, 2024", voteType: "yes", voteLabel: "VOTED YES · 12 days later", voteColor: C.green, summary: '"Small donor-funded — voted yes on minimum wage increase consistent with stated positions."', followers: "5,112" },
   { id: "amy-klobuchar", initials: "AK", party: "dem", name: "Amy Klobuchar", meta: "D · MN · Senate", das: 48, dasColor: C.gold, avg: "$340", avgColor: C.gold, events: 23, strip: C.blue, donationDate: "Oct 3, 2023", voteType: "yes", voteLabel: "VOTED YES · 61 days later", voteColor: C.green, summary: '"$480K from tech industry — voted yes on weakened antitrust amendment."', followers: "2,291" },
   { id: "rand-paul", initials: "RP", party: "rep", name: "Rand Paul", meta: "R · KY · Senate", das: 31, dasColor: C.green, avg: "$44", avgColor: C.green, events: 14, strip: C.red, donationDate: "Feb 21, 2024", voteType: "no", voteLabel: "VOTED NO · 33 days later", voteColor: C.red, summary: '"Voted no on defense spending — consistent with his stated anti-interventionist record."', followers: "1,876" },
-  { id: "aoc", initials: "AO", party: "dem", name: "Alexandria Ocasio-Cortez", meta: "D · NY · House", das: 9, dasColor: C.green, avg: "$18", avgColor: C.green, events: 5, strip: C.blue, donationDate: "Nov 1, 2023", voteType: "yes", voteLabel: "VOTED YES · 7 days later", voteColor: C.green, summary: '"Grassroots-funded — voted yes on Green New Deal framework consistent with donor base."', followers: "8,204" },
+  { id: "alexandria-ocasio-cortez", initials: "AO", party: "dem", name: "Alexandria Ocasio-Cortez", meta: "D · NY · House", das: 9, dasColor: C.green, avg: "$18", avgColor: C.green, events: 5, strip: C.blue, donationDate: "Nov 1, 2023", voteType: "yes", voteLabel: "VOTED YES · 7 days later", voteColor: C.green, summary: '"Grassroots-funded — voted yes on Green New Deal framework consistent with donor base."', followers: "8,204" },
   { id: "ted-cruz", initials: "TC", party: "rep", name: "Ted Cruz", meta: "R · TX · Senate", das: 77, dasColor: C.red, avg: "$1.8k", avgColor: C.red, events: 38, strip: C.red, donationDate: "Apr 4, 2024", voteType: "no", voteLabel: "VOTED NO · 55 days later", voteColor: C.red, summary: '"$900K from oil & gas PACs — voted no on clean energy tax credits."', followers: "2,940" },
   { id: "elizabeth-warren", initials: "EW", party: "dem", name: "Elizabeth Warren", meta: "D · MA · Senate", das: 22, dasColor: C.green, avg: "$31", avgColor: C.green, events: 11, strip: C.blue, donationDate: "Dec 12, 2023", voteType: "yes", voteLabel: "VOTED YES · 19 days later", voteColor: C.green, summary: '"Rejected PAC money — voted yes on Wall Street accountability act."', followers: "4,517" },
   { id: "marco-rubio", initials: "MR", party: "rep", name: "Marco Rubio", meta: "R · FL · Senate", das: 61, dasColor: C.gold, avg: "$620", avgColor: C.red, events: 29, strip: C.red, donationDate: "Feb 8, 2024", voteType: "yes", voteLabel: "VOTED YES · 44 days later", voteColor: C.green, summary: '"$540K from defense contractors — voted yes on expanded military spending bill."', followers: "1,632" },
@@ -284,13 +284,19 @@ export default function HomePage() {
               We draw a straight line from the day a donation was received to the day a politician voted. No spin. Just the receipt.
             </p>
             <div style={{ position: "relative", maxWidth: 480, margin: "0 auto 10px" }}>
-              <input type="text" placeholder="Search any senator or representative…" value={searchQuery}
-                onChange={e => { setSearchQuery(e.target.value); setSearchOpen(true); }}
-                onFocus={() => setSearchOpen(true)}
-                onBlur={() => setTimeout(() => setSearchOpen(false), 200)}
-                style={{ width: "100%", background: C.bgCard, border: `2px solid rgba(201,168,76,0.35)`, borderRadius: 2, padding: "13px 48px 13px 16px", fontSize: 14, color: C.parchment, outline: "none", fontFamily: "'Inter', sans-serif" }}
-              />
-              <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: searching ? C.parchmentDim : C.gold, fontSize: 18, pointerEvents: "none" }}>{searching ? "…" : "⌕"}</span>
+              <div style={{ display: "flex", height: 48 }}>
+                <input type="text" placeholder="Search any senator or representative…" value={searchQuery}
+                  onChange={e => { setSearchQuery(e.target.value); setSearchOpen(true); }}
+                  onFocus={() => setSearchOpen(true)}
+                  onBlur={() => setTimeout(() => setSearchOpen(false), 200)}
+                  style={{ flex: 1, background: C.bgCard, border: `2px solid rgba(201,168,76,0.35)`, borderRight: "none", borderRadius: "2px 0 0 2px", padding: "0 16px", fontSize: 14, color: C.parchment, outline: "none", fontFamily: "'Inter', sans-serif" }}
+                />
+                <button
+                  onClick={() => { setSearchOpen(true); }}
+                  style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 12, color: "#0a0b0d", background: C.gold, border: "none", borderRadius: "0 2px 2px 0", padding: "0 16px", cursor: "pointer", whiteSpace: "nowrap", letterSpacing: "0.1em" }}>
+                  SEARCH
+                </button>
+              </div>
               {searchOpen && searchQuery.length >= 2 && (
                 <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: C.bgCard, border: `2px solid rgba(201,168,76,0.35)`, borderTop: "none", borderRadius: "0 0 2px 2px", zIndex: 100 }}>
                   {searchResults.length === 0 && !searching && <div style={{ padding: "14px 16px", fontFamily: "'Inter', sans-serif", fontSize: 13, color: C.parchmentDim }}>No results for "{searchQuery}"</div>}

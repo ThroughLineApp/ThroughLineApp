@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import supabase from "../lib/supabase";
 import { useAuth } from "../lib/auth";
+import Nav from "../components/Nav";
 
 const C = {
   bg:            "#0a0b0d",
@@ -208,16 +209,9 @@ export default function ProfilePage() {
         <meta name="description" content="Your political thumbprint and followed politicians on Throughline." />
       </Head>
       <style>{GLOBAL_STYLES}</style>
+      <Nav />
       <div style={{ minHeight:"100vh", background:C.bg, color:C.parchment, fontFamily:"'Figtree',sans-serif" }}>
         <div style={{ maxWidth:640, margin:"0 auto", padding:"32px 20px 80px" }}>
-
-          {/* Nav */}
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:40 }}>
-            <button onClick={() => router.push("/")}
-              style={{ fontFamily:"'Barlow Condensed',sans-serif", fontWeight:700, fontSize:12, letterSpacing:"0.2em", color:C.gold, background:"none", border:"none", cursor:"pointer" }}
-            >← THROUGHLINE</button>
-            <div style={{ fontFamily:"'Figtree',sans-serif", fontSize:12, color:C.parchmentDim, maxWidth:180, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{user.email}</div>
-          </div>
 
           {/* Header */}
           <div style={{ marginBottom:40, animation:"fadeSlideIn 0.5s ease forwards" }}>
