@@ -306,7 +306,7 @@ export default function HomePage() {
                     const das = r.donor_alignment_score;
                     const dc = das == null ? C.parchmentDim : das < 34 ? C.green : das < 67 ? C.gold : C.red;
                     return (
-                      <div key={r.slug} onMouseDown={() => router.push(`/politician/${r.slug}`)}
+                      <div key={r.slug} onMouseDown={() => router.push(`/politician/${r.slug}`)} onClick={() => router.push(`/politician/${r.slug}`)}
                         style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid rgba(201,168,76,0.07)" }}
                         onMouseEnter={e => e.currentTarget.style.background = "#161922"}
                         onMouseLeave={e => e.currentTarget.style.background = "transparent"}
