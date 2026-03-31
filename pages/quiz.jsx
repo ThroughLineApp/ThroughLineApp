@@ -73,17 +73,7 @@ const BADGES=[
 function getScoreBand(s){if(s<=20)return"0-20";if(s<=40)return"21-40";if(s<=60)return"41-60";if(s<=80)return"61-80";return"81-100";}
 function shuffle(a){return[...a].sort(()=>Math.random()-0.5);}
 function buildL2(l1Scores){return DIMS.map(dim=>{const band=getScoreBand(l1Scores[dim]??50);const q=L2_QUESTIONS[dim][band];return{id:`l2_${dim}`,dimension:dim,label:q.label,scenario:q.scenario,question:q.question,answers:shuffle(q.answers)};});}
-function profileLabel(scores){
-  const dims=Object.keys(scores);
-  const avg=dims.reduce((a,b)=>a+scores[b],0)/dims.length;
-  const spread=Math.max(...Object.values(scores))-Math.min(...Object.values(scores));
-  if(spread>60)return"Crosscurrent";
-  if(avg>72)return"Firmly Left-Leaning";
-  if(avg>58)return"Left-Leaning";
-  if(avg>42)return"Mixed";
-  if(avg>28)return"Right-Leaning";
-  return"Firmly Right-Leaning";
-}
+function profileLabel(scores){return"Your Political Thumbprint";}
 
 function ThumbprintSVG({scores,size=280,animate=true}){
   const cx=size/2,cy=size/2,r=size*0.40;
@@ -227,7 +217,6 @@ function ResultsScreen({scores,matches,onStartL2,onRetake,onExplore,user,showSav
   const router=useRouter();
   const safe=scores||Object.fromEntries(DIMS.map(d=>[d,50]));
   const pcolor=p=>p==="D"?C.blue:p==="R"?C.red:C.purple;
-  const label=profileLabel(safe);
   return(
     <div style={{minHeight:"100vh",background:C.bg,color:C.parchment}}>
       <div style={{maxWidth:580,margin:"0 auto",padding:"44px 24px 80px"}}>
