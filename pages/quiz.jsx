@@ -371,62 +371,142 @@ export default function QuizPage(){
     }catch(e){console.log("AI skip:",e.message);return scores;}
   };
 
-  const runL1=async(rawAnswers,writtenInputs)=>{
-    try{
+  const runL1 = async (rawAnswers, writtenInputs) => {
+    try {
       setProcMsg("Reading your answers…");
-      const numeric={};Object.entries(rawAnswers).forEach(([k,v])=>{if(v!=="skipped")numeric[k]=v;});
-      let refined=await aiRefine(numeric,writtenInputs);
+      const numeric = {};
+      Object.entries(rawAnswers).forEach(([k, v]) => { if (v !== "skipped") numeric[k] = v; });
+
+      let refined = numeric;
+      try {
+        refined = await aiRefine(numeric, writtenInputs);
+      } catch (e) { console.log("AI refine skipped:", e.message); }
+
       setProcMsg("Building your political thumbprint…");
-      await new Promise(r=>setTimeout(r,600));
-      const full={};DIMS.forEach(d=>{full[d]=refined[d]??50;});
+      await new Promise(r => setTimeout(r, 600));
+      const full = {};
+      DIMS.forEach(d => { full[d] = refined[d] ?? numeric[d] ?? 50; });
       setL1Scores(full);
+
       setProcMsg("Finding your closest matches…");
-      try{
-        const{data:pols}=await supabase.from("politicians").select("name,slug,party,state,chamber,bioguide_id,score_economic,score_healthcare,score_climate,score_criminal,score_immigration,score_foreign,score_education,score_freedom,score_guns,score_housing,score_tech,score_voting").not("score_economic","is",null).limit(538);
-        if(pols?.length>0){
-          const ranked=pols.map(p=>({...p,distance:Math.sqrt(DIMS.reduce((s,d)=>rawAnswers[d]==="skipped"?s:s+Math.pow((refined[d]??50)-(p[`score_${d}`]??50),2),0))})).sort((a,b)=>a.distance-b.distance);
-          setL1Matches(ranked.slice(0,3));
+      try {
+        const matchPromise = supabase
+          .from("politicians")
+          .select("name,slug,party,state,chamber,bioguide_id,score_economic,score_healthcare,score_climate,score_criminal,score_immigration,score_foreign,score_education,score_freedom,score_guns,score_housing,score_tech,score_voting")
+          .limit(538);
+        const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 5000));
+        const { data: pols } = await Promise.race([matchPromise, timeoutPromise]);
+        if (pols?.length > 0) {
+          const ranked = pols
+            .map(p => ({
+              ...p,
+              distance: Math.sqrt(DIMS.reduce((s, d) => {
+                if (rawAnswers[d] === "skipped") return s;
+                const polScore = p[`score_${d}`] ?? 50;
+                return s + Math.pow((refined[d] ?? 50) - polScore, 2);
+              }, 0))
+            }))
+            .sort((a, b) => a.distance - b.distance);
+          setL1Matches(ranked.slice(0, 3));
         }
-      }catch(e){console.log("Match skip:",e.message);}
-      try{
-        const ps=profileLabel(full);
-        const row={user_id:user?.id||null,session_id:crypto.randomUUID(),completed_at:new Date().toISOString(),tier:"basic",score_economic:full.economic,score_healthcare:full.healthcare,score_climate:full.climate,score_criminal:full.criminal,score_immigration:full.immigration,score_foreign:full.foreign,score_education:full.education,score_freedom:full.freedom,score_guns:full.guns,score_housing:full.housing,score_tech:full.tech,score_voting:full.voting,profile_summary:ps};
-        const{data:saved,error:se}=await supabase.from("quiz_results").insert(row).select().single();
-        if(!se&&saved&&user?.id)await supabase.from("profiles").update({quiz_result_id:saved.id}).eq("id",user.id);
-        if(!se&&!user)setShowSave(true);
-        try{await supabase.from("quiz_history").insert({...row});}catch(e){}
-      }catch(e){console.log("Save skip:",e.message);}
-      const ids=["voter"];
-      if((profile?.followed_politicians?.length||0)>=5)ids.push("activist");
-      if((profile?.followed_issues?.length||0)>=3)ids.push("engaged");
-      try{if(user?.id){const{count}=await supabase.from("quiz_history").select("*",{count:"exact",head:true}).eq("user_id",user.id);if(count>=3)ids.push("analyst");}}catch(e){}
-      if(user?.id){const ex=profile?.badges||[];const add=ids.filter(b=>!ex.includes(b));if(add.length>0)await supabase.from("profiles").update({badges:[...ex,...add]}).eq("id",user.id);}
-      setEarnedBadges(BADGES.filter(b=>ids.includes(b.id)));
-    }catch(e){console.log("L1 error:",e.message);}
-    setLvl(1);setPhase("l1_badges");
+      } catch (e) { console.log("Match skipped:", e.message); }
+
+      try {
+        const ps = profileLabel(full);
+        const row = {
+          user_id: user?.id || null,
+          session_id: crypto.randomUUID(),
+          completed_at: new Date().toISOString(),
+          tier: "basic",
+          score_economic: full.economic, score_healthcare: full.healthcare,
+          score_climate: full.climate, score_criminal: full.criminal,
+          score_immigration: full.immigration, score_foreign: full.foreign,
+          score_education: full.education, score_freedom: full.freedom,
+          score_guns: full.guns, score_housing: full.housing,
+          score_tech: full.tech, score_voting: full.voting,
+          profile_summary: ps
+        };
+        const { data: saved, error: se } = await supabase.from("quiz_results").insert(row).select().single();
+        if (!se && saved && user?.id) await supabase.from("profiles").update({ quiz_result_id: saved.id }).eq("id", user.id);
+        if (!se && !user) setShowSave(true);
+        try { await supabase.from("quiz_history").insert({ ...row }); } catch (e) {}
+      } catch (e) { console.log("Save skipped:", e.message); }
+
+      const ids = ["voter"];
+      if ((profile?.followed_politicians?.length || 0) >= 5) ids.push("activist");
+      if ((profile?.followed_issues?.length || 0) >= 3) ids.push("engaged");
+      try {
+        if (user?.id) {
+          const { count } = await supabase.from("quiz_history").select("*", { count: "exact", head: true }).eq("user_id", user.id);
+          if (count >= 3) ids.push("analyst");
+        }
+      } catch (e) {}
+      if (user?.id) {
+        const ex = profile?.badges || [];
+        const add = ids.filter(b => !ex.includes(b));
+        if (add.length > 0) await supabase.from("profiles").update({ badges: [...ex, ...add] }).eq("id", user.id);
+      }
+      setEarnedBadges(BADGES.filter(b => ids.includes(b.id)));
+
+    } catch (e) {
+      console.log("L1 error:", e.message);
+    } finally {
+      setLvl(1);
+      setPhase("l1_badges");
+    }
   };
 
-  const runL2=async(rawAnswers,writtenInputs)=>{
-    try{
+  const runL2 = async (rawAnswers, writtenInputs) => {
+    try {
       setProcMsg("Refining your thumbprint…");
-      const numeric={};Object.entries(rawAnswers).forEach(([k,v])=>{if(v!=="skipped")numeric[k]=v;});
-      const blended={};DIMS.forEach(d=>{blended[d]=Math.round(((l1Scores[d]??50)+(numeric[d]??(l1Scores[d]??50)))/2);});
-      let refined=await aiRefine(blended,writtenInputs);
+      const numeric = {};
+      Object.entries(rawAnswers).forEach(([k, v]) => { if (v !== "skipped") numeric[k] = v; });
+      const blended = {};
+      DIMS.forEach(d => { blended[d] = Math.round(((l1Scores[d] ?? 50) + (numeric[d] ?? (l1Scores[d] ?? 50))) / 2); });
+
+      let refined = blended;
+      try {
+        refined = await aiRefine(blended, writtenInputs);
+      } catch (e) { console.log("L2 AI refine skipped:", e.message); }
+
       setProcMsg("Building your refined thumbprint…");
-      await new Promise(r=>setTimeout(r,600));
+      await new Promise(r => setTimeout(r, 600));
       setL2Scores(refined);
-      try{
-        const ps=profileLabel(refined);
-        const row={user_id:user?.id||null,session_id:crypto.randomUUID(),completed_at:new Date().toISOString(),tier:"informed",score_economic:refined.economic??50,score_healthcare:refined.healthcare??50,score_climate:refined.climate??50,score_criminal:refined.criminal??50,score_immigration:refined.immigration??50,score_foreign:refined.foreign??50,score_education:refined.education??50,score_freedom:refined.freedom??50,score_guns:refined.guns??50,score_housing:refined.housing??50,score_tech:refined.tech??50,score_voting:refined.voting??50,profile_summary:ps};
-        const{data:saved}=await supabase.from("quiz_results").insert(row).select().single();
-        if(saved&&user?.id)await supabase.from("profiles").update({quiz_result_id:saved.id}).eq("id",user.id);
-        try{await supabase.from("quiz_history").insert({...row});}catch(e){}
-      }catch(e){console.log("L2 save skip:",e.message);}
-      const ids=["informed"];
-      if(user?.id){const ex=profile?.badges||[];const add=ids.filter(b=>!ex.includes(b));if(add.length>0)await supabase.from("profiles").update({badges:[...ex,...add]}).eq("id",user.id);}
-      setEarnedBadges(BADGES.filter(b=>ids.includes(b.id)));
-    }catch(e){console.log("L2 error:",e.message);}
-    setLvl(2);setPhase("l2_badges");
+
+      try {
+        const ps = profileLabel(refined);
+        const row = {
+          user_id: user?.id || null,
+          session_id: crypto.randomUUID(),
+          completed_at: new Date().toISOString(),
+          tier: "informed",
+          score_economic: refined.economic ?? 50, score_healthcare: refined.healthcare ?? 50,
+          score_climate: refined.climate ?? 50, score_criminal: refined.criminal ?? 50,
+          score_immigration: refined.immigration ?? 50, score_foreign: refined.foreign ?? 50,
+          score_education: refined.education ?? 50, score_freedom: refined.freedom ?? 50,
+          score_guns: refined.guns ?? 50, score_housing: refined.housing ?? 50,
+          score_tech: refined.tech ?? 50, score_voting: refined.voting ?? 50,
+          profile_summary: ps
+        };
+        const { data: saved } = await supabase.from("quiz_results").insert(row).select().single();
+        if (saved && user?.id) await supabase.from("profiles").update({ quiz_result_id: saved.id }).eq("id", user.id);
+        try { await supabase.from("quiz_history").insert({ ...row }); } catch (e) {}
+      } catch (e) { console.log("L2 save skipped:", e.message); }
+
+      const ids = ["informed"];
+      if (user?.id) {
+        const ex = profile?.badges || [];
+        const add = ids.filter(b => !ex.includes(b));
+        if (add.length > 0) await supabase.from("profiles").update({ badges: [...ex, ...add] }).eq("id", user.id);
+      }
+      setEarnedBadges(BADGES.filter(b => ids.includes(b.id)));
+
+    } catch (e) {
+      console.log("L2 error:", e.message);
+    } finally {
+      setLvl(2);
+      setPhase("l2_badges");
+    }
   };
 
   const handleRetake=()=>{
