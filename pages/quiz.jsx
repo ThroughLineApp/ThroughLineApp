@@ -389,12 +389,15 @@ export default function QuizPage(){
 
       setProcMsg("Finding your closest matches…");
       try {
-        const matchPromise = supabase
+        const ac = new AbortController();
+        const tid = setTimeout(() => ac.abort(), 4000);
+        const { data: pols, error: me } = await supabase
           .from("politicians")
           .select("name,slug,party,state,chamber,bioguide_id,score_economic,score_healthcare,score_climate,score_criminal,score_immigration,score_foreign,score_education,score_freedom,score_guns,score_housing,score_tech,score_voting")
-          .limit(538);
-        const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 5000));
-        const { data: pols } = await Promise.race([matchPromise, timeoutPromise]);
+          .limit(538)
+          .abortSignal(ac.signal);
+        clearTimeout(tid);
+        if (me) throw new Error(me.message);
         if (pols?.length > 0) {
           const ranked = pols
             .map(p => ({
