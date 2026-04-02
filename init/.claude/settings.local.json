@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/mrhea/Projects/throughline-next/**)",
+      "Bash(vercel --prod)",
+      "Bash(node -e \"const {createClient}=require\\(''@supabase/supabase-js''\\);const s=createClient\\(''https://busiguukyesnvgriktbu.supabase.co'',''sb_publishable_ISiDLfrT9y1mXTAn0IA2YA_jrGAz9fy''\\);s.from\\(''quiz_results''\\).select\\(''*''\\).order\\(''created_at'',{ascending:false}\\).limit\\(3\\).then\\(r=>console.log\\(JSON.stringify\\(r.data,null,2\\)\\)\\)\")",
+      "Bash(node -e \"const {createClient}=require\\(''@supabase/supabase-js''\\);const s=createClient\\(''https://busiguukyesnvgriktbu.supabase.co'',''sb_publishable_ISiDLfrT9y1mXTAn0IA2YA_jrGAz9fy''\\);s.from\\(''quiz_results''\\).select\\(''*''\\).order\\(''created_at'',{ascending:false}\\).limit\\(3\\).then\\(r=>console.log\\(JSON.stringify\\(r,null,2\\)\\)\\)\")",
+      "Bash(node -e \"const {createClient}=require\\(''@supabase/supabase-js''\\);const s=createClient\\(''https://busiguukyesnvgriktbu.supabase.co'',''sb_publishable_ISiDLfrT9y1mXTAn0IA2YA_jrGAz9fy''\\);s.from\\(''quiz_results''\\).select\\(''*''\\).limit\\(3\\).then\\(r=>console.log\\(JSON.stringify\\(r,null,2\\)\\)\\)\")",
+      "Bash(node -e \"const {createClient}=require\\(''@supabase/supabase-js''\\);const s=createClient\\(''https://busiguukyesnvgriktbu.supabase.co'',''sb_publishable_ISiDLfrT9y1mXTAn0IA2YA_jrGAz9fy''\\);s.from\\(''profiles''\\).select\\(''id,quiz_result_id,score_economic,score_healthcare,badges''\\).limit\\(3\\).then\\(r=>console.log\\(JSON.stringify\\(r,null,2\\)\\)\\)\")",
+      "Bash(python import_pac_data.py)",
+      "Bash(python3 -c \":*)",
+      "Read(//c/Users/mrhea/AppData/Local/Programs/Python//**)",
+      "Bash(ls /c/Python*)",
+      "Bash(command -v python3)",
+      "Bash(command -v python)",
+      "Bash(/c/Users/mrhea/AppData/Local/Programs/Python/Python313/python -c \":*)",
+      "Bash(/c/Users/mrhea/AppData/Local/Programs/Python/Python313/python import_pac_data.py)",
+      "Bash(node pipeline_fec.js --single \"Ted Cruz\")",
+      "Bash(node -e \":*)",
+      "Bash(/c/Users/mrhea/AppData/Local/Programs/Python/Python313/python enrich_pac_dimensions.py)",
+      "Bash(node pipeline_fec.js --single \"Mitch McConnell\")"
+    ]
+  }
+}
