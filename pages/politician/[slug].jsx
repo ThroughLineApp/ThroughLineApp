@@ -372,7 +372,7 @@ function TabThroughline({ politicianId }) {
       .order("corruption_contribution", { ascending: false })
       .limit(50)
       .then(({ data, error }) => {
-        if (error || !data) { setEvents([]); setLoading(false); return; }
+        if (error || !data || data.length === 0) { setEvents([]); setLoading(false); return; }
         setEvents(data);
         setLoading(false);
         setActiveIdx(0);
@@ -733,7 +733,7 @@ function TabVoting({ politicianId }) {
       .not("how_voted", "is", null)
       .order("vote_date", { ascending: false })
       .then(({ data, error }) => {
-        if (error || !data) { setVotes([]); setLoading(false); return; }
+        if (error || !data || data.length === 0) { setVotes([]); setLoading(false); return; }
 
         // Deduplicate: one row per unique bill + vote combo
         const seen = new Set();
