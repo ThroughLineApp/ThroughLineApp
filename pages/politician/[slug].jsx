@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import supabase from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
+import AuthModal from "../../components/AuthModal";
 
 const C = {
   bg:            "#0a0b0d",
@@ -148,59 +149,6 @@ function ThumbprintOverlay({ userScores, polScores, size = 220 }) {
         >{dim.slice(0,3).toUpperCase()}</text>
       );})}
     </svg>
-  );
-}
-
-function AuthModal({ message, onDismiss }) {
-  const [mode, setMode]         = useState("signin");
-  const [email, setEmail]       = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError]       = useState(null);
-  const [loading, setLoading]   = useState(false);
-
-  const handleSubmit = async () => {
-    if (!email || !email.includes("@")) { setError("Enter a valid email address."); return; }
-    if (!password || password.length < 6) { setError("Password must be at least 6 characters."); return; }
-    setLoading(true);
-    setError(null);
-    if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) { setError(error.message); setLoading(false); return; }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) { setError(error.message); setLoading(false); return; }
-    }
-    setLoading(false);
-    onDismiss();
-  };
-
-  return (
-    <div onClick={onDismiss} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: C.bgCard, border: `1px solid ${C.goldBorder}`, borderRadius: 2, padding: "32px 28px", maxWidth: 340, width: "90%", textAlign: "center" }}>
-        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 10, letterSpacing: "0.3em", color: C.gold, marginBottom: 10 }}>FREE ACCOUNT</div>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 20, color: C.parchment, lineHeight: 1.25, marginBottom: 16 }}>
-          {message || (mode === "signup" ? "Create your account" : "Sign in to Throughline")}
-        </div>
-        <div style={{ display: "flex", gap: 0, marginBottom: 20, border: `1px solid ${C.goldBorder}`, borderRadius: 2, overflow: "hidden" }}>
-          {["signin", "signup"].map(m => (
-            <button key={m} onClick={() => { setMode(m); setError(null); }}
-              style={{ flex: 1, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.1em", padding: "8px", border: "none", cursor: "pointer", background: mode === m ? C.gold : "transparent", color: mode === m ? C.bg : C.parchmentDim }}
-            >{m === "signin" ? "SIGN IN" : "SIGN UP"}</button>
-          ))}
-        </div>
-        <input type="email" placeholder="your@email.com" value={email} onChange={e => { setEmail(e.target.value); setError(null); }}
-          style={{ width: "100%", background: C.bgDeep, border: `1.5px solid ${C.goldBorder}`, borderRadius: 2, padding: "12px 14px", fontSize: 14, color: C.parchment, outline: "none", fontFamily: "'Inter', sans-serif", marginBottom: 10 }}
-        />
-        <input type="password" placeholder="password (6+ characters)" value={password} onChange={e => { setPassword(e.target.value); setError(null); }} onKeyDown={e => e.key === "Enter" && handleSubmit()}
-          style={{ width: "100%", background: C.bgDeep, border: `1.5px solid ${error ? C.red : C.goldBorder}`, borderRadius: 2, padding: "12px 14px", fontSize: 14, color: C.parchment, outline: "none", fontFamily: "'Inter', sans-serif", marginBottom: 10 }}
-        />
-        {error && <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.red, marginBottom: 10 }}>{error}</div>}
-        <button onClick={handleSubmit} disabled={loading}
-          style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 15, letterSpacing: "0.12em", color: "#0a0b0d", backgroundColor: loading ? C.goldDim : C.gold, border: "none", borderRadius: 2, padding: 13, cursor: loading ? "default" : "pointer", width: "100%", marginBottom: 14 }}
-        >{loading ? "LOADING…" : mode === "signup" ? "CREATE ACCOUNT →" : "SIGN IN →"}</button>
-        <button onClick={onDismiss} style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, background: "none", border: "none", textDecoration: "underline", textUnderlineOffset: 3, cursor: "pointer" }}>maybe later</button>
-      </div>
-    </div>
   );
 }
 
