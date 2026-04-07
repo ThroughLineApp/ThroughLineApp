@@ -43,16 +43,42 @@ export default function AuthModal({ message, onDismiss }) {
     setLoading(true);
 
     if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({ email, password });
       setLoading(false);
-      if (error) { setError(error.message); return; }
-      // Send branded welcome email via Resend
+
+      if (error) {
+        let friendlyMessage = '';
+        const msg = error.message?.toLowerCase() || '';
+
+        if (msg.includes('already registered') || msg.includes('user already exists')) {
+          friendlyMessage = 'An account with this email already exists. Try signing in instead.';
+        } else if (msg.includes('password') && msg.includes('short')) {
+          friendlyMessage = 'Password must be at least 6 characters.';
+        } else if (msg.includes('invalid email') || msg.includes('valid email')) {
+          friendlyMessage = 'Please enter a valid email address.';
+        } else if (msg.includes('rate limit') || msg.includes('too many')) {
+          friendlyMessage = 'Too many attempts. Please wait a minute and try again.';
+        } else if (msg.includes('confirmation') || msg.includes('smtp') || msg.includes('email')) {
+          // SMTP errors — account was created, email just failed to send
+          friendlyMessage = null;
+        } else {
+          friendlyMessage = 'Something went wrong. Please try again.';
+        }
+
+        if (friendlyMessage) {
+          setError(friendlyMessage);
+          return;
+        }
+        // If friendlyMessage is null, fall through to success state below
+      }
+
+      // Success — fire Resend welcome email and show success screen
       fetch('/api/send-confirmation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
-      }).catch(() => {}); // fire and forget, never block signup
-      setMode("sent");
+      }).catch(() => {});
+      setMode("signup_success");
       return;
     }
 
@@ -64,10 +90,11 @@ export default function AuthModal({ message, onDismiss }) {
   };
 
   const titles = {
-    signin: "Sign in to Throughline",
-    signup: "Create your free account",
-    forgot: "Reset your password",
-    sent:   mode === "signup" ? "Check your email" : "Reset link sent",
+    signin:         "Sign in to Throughline",
+    signup:         "Create your free account",
+    forgot:         "Reset your password",
+    sent:           "Reset link sent",
+    signup_success: "Account created.",
   };
 
   return (
@@ -99,8 +126,25 @@ export default function AuthModal({ message, onDismiss }) {
           </div>
         )}
 
+        {/* Signup success screen */}
+        {mode === "signup_success" && (
+          <div>
+            <div style={{ fontSize: 32, color: C.green, marginBottom: 12 }}>✓</div>
+            <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7, marginBottom: 24 }}>
+              We sent a confirmation email to <strong style={{ color: C.parchment }}>{email}</strong>. Click the link to activate your account, then come back and sign in.
+            </div>
+            <button onClick={onDismiss}
+              style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.gold, background: "transparent", border: `1px solid ${C.gold}`, borderRadius: 2, padding: "11px 24px", cursor: "pointer", width: "100%", marginBottom: 12 }}>
+              OK, GOT IT
+            </button>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, lineHeight: 1.6 }}>
+              Didn't get it? Check your spam folder or wait a minute and try again.
+            </div>
+          </div>
+        )}
+
         {/* Main form */}
-        {mode !== "sent" && (
+        {mode !== "sent" && mode !== "signup_success" && (
           <>
             {/* Mode toggle — only for signin/signup */}
             {(mode === "signin" || mode === "signup") && (
