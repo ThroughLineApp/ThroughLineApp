@@ -12,7 +12,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Throughline <onboarding@resend.dev>',
+        from: 'Throughline <noreply@throughlinenews.org>',
         to: email,
         subject: 'Confirm your Throughline account',
         html: `
