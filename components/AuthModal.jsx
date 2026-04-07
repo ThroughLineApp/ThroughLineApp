@@ -46,6 +46,12 @@ export default function AuthModal({ message, onDismiss }) {
       const { error } = await supabase.auth.signUp({ email, password });
       setLoading(false);
       if (error) { setError(error.message); return; }
+      // Send branded welcome email via Resend
+      fetch('/api/send-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      }).catch(() => {}); // fire and forget, never block signup
       setMode("sent");
       return;
     }
