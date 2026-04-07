@@ -357,13 +357,14 @@ export default function QuizPage(){
     const entries=Object.entries(written).filter(([,v])=>v&&v.trim());
     if(entries.length===0)return scores;
     try{
-      const ctrl=new AbortController();
-      const tid=setTimeout(()=>ctrl.abort(),8000);
-      const res=await fetch("https://api.anthropic.com/v1/messages",{
-        method:"POST",headers:{"Content-Type":"application/json"},signal:ctrl.signal,
-        body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:400,messages:[{role:"user",content:`Adjust political scores (0=most conservative, 100=most progressive) based on written quiz responses.\nCurrent scores: ${Object.entries(scores).map(([k,v])=>`${k}:${v}`).join(", ")}\nWritten responses: ${entries.map(([k,v])=>`${k}: "${v}"`).join(" | ")}\nReturn ONLY a JSON object adjusting scores for the written dimensions. Example: {"economic":65}\nNo markdown. No explanation. Just JSON.`}]})
-      });
-      clearTimeout(tid);
+      const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("AI timeout")),5000));
+      const res=await Promise.race([
+        fetch("/api/ai-refine",{
+          method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:400,messages:[{role:"user",content:`Adjust political scores (0=most conservative, 100=most progressive) based on written quiz responses.\nCurrent scores: ${Object.entries(scores).map(([k,v])=>`${k}:${v}`).join(", ")}\nWritten responses: ${entries.map(([k,v])=>`${k}: "${v}"`).join(" | ")}\nReturn ONLY a JSON object adjusting scores for the written dimensions. Example: {"economic":65}\nNo markdown. No explanation. Just JSON.`}]})
+        }),
+        timeout
+      ]);
       const d=await res.json();
       const txt=(d.content?.[0]?.text||"{}").replace(/```json|```/g,"").trim();
       return{...scores,...JSON.parse(txt)};
@@ -436,7 +437,11 @@ export default function QuizPage(){
           }
         }
         try { await supabase.from("quiz_history").insert({ ...row }); } catch (e) {}
-      } catch (e) { console.log("Save skipped:", e.message); }
+      } catch (e) {
+        console.log("Save error:", e.message);
+      } finally {
+        setPhase("l1_badges");
+      }
 
       const ids = ["voter"];
       if ((profile?.followed_politicians?.length || 0) >= 5) ids.push("activist");
@@ -506,7 +511,11 @@ export default function QuizPage(){
         const { data: saved } = await supabase.from("quiz_results").upsert(row, { onConflict: "user_id" }).select().single();
         if (saved && user?.id) await supabase.from("profiles").update({ quiz_result_id: saved.id }).eq("id", user.id);
         try { await supabase.from("quiz_history").insert({ ...row }); } catch (e) {}
-      } catch (e) { console.log("L2 save skipped:", e.message); }
+      } catch (e) {
+        console.log("L2 save error:", e.message);
+      } finally {
+        setPhase("l2_badges");
+      }
 
       const ids = ["informed"];
       if (user?.id) {
