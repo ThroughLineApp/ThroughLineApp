@@ -18,7 +18,8 @@
       "Bash(node pipeline_fec.js --single \"Ted Cruz\")",
       "Bash(node -e \":*)",
       "Bash(/c/Users/mrhea/AppData/Local/Programs/Python/Python313/python enrich_pac_dimensions.py)",
-      "Bash(node pipeline_fec.js --single \"Mitch McConnell\")"
+      "Bash(node pipeline_fec.js --single \"Mitch McConnell\")",
+      "Bash(node enrich_pac_names.js)"
     ]
   }
 }
