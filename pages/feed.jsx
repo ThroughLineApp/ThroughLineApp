@@ -401,6 +401,7 @@ export default function FeedPage() {
           </div>
 
           {/* Cards */}
+          {receipts[0] && console.log("FIRST EVENT:", JSON.stringify(receipts[0]))}
           {feedWithNudge().map((item) => {
             if (item.__type === "quiz_nudge") {
               return <QuizNudgeCard key={item.id} />;
