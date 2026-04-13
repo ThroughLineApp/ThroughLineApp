@@ -252,8 +252,8 @@ export default function FeedPage() {
       const data = await res.json();
 
       let newReceipts = data.events || [];
-      // Fallback to curated mock if DB returns nothing
-      if (newReceipts.length === 0) {
+      // Only use mock if explicitly flagged as fallback AND no real data
+      if (newReceipts.length === 0 && data.fallback) {
         newReceipts = getMockReceipts(pageNum);
       }
 
@@ -401,7 +401,6 @@ export default function FeedPage() {
           </div>
 
           {/* Cards */}
-          {receipts[0] && console.log("FIRST EVENT:", JSON.stringify(receipts[0]))}
           {feedWithNudge().map((item) => {
             if (item.__type === "quiz_nudge") {
               return <QuizNudgeCard key={item.id} />;
