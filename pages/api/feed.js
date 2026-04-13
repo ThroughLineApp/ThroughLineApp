@@ -7,6 +7,29 @@ const supabase = createClient(
 
 const PAGE_SIZE = 10;
 
+const BAD_BILL_PATTERNS = [
+  /^On the Cloture Motion/i,
+  /^On the Motion/i,
+  /^On Cloture/i,
+  /^On the Nomination/i,
+  /^On the Conference Report/i,
+  /^On the Joint Resolution/i,
+  /^On Passage of the Bill/i,
+  /^On the Amendment/i,
+  /^On the Resolution/i,
+  /^PN\d/i,
+];
+
+function isBadBillName(name) {
+  if (!name) return true;
+  return BAD_BILL_PATTERNS.some(p => p.test(name.trim()));
+}
+
+function isRawPacId(name) {
+  if (!name) return true;
+  return /^C\d{8}$/.test(name.trim());
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -14,10 +37,12 @@ export default async function handler(req, res) {
 
   const { state, follows, page = "0" } = req.query;
   const pageNum = parseInt(page, 10) || 0;
-  const from = pageNum * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
 
   try {
+    const fetchSize = PAGE_SIZE * 6;
+    const from = pageNum * fetchSize;
+    const to = from + fetchSize - 1;
+
     let query = supabase
       .from("throughline_events")
       .select(`
@@ -46,8 +71,9 @@ export default async function handler(req, res) {
           donor_alignment_score,
           bioguide_id
         )
-      `, { count: "exact" })
+      `)
       .not("donation_amount", "is", null)
+      .not("vote_impact", "is", null)
       .order("donation_amount", { ascending: false });
 
     if (follows) {
@@ -57,11 +83,10 @@ export default async function handler(req, res) {
       }
     }
 
-    const { data, error, count } = await query.range(from, to);
+    const { data, error } = await query.range(from, to);
     if (error) throw error;
 
-    // Flatten politician join into event object
-    const events = (data || []).map(e => ({
+    let events = (data || []).map(e => ({
       ...e,
       politician_name: e.politicians?.name,
       party: e.politicians?.party,
@@ -70,21 +95,40 @@ export default async function handler(req, res) {
       donor_alignment_score: e.politicians?.donor_alignment_score,
       bioguide_id: e.politicians?.bioguide_id,
       days_before_vote: e.days_between,
+      donor_display: isRawPacId(e.donor_pac_name)
+        ? (isRawPacId(e.donor_name) ? (e.donor_industry || "PAC donor") : e.donor_name)
+        : e.donor_pac_name,
     }));
 
-    // State 2: sort user's state reps to top
-    let sorted = events;
+    events = events.filter(e =>
+      !isBadBillName(e.bill_name) &&
+      e.vote_impact &&
+      e.vote_impact.length > 20 &&
+      e.politician_name
+    );
+
+    const seenPoliticians = new Set();
+    const deduped = [];
+    for (const e of events) {
+      if (!seenPoliticians.has(e.politician_id)) {
+        seenPoliticians.add(e.politician_id);
+        deduped.push(e);
+      }
+      if (deduped.length >= PAGE_SIZE) break;
+    }
+
+    let sorted = deduped;
     if (state && !follows) {
       sorted = [
-        ...events.filter(e => e.state === state),
-        ...events.filter(e => e.state !== state),
+        ...deduped.filter(e => e.state === state),
+        ...deduped.filter(e => e.state !== state),
       ];
     }
 
     return res.status(200).json({
       events: sorted,
-      hasMore: count ? from + PAGE_SIZE < count : false,
-      total: count,
+      hasMore: sorted.length === PAGE_SIZE,
+      total: null,
     });
   } catch (err) {
     console.error("Feed API error:", err.message);
