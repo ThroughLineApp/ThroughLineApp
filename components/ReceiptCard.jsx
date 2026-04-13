@@ -49,6 +49,7 @@ export default function ReceiptCard({ event, onSave, onShare, onCallScript, comp
     donor_alignment_score,
     bill_link,
     corruption_contribution,
+    bioguide_id,
   } = event;
 
   const dimColor = DIMENSION_COLORS[dimension] || T.gold;
@@ -114,37 +115,33 @@ export default function ReceiptCard({ event, onSave, onShare, onCallScript, comp
               borderRadius: "50%",
               background: partyColor(party) + "22",
               border: `1.5px solid ${partyColor(party)}44`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
               flexShrink: 0,
               overflow: "hidden",
+              position: "relative",
             }}>
-              {politician_slug ? (
-                // Try bioguide photo — falls back to initials via onError
+              {bioguide_id ? (
                 <img
-                  src={`https://bioguide.congress.gov/bioguide/photo/${politician_slug.charAt(0).toUpperCase()}/${politician_slug.split('-').map(s => s[0]).join('').toUpperCase()}.jpg`}
+                  src={`https://bioguide.congress.gov/bioguide/photo/${bioguide_id.charAt(0).toUpperCase()}/${bioguide_id}.jpg`}
                   alt={politician_name}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }}
                   onError={e => {
                     e.target.style.display = "none";
-                    e.target.parentNode.querySelector(".initials").style.display = "flex";
+                    e.target.nextSibling.style.display = "flex";
                   }}
                 />
               ) : null}
-              <span className="initials" style={{
-                display: politician_slug ? "none" : "flex",
+              <div style={{
+                display: bioguide_id ? "none" : "flex",
+                position: "absolute", inset: 0,
                 alignItems: "center",
                 justifyContent: "center",
-                width: "100%",
-                height: "100%",
                 fontFamily: "Arial Black, Arial",
                 fontSize: compact ? 13 : 16,
                 fontWeight: 900,
                 color: partyColor(party),
               }}>
                 {(politician_name || "?").split(" ").map(w => w[0]).join("").slice(0, 2)}
-              </span>
+              </div>
             </div>
 
             <div>
