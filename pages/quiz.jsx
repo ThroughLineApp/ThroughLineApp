@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import supabase from "../lib/supabase";
@@ -117,6 +117,7 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
   const[skipWarn,setSkipWarn]=useState(false);
   const[anim,setAnim]=useState(false);
   const[animDir,setAnimDir]=useState("forward");
+  const touchStartY = useRef(null);
   const canProceed=sel!==null||(writeOwn&&ownText.trim().length>0);
   const dc=DIMENSION_COLORS[q.dimension];
   const go=(dir,fn)=>{if(anim)return;setAnimDir(dir);setAnim(true);setTimeout(()=>{fn();setAnim(false);},280);};
@@ -141,7 +142,10 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:14,marginTop:20}}>
           {q.answers.map((ans,i)=>(
-            <button key={i} className={`answer-btn${sel===i?" selected":""}`} onClick={()=>{setSel(i);setWriteOwn(false);setOwnText("");}}
+            <button key={i} className={`answer-btn${sel===i?" selected":""}`}
+              onTouchStart={e=>{touchStartY.current=e.touches[0].clientY;}}
+              onTouchEnd={e=>{const delta=Math.abs(e.changedTouches[0].clientY-touchStartY.current);if(delta<10){setSel(i);setWriteOwn(false);setOwnText("");}}}
+              onClick={()=>{setSel(i);setWriteOwn(false);setOwnText("");}}
               style={{width:"100%",textAlign:"left",fontFamily:"'Figtree',sans-serif",fontWeight:sel===i?600:400,fontSize:14,color:sel===i?C.parchment:C.parchmentDim,background:sel===i?"rgba(201,168,76,0.1)":C.bgCard,border:`1.5px solid ${sel===i?C.gold:"rgba(201,168,76,0.1)"}`,borderRadius:4,padding:"14px 16px",cursor:"pointer",lineHeight:1.6}}>
               <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:11,color:sel===i?C.gold:"rgba(201,168,76,0.35)",marginRight:10,letterSpacing:"0.06em"}}>{String.fromCharCode(65+i)}</span>
               {ans.text}

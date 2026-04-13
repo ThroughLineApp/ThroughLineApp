@@ -220,7 +220,7 @@ export default function ReceiptCard({ event, onSave, onShare, onCallScript, comp
             fontSize: 12,
             color: T.text2,
             marginBottom: 10,
-          }}>from {donor_name || "PAC donor"}</div>
+          }}>from {event.donor_display || donor_industry || "PAC donor"}</div>
 
           {/* Timeline connector */}
           <div style={{
