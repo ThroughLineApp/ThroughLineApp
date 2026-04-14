@@ -107,7 +107,8 @@ export default async function handler(req, res) {
     events = events.filter(e =>
       e.politician_name &&
       e.donation_amount > 0 &&
-      !isBadBillName(e.bill_name)
+      e.vote_impact &&
+      e.vote_impact.length > 20
     );
 
     // Deduplicate — one card per politician per page
