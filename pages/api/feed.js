@@ -39,7 +39,7 @@ export default async function handler(req, res) {
   const pageNum = parseInt(page, 10) || 0;
 
   try {
-    const fetchSize = PAGE_SIZE * 6;
+    const fetchSize = PAGE_SIZE * 20;
     const from = pageNum * fetchSize;
     const to = from + fetchSize - 1;
 
@@ -73,7 +73,6 @@ export default async function handler(req, res) {
         )
       `)
       .not("donation_amount", "is", null)
-      .not("vote_impact", "is", null)
       .order("donation_amount", { ascending: false });
 
     if (follows) {
@@ -86,6 +85,7 @@ export default async function handler(req, res) {
     const { data, error } = await query.range(from, to);
     if (error) throw error;
 
+    // Flatten join
     let events = (data || []).map(e => ({
       ...e,
       politician_name: e.politicians?.name,
@@ -96,17 +96,20 @@ export default async function handler(req, res) {
       bioguide_id: e.politicians?.bioguide_id,
       days_before_vote: e.days_between,
       donor_display: isRawPacId(e.donor_pac_name)
-        ? (isRawPacId(e.donor_name) ? (e.donor_industry || "PAC donor") : e.donor_name)
+        ? (isRawPacId(e.donor_name)
+            ? (e.donor_industry || "PAC donor")
+            : e.donor_name)
         : e.donor_pac_name,
     }));
 
+    // Filter — only remove truly bad data, keep everything else
     events = events.filter(e =>
-      !isBadBillName(e.bill_name) &&
-      e.vote_impact &&
-      e.vote_impact.length > 20 &&
-      e.politician_name
+      e.politician_name &&
+      e.donation_amount > 0 &&
+      !isBadBillName(e.bill_name)
     );
 
+    // Deduplicate — one card per politician per page
     const seenPoliticians = new Set();
     const deduped = [];
     for (const e of events) {
@@ -117,6 +120,7 @@ export default async function handler(req, res) {
       if (deduped.length >= PAGE_SIZE) break;
     }
 
+    // Sort user's state reps to top
     let sorted = deduped;
     if (state && !follows) {
       sorted = [
@@ -132,6 +136,11 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("Feed API error:", err.message);
-    return res.status(200).json({ events: [], hasMore: false, total: 0, fallback: true });
+    return res.status(200).json({
+      events: [],
+      hasMore: false,
+      total: 0,
+      fallback: true,
+    });
   }
 }
