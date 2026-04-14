@@ -73,9 +73,8 @@ export default async function handler(req, res) {
         )
       `)
       .not("donation_amount", "is", null)
-      .not("corruption_contribution", "is", null)
-      .gt("corruption_contribution", 0)
-      .order("corruption_contribution", { ascending: false });
+      .not("vote_impact", "is", null)
+      .order("donation_amount", { ascending: false });
 
     if (follows) {
       const followList = follows.split(",").filter(Boolean);
