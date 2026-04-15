@@ -525,8 +525,8 @@ function Card1NASCARJacket({ onNext }) {
       marginBottom: 16,
       overflow: "hidden",
     }}>
-      {/* Video container — 16:9 ratio, full width */}
-      <div style={{ position: "relative", width: "100%", aspectRatio: "16/9" }}>
+      {/* Video container — fixed height, full width */}
+      <div style={{ position: "relative", width: "100%", height: 520 }}>
         <video
           src="/videos/landing_card_1.mp4"
           autoPlay
@@ -540,7 +540,7 @@ function Card1NASCARJacket({ onNext }) {
         <div style={{
           position: "absolute", top: 16, left: 16,
           fontFamily: "Arial Black, Arial", fontWeight: 900,
-          fontSize: 15, color: T.gold, letterSpacing: "0.08em",
+          fontSize: 18, color: T.gold, letterSpacing: "0.08em",
           textShadow: "0 1px 6px rgba(0,0,0,0.8)",
         }}>THROUGHLINE</div>
 
@@ -549,7 +549,7 @@ function Card1NASCARJacket({ onNext }) {
           position: "absolute", bottom: 16, left: 0, right: 0,
           textAlign: "center",
           fontFamily: "Arial Black, Arial", fontWeight: 900,
-          fontSize: 13, color: T.gold, letterSpacing: "0.04em",
+          fontSize: 16, color: T.gold, letterSpacing: "0.04em",
           textShadow: "0 1px 8px rgba(0,0,0,0.9)",
           padding: "0 16px",
         }}>Every vote has a price. We show you the receipt.</div>
