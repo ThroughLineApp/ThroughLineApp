@@ -96,6 +96,9 @@ export default async function handler(req, res) {
       donor_alignment_score: e.politicians?.donor_alignment_score,
       bioguide_id: e.politicians?.bioguide_id,
       days_before_vote: e.days_between,
+      vote_impact: e.vote_impact
+        ? e.vote_impact.replace(/^#+\s*/gm, "").replace(/\n+/g, " ").trim()
+        : null,
       donor_display: isRawPacId(e.donor_pac_name)
         ? (isRawPacId(e.donor_name)
             ? (e.donor_industry || "PAC donor")
@@ -106,6 +109,7 @@ export default async function handler(req, res) {
     // Filter — only remove truly bad data, keep everything else
     events = events.filter(e =>
       e.politician_name &&
+      e.bioguide_id &&
       e.donation_amount > 0 &&
       e.vote_impact &&
       e.vote_impact.length > 20
