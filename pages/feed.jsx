@@ -517,118 +517,49 @@ function LandingSequence({ onComplete, zip, setZip, onZipSave, followedInSession
 
 // ── Card 1: The NASCAR Jacket ────────────────────────────────────────────────
 function Card1NASCARJacket({ onNext }) {
-  const [animStep, setAnimStep] = useState(0);
-  const donors = [
-    { name: "PhRMA", color: T.red, x: "15%", y: "20%" },
-    { name: "Exxon", color: "#F59E0B", x: "65%", y: "15%" },
-    { name: "NRA", color: T.red, x: "40%", y: "35%" },
-    { name: "Citi", color: T.blue, x: "20%", y: "55%" },
-    { name: "Koch", color: "#F59E0B", x: "70%", y: "45%" },
-    { name: "AIPAC", color: T.purple, x: "10%", y: "75%" },
-    { name: "Raytheon", color: T.red, x: "55%", y: "65%" },
-    { name: "Goldman", color: T.blue, x: "75%", y: "70%" },
-  ];
-
-  useEffect(() => {
-    const timers = donors.map((_, i) =>
-      setTimeout(() => setAnimStep(prev => Math.max(prev, i + 1)), 400 + i * 350)
-    );
-    return () => timers.forEach(clearTimeout);
-  }, []);
-
   return (
-    <LandingCard>
-      {/* Silhouette + donor badges */}
-      <div style={{
-        position: "relative",
-        height: 280,
-        background: `radial-gradient(ellipse at 50% 80%, ${T.gold}08 0%, transparent 70%)`,
-        marginBottom: 24,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        overflow: "hidden",
-      }}>
-        {/* Politician silhouette */}
-        <svg width={120} height={240} viewBox="0 0 120 240" fill="none" style={{ position: "relative", zIndex: 1 }}>
-          {/* Head */}
-          <ellipse cx={60} cy={30} rx={22} ry={26} fill={T.surface2} stroke={T.border} strokeWidth={1} />
-          {/* Suit jacket body */}
-          <path d="M20 90 L60 75 L100 90 L110 200 L10 200 Z" fill={T.surface2} stroke={T.border} strokeWidth={1} />
-          {/* Lapels */}
-          <path d="M60 75 L40 100 L55 120 Z" fill={T.surface} />
-          <path d="M60 75 L80 100 L65 120 Z" fill={T.surface} />
-          {/* Tie */}
-          <path d="M58 100 L62 100 L64 160 L60 170 L56 160 Z" fill={T.gold + "44"} />
-          {/* Legs */}
-          <rect x={30} y={200} width={25} height={38} rx={3} fill={T.surface2} stroke={T.border} strokeWidth={1} />
-          <rect x={65} y={200} width={25} height={38} rx={3} fill={T.surface2} stroke={T.border} strokeWidth={1} />
-        </svg>
+    <div style={{
+      background: T.surface,
+      border: `0.5px solid ${T.border}`,
+      borderRadius: 16,
+      marginBottom: 16,
+      overflow: "hidden",
+    }}>
+      {/* Video container — 16:9 ratio, full width */}
+      <div style={{ position: "relative", width: "100%", aspectRatio: "16/9" }}>
+        <video
+          src="/videos/landing_card_1.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
 
-        {/* PAC logo badges appearing on the jacket */}
-        {donors.map((d, i) => (
-          <div key={i} style={{
-            position: "absolute",
-            left: d.x, top: d.y,
-            background: d.color + "22",
-            border: `1px solid ${d.color}88`,
-            borderRadius: 6,
-            padding: "3px 8px",
-            fontFamily: "Arial Black, Arial",
-            fontWeight: 900,
-            fontSize: 10,
-            color: d.color,
-            opacity: animStep > i ? 1 : 0,
-            transform: animStep > i ? "scale(1)" : "scale(0.6)",
-            transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
-            zIndex: 2,
-            whiteSpace: "nowrap",
-          }}>{d.name}</div>
-        ))}
-      </div>
-
-      {/* Copy */}
-      <div style={{ marginBottom: 8, padding: "0 4px" }}>
+        {/* Throughline logo — top left */}
         <div style={{
-          fontFamily: "Arial Black, Arial",
-          fontWeight: 900,
-          fontSize: 28,
-          color: T.text,
-          lineHeight: 1.15,
-          marginBottom: 12,
-        }}>Every senator wears his donors.</div>
+          position: "absolute", top: 16, left: 16,
+          fontFamily: "Arial Black, Arial", fontWeight: 900,
+          fontSize: 15, color: T.gold, letterSpacing: "0.08em",
+          textShadow: "0 1px 6px rgba(0,0,0,0.8)",
+        }}>THROUGHLINE</div>
+
+        {/* Tagline — centered bottom */}
         <div style={{
-          fontFamily: "Arial",
-          fontSize: 15,
-          color: T.text2,
-          lineHeight: 1.6,
-          fontStyle: "italic",
-        }}>We show you the receipt.</div>
+          position: "absolute", bottom: 16, left: 0, right: 0,
+          textAlign: "center",
+          fontFamily: "Arial Black, Arial", fontWeight: 900,
+          fontSize: 13, color: T.gold, letterSpacing: "0.04em",
+          textShadow: "0 1px 8px rgba(0,0,0,0.9)",
+          padding: "0 16px",
+        }}>Every vote has a price. We show you the receipt.</div>
       </div>
 
-      {/* Live receipt flash */}
-      <div style={{
-        background: T.surface2,
-        border: `0.5px solid ${T.goldBorder}`,
-        borderRadius: 10,
-        padding: "12px 16px",
-        marginBottom: 24,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-      }}>
-        <div>
-          <div style={{ fontFamily: "Arial", fontSize: 11, color: T.text2, marginBottom: 2 }}>LATEST RECEIPT</div>
-          <div style={{ fontFamily: "Arial Black, Arial", fontWeight: 900, fontSize: 20, color: T.gold }}>$847,000</div>
-          <div style={{ fontFamily: "Arial", fontSize: 11, color: T.text2 }}>PhRMA → McConnell → voted NO on drug pricing</div>
-        </div>
-        <div style={{ fontFamily: "Arial Black, Arial", fontWeight: 900, fontSize: 13, color: T.red, letterSpacing: "0.05em" }}>
-          VOTED<br />NO
-        </div>
+      {/* Next button */}
+      <div style={{ padding: "16px 24px 24px" }}>
+        <NextButton onClick={onNext} label="Show me the receipts →" />
       </div>
-
-      <NextButton onClick={onNext} label="Show me the receipts →" />
-    </LandingCard>
+    </div>
   );
 }
 
