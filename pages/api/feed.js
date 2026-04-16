@@ -54,6 +54,7 @@ export default async function handler(req, res) {
         donation_amount,
         donation_date,
         bill_name,
+        bill_name_enriched,
         bill_link,
         vote_date,
         how_voted,
@@ -95,6 +96,7 @@ export default async function handler(req, res) {
       politician_slug: e.politicians?.slug,
       donor_alignment_score: e.politicians?.donor_alignment_score,
       bioguide_id: e.politicians?.bioguide_id,
+      bill_name: e.bill_name_enriched || e.bill_name,
       days_before_vote: e.days_between,
       vote_impact: e.vote_impact
         ? e.vote_impact.replace(/^#+\s*/gm, "").replace(/\n+/g, " ").trim()
