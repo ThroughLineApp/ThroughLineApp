@@ -459,6 +459,7 @@ export default function FeedPage() {
 function LandingSequence({ onComplete, zip, setZip, onZipSave, followedInSession, onFollow, onSignupPrompt }) {
   const [activeCard, setActiveCard] = useState(0);
   const scrollRef = useRef(null);
+  const touchStartX = useRef(null);
 
   const TOTAL = 10;
 
@@ -469,6 +470,18 @@ function LandingSequence({ onComplete, zip, setZip, onZipSave, followedInSession
     } else {
       onComplete();
     }
+  };
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (dx < -50) goNext();
+    else if (dx > 50 && activeCard > 0) setActiveCard(prev => prev - 1);
+    touchStartX.current = null;
   };
 
   const cards = [
@@ -485,7 +498,7 @@ function LandingSequence({ onComplete, zip, setZip, onZipSave, followedInSession
   ];
 
   return (
-    <div ref={scrollRef} style={{ maxWidth: 600, margin: "0 auto", padding: "16px 20px 80px" }}>
+    <div ref={scrollRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{ maxWidth: 600, margin: "0 auto", padding: "16px 20px 80px" }}>
       {/* Progress dots */}
       <div style={{ display: "flex", gap: 4, justifyContent: "center", marginBottom: 20 }}>
         {Array.from({ length: TOTAL }).map((_, i) => (
