@@ -181,7 +181,7 @@ export default function ReceiptCard({ event, onSave, onShare, onCallScript, comp
                 fontSize: 18,
                 color: dasColor(donor_alignment_score),
                 lineHeight: 1,
-              }}>{donor_alignment_score}</div>
+              }}>{donor_alignment_score === 0 || donor_alignment_score === 100 ? "—" : donor_alignment_score}</div>
               <div style={{
                 fontFamily: "Arial",
                 fontSize: 9,
