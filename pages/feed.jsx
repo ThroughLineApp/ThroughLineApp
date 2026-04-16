@@ -517,6 +517,113 @@ function LandingSequence({ onComplete, zip, setZip, onZipSave, followedInSession
 
 // ── Card 1: The NASCAR Jacket ────────────────────────────────────────────────
 function Card1NASCARJacket({ onNext }) {
+  const router = useRouter();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
+  }, []);
+
+  // ── Mobile: full-screen video splash ──────────────────────────────────────
+  if (isMobile) {
+    return (
+      <div style={{
+        position: "fixed",
+        top: 0, left: 0,
+        width: "100vw",
+        height: "100dvh",
+        zIndex: 1000,
+        overflow: "hidden",
+        background: "#000",
+      }}>
+        {/* Full-screen video */}
+        <video
+          src="/videos/landing_card_1.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          style={{
+            position: "absolute", top: 0, left: 0,
+            width: "100%", height: "100%",
+            objectFit: "cover",
+          }}
+        />
+
+        {/* Scrim — improves text legibility over video */}
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, transparent 40%, rgba(0,0,0,0.65) 100%)",
+        }} />
+
+        {/* Skip — top right */}
+        <button
+          onClick={onNext}
+          style={{
+            position: "absolute", top: 16, right: 16, zIndex: 10,
+            background: "transparent", border: "none",
+            color: T.text2, fontFamily: "Arial", fontSize: 13,
+            cursor: "pointer", padding: "8px 12px",
+            textShadow: "0 1px 4px rgba(0,0,0,0.8)",
+          }}>Skip</button>
+
+        {/* THROUGHLINE logo — top center */}
+        <div style={{
+          position: "absolute", top: 20, left: 0, right: 0, zIndex: 10,
+          textAlign: "center",
+          fontFamily: "Arial Black, Arial", fontWeight: 900,
+          fontSize: 20, color: T.gold, letterSpacing: "0.08em",
+          textShadow: "0 1px 8px rgba(0,0,0,0.9)",
+        }}>THROUGHLINE</div>
+
+        {/* Bottom section: tagline + three buttons */}
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 10,
+          padding: "0 24px 52px",
+          display: "flex", flexDirection: "column", gap: 12,
+        }}>
+          {/* Tagline */}
+          <div style={{
+            textAlign: "center",
+            fontFamily: "Arial Black, Arial", fontWeight: 900,
+            fontSize: 16, color: T.gold, letterSpacing: "0.04em",
+            textShadow: "0 1px 8px rgba(0,0,0,0.9)",
+            marginBottom: 4,
+          }}>Every vote has a price. We show you the receipt.</div>
+
+          {/* Primary CTA */}
+          <button onClick={onNext} style={{
+            width: "100%", padding: "16px",
+            background: T.gold, border: "none", borderRadius: 12,
+            fontFamily: "Arial Black, Arial", fontWeight: 900,
+            fontSize: 15, color: T.bg,
+            cursor: "pointer", letterSpacing: "0.02em",
+          }}>See the Receipts →</button>
+
+          {/* Secondary CTAs */}
+          <button onClick={() => router.push('/quiz')} style={{
+            width: "100%", padding: "14px",
+            background: "transparent",
+            border: `1px solid ${T.gold}88`, borderRadius: 12,
+            fontFamily: "Arial Black, Arial", fontWeight: 900,
+            fontSize: 15, color: T.gold,
+            cursor: "pointer", letterSpacing: "0.02em",
+          }}>Take the Quiz →</button>
+
+          <button onClick={() => router.push('/search')} style={{
+            width: "100%", padding: "14px",
+            background: "transparent",
+            border: `1px solid ${T.border}`, borderRadius: 12,
+            fontFamily: "Arial", fontWeight: 700,
+            fontSize: 15, color: T.text2,
+            cursor: "pointer",
+          }}>Browse Politicians →</button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Desktop: unchanged ────────────────────────────────────────────────────
   return (
     <div style={{
       background: T.surface,
