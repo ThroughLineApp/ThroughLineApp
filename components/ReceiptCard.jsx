@@ -665,9 +665,8 @@ function HeroSection({ photoUrl, politician_name, party, state, donor_alignment_
   const [imgError, setImgError] = useState(false);
   const ini = getInitials(politician_name);
   const pColor = partyColor(party);
-  const showDash = donor_alignment_score === 0 || donor_alignment_score === 100;
-  const displayScore = showDash ? "—" : (donor_alignment_score ?? "—");
-  const scoreColor = dasColorLocal(showDash ? null : donor_alignment_score);
+  const displayScore = donor_alignment_score ?? "—";
+  const scoreColor = dasColorLocal(donor_alignment_score);
 
   return (
     <div style={{ width: "100%", height: 200, position: "relative", overflow: "hidden" }}>
@@ -698,7 +697,7 @@ function HeroSection({ photoUrl, politician_name, party, state, donor_alignment_
       <div style={{
         position: "absolute",
         inset: 0,
-        background: "linear-gradient(to top, rgba(10,11,13,0.95) 0%, transparent 100%)",
+        background: "linear-gradient(to top, rgba(10,11,13,0.85) 0%, rgba(10,11,13,0.3) 40%, transparent 100%)",
       }} />
 
       {/* Name + party · state */}
@@ -769,10 +768,9 @@ function DasModal({
   const photoUrl = bioguideUrl(bioguide_id);
   const firstName = (politician_name || "").split(" ")[0];
   const ini = getInitials(politician_name);
-  const showDash = donor_alignment_score === 0 || donor_alignment_score === 100;
-  const displayScore = showDash ? "—" : (donor_alignment_score ?? "—");
-  const scoreColor = dasColorLocal(showDash ? null : donor_alignment_score);
-  const barPct = (!showDash && donor_alignment_score != null) ? donor_alignment_score : 0;
+  const displayScore = donor_alignment_score ?? "—";
+  const scoreColor = dasColorLocal(donor_alignment_score);
+  const barPct = donor_alignment_score ?? 0;
 
   // Top industries from donor records — pac_donors uses `dimension` column
   const topIndustries = donors.length > 0
@@ -864,7 +862,7 @@ function DasModal({
           <div style={{ height: 8, width: `${barPct}%`, background: scoreColor, borderRadius: 4, transition: "width 0.5s ease" }} />
         </div>
         <div style={{ fontFamily: "Arial", fontSize: 11, color: T.text2 }}>
-          They voted with donor interests {showDash ? "—" : donor_alignment_score}% of the time
+          They voted with donor interests {donor_alignment_score ?? "—"}% of the time
         </div>
       </div>
 
