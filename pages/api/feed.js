@@ -70,7 +70,8 @@ export default async function handler(req, res) {
           state,
           slug,
           donor_alignment_score,
-          bioguide_id
+          bioguide_id,
+          wikipedia_photo_url
         )
       `)
       .not("donation_amount", "is", null)
@@ -96,6 +97,7 @@ export default async function handler(req, res) {
       politician_slug: e.politicians?.slug,
       donor_alignment_score: e.politicians?.donor_alignment_score,
       bioguide_id: e.politicians?.bioguide_id,
+      wikipedia_photo_url: e.politicians?.wikipedia_photo_url,
       bill_name: e.bill_name_enriched || e.bill_name,
       days_before_vote: e.days_between,
       vote_impact: e.vote_impact

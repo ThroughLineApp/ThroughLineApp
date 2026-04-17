@@ -226,6 +226,7 @@ export default function ReceiptCard({ event }) {
     dimension,
     corruption_contribution,
     source_url,
+    wikipedia_photo_url,
   } = event;
 
   const voteIsYes = how_voted === "Yes" || how_voted === "Yea";
@@ -426,7 +427,7 @@ export default function ReceiptCard({ event }) {
       >
         {/* ── Hero ── */}
         <HeroSection
-          photoUrl={bioguideUrl(bioguide_id)}
+          photoUrl={wikipedia_photo_url || bioguideUrl(bioguide_id)}
           politician_name={politician_name}
           party={party}
           state={state}
