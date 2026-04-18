@@ -83,10 +83,27 @@ export default function AuthModal({ message, onDismiss }) {
     }
 
     // signin
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) { setError(error.message); return; }
+    if (signInError) { setError(signInError.message); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("profiles").upsert({
+      id: user.id,
+      email: user.email,
+      quiz_level: 0,
+    }, { onConflict: "id", ignoreDuplicates: true });
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("quiz_level")
+      .eq("id", user.id)
+      .single();
+    const level = profile?.quiz_level ?? 0;
     onDismiss();
+    if (level === 0) {
+      router.push("/quiz");
+    } else {
+      router.push("/profile");
+    }
   };
 
   const titles = {

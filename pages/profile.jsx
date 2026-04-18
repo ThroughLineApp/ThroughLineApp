@@ -294,6 +294,28 @@ export default function ProfilePage() {
             </div>
           )}
 
+          {/* LEVEL 2 CTA */}
+          {profile?.quiz_level === 1 && (
+            <div style={{
+              background: "#111318",
+              borderRadius: 12,
+              border: "0.5px solid rgba(201,168,76,0.3)",
+              padding: "20px 16px",
+              marginTop: 16,
+              marginBottom: 32,
+              textAlign: "center",
+            }}>
+              <p style={{ color: "#C9A84C", fontFamily: "Arial Black", fontSize: 15, margin: "0 0 6px" }}>🧠 Level 2 Unlocked</p>
+              <p style={{ color: "#9A9488", fontFamily: "Arial", fontSize: 13, margin: "0 0 16px", lineHeight: 1.5 }}>
+                Take the Informed Quiz to refine your political profile across all 12 dimensions.
+              </p>
+              <button
+                onClick={() => router.push("/quiz?level=2")}
+                style={{ background: "#C9A84C", color: "#0A0B0D", border: "none", borderRadius: 8, padding: "12px 24px", fontFamily: "Arial Black", fontSize: 14, cursor: "pointer", width: "100%" }}
+              >Start Level 2 →</button>
+            </div>
+          )}
+
           {/* FOLLOWED POLITICIANS */}
           <div style={{ marginBottom:44, animation:"fadeSlideIn 0.5s ease forwards 0.2s", opacity:0 }}>
             <SectionLabel text={`Following · ${profile?.followed_politicians?.length || 0} Politicians`} />

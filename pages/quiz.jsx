@@ -328,6 +328,30 @@ export default function QuizPage(){
   const[earnedBadges,setEarnedBadges]=useState([]);
   const[lvl,setLvl]=useState(1);
   const[shuffledL1]=useState(()=>shuffle(L1_QUESTIONS));
+
+  useEffect(()=>{
+    if(!router.isReady)return;
+    if(router.query.level==="2"&&profile?.quiz_level>=1&&l1Scores===null){
+      const profileScores={
+        economic:profile.score_economic??50,
+        healthcare:profile.score_healthcare??50,
+        climate:profile.score_climate??50,
+        criminal:profile.score_criminal??50,
+        immigration:profile.score_immigration??50,
+        foreign:profile.score_foreign??50,
+        education:profile.score_education??50,
+        freedom:profile.score_freedom??50,
+        guns:profile.score_guns??50,
+        housing:profile.score_housing??50,
+        tech:profile.score_tech??50,
+        voting:profile.score_voting??50,
+      };
+      setL1Scores(profileScores);
+      setL2Questions(buildL2(profileScores));
+      setPhase("l2_question");
+    }
+  },[router.isReady,router.query,profile]);
+
   const l1Skipped=Object.values(l1Answers).filter(v=>v==="skipped").length;
   const l2Skipped=Object.values(l2Answers).filter(v=>v==="skipped").length;
 
@@ -401,6 +425,7 @@ export default function QuizPage(){
           session_id: crypto.randomUUID(),
           completed_at: new Date().toISOString(),
           tier: "basic",
+          quiz_level: 1,
           score_economic: full.economic, score_healthcare: full.healthcare,
           score_climate: full.climate, score_criminal: full.criminal,
           score_immigration: full.immigration, score_foreign: full.foreign,
@@ -411,7 +436,7 @@ export default function QuizPage(){
         };
         const { data: saved, error: se } = await supabase
           .from("quiz_results")
-          .upsert(row, { onConflict: "user_id" })
+          .upsert(row, { onConflict: "user_id,quiz_level" })
           .select()
           .single();
         console.log("quiz_results save:", saved, se);
@@ -421,6 +446,7 @@ export default function QuizPage(){
               .from("profiles")
               .update({
                 quiz_result_id: saved.id,
+                quiz_level: 1,
                 score_economic: full.economic,
                 score_healthcare: full.healthcare,
                 score_climate: full.climate,
@@ -504,6 +530,7 @@ export default function QuizPage(){
           session_id: crypto.randomUUID(),
           completed_at: new Date().toISOString(),
           tier: "informed",
+          quiz_level: 2,
           score_economic: refined.economic ?? 50, score_healthcare: refined.healthcare ?? 50,
           score_climate: refined.climate ?? 50, score_criminal: refined.criminal ?? 50,
           score_immigration: refined.immigration ?? 50, score_foreign: refined.foreign ?? 50,
@@ -512,8 +539,23 @@ export default function QuizPage(){
           score_tech: refined.tech ?? 50, score_voting: refined.voting ?? 50,
           profile_summary: ps
         };
-        const { data: saved } = await supabase.from("quiz_results").upsert(row, { onConflict: "user_id" }).select().single();
-        if (saved && user?.id) await supabase.from("profiles").update({ quiz_result_id: saved.id }).eq("id", user.id);
+        const { data: saved } = await supabase.from("quiz_results").upsert(row, { onConflict: "user_id,quiz_level" }).select().single();
+        if (saved && user?.id) await supabase.from("profiles").update({
+          quiz_result_id: saved.id,
+          quiz_level: 2,
+          score_economic: refined.economic ?? 50,
+          score_healthcare: refined.healthcare ?? 50,
+          score_climate: refined.climate ?? 50,
+          score_criminal: refined.criminal ?? 50,
+          score_immigration: refined.immigration ?? 50,
+          score_foreign: refined.foreign ?? 50,
+          score_education: refined.education ?? 50,
+          score_freedom: refined.freedom ?? 50,
+          score_guns: refined.guns ?? 50,
+          score_housing: refined.housing ?? 50,
+          score_tech: refined.tech ?? 50,
+          score_voting: refined.voting ?? 50,
+        }).eq("id", user.id);
         try { await supabase.from("quiz_history").insert({ ...row }); } catch (e) {}
       } catch (e) {
         console.log("L2 save error:", e.message);
