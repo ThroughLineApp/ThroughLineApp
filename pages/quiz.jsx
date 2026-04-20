@@ -108,8 +108,8 @@ function ProgressBar({current,total,skipped,level}){
   );
 }
 
-function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCount}){
-  const[sel,setSel]=useState(null);
+function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCount,previousAnswer}){
+  const[sel,setSel]=useState(previousAnswer??null);
   const[writeOwn,setWriteOwn]=useState(false);
   const[ownText,setOwnText]=useState("");
   const[deeperOpen,setDeeperOpen]=useState(false);
@@ -117,20 +117,18 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
   const[skipWarn,setSkipWarn]=useState(false);
   const[anim,setAnim]=useState(false);
   const[animDir,setAnimDir]=useState("forward");
-  const touchStartY = useRef(null);
   const canProceed=sel!==null||(writeOwn&&ownText.trim().length>0);
   const dc=DIMENSION_COLORS[q.dimension];
   const go=(dir,fn)=>{if(anim)return;setAnimDir(dir);setAnim(true);setTimeout(()=>{fn();setAnim(false);},280);};
-  const handleNext=()=>{if(!canProceed)return;const score=writeOwn?50:q.answers[sel].score;const wt=writeOwn?ownText.trim():(deeperOpen&&nuanceText.trim()?nuanceText.trim():null);go("forward",()=>onAnswer(q.dimension,score,wt));};
+  const handleNext=()=>{if(!canProceed)return;const score=writeOwn?50:q.answers[sel].score;const wt=writeOwn?ownText.trim():(deeperOpen&&nuanceText.trim()?nuanceText.trim():null);const ansIdx=writeOwn?null:sel;go("forward",()=>onAnswer(q.dimension,score,wt,ansIdx));};
   const handleBack=()=>{if(qIndex===0)return;go("back",()=>onBack());};
   const handleSkip=()=>{if(skippedCount>=MAX_SKIPS){setSkipWarn(true);return;}go("forward",()=>onSkip(q.dimension));};
   const animStyle=anim?{animation:`${animDir==="forward"?"fadeSlideOut":"fadeSlideIn"} 0.28s ease forwards`}:{animation:`${animDir==="back"?"fadeSlideBack":"fadeSlideIn"} 0.32s ease forwards`};
   return(
-    <div style={{maxWidth:600,margin:"0 auto",padding:"28px 20px 80px"}}>
+    <div style={{maxWidth:600,margin:"0 auto",padding:"28px 20px 160px"}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:24}}>
         <button onClick={()=>window.location.href="/"} style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:12,letterSpacing:"0.15em",color:C.parchmentDim,background:"none",border:"none",cursor:"pointer"}}>← THROUGHLINE</button>
       </div>
-      <div style={{marginBottom:28}}><ProgressBar current={qIndex+1} total={total} skipped={skippedCount} level={level}/></div>
       <div style={animStyle}>
         <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:20,background:dc+"14",border:`1px solid ${dc}30`,marginBottom:20}}>
           <span style={{fontSize:14,color:dc}}>{DIMENSION_ICONS[q.dimension]}</span>
@@ -143,16 +141,14 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
         <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:14,marginTop:20}}>
           {q.answers.map((ans,i)=>(
             <button key={i} className={`answer-btn${sel===i?" selected":""}`}
-              onTouchStart={e=>{touchStartY.current=e.touches[0].clientY;}}
-              onTouchEnd={e=>{const delta=Math.abs(e.changedTouches[0].clientY-touchStartY.current);if(delta<10){setSel(i);setWriteOwn(false);setOwnText("");}}}
               onClick={()=>{setSel(i);setWriteOwn(false);setOwnText("");}}
-              style={{width:"100%",textAlign:"left",fontFamily:"'Figtree',sans-serif",fontWeight:sel===i?600:400,fontSize:14,color:sel===i?C.parchment:C.parchmentDim,background:sel===i?"rgba(201,168,76,0.1)":C.bgCard,border:`1.5px solid ${sel===i?C.gold:"rgba(201,168,76,0.1)"}`,borderRadius:4,padding:"14px 16px",cursor:"pointer",lineHeight:1.6}}>
+              style={{width:"100%",textAlign:"left",fontFamily:"'Figtree',sans-serif",fontWeight:sel===i?600:400,fontSize:14,color:sel===i?C.parchment:C.parchmentDim,background:sel===i?"rgba(201,168,76,0.1)":C.bgCard,border:`1.5px solid ${sel===i?C.gold:"rgba(201,168,76,0.1)"}`,borderRadius:4,padding:"14px 16px",cursor:"pointer",lineHeight:1.6,touchAction:"manipulation"}}>
               <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:11,color:sel===i?C.gold:"rgba(201,168,76,0.35)",marginRight:10,letterSpacing:"0.06em"}}>{String.fromCharCode(65+i)}</span>
               {ans.text}
             </button>
           ))}
           <button onClick={()=>{setWriteOwn(w=>!w);setSel(null);}}
-            style={{width:"100%",textAlign:"left",fontFamily:"'Figtree',sans-serif",fontWeight:writeOwn?600:400,fontSize:13,color:writeOwn?C.gold:C.parchmentDim,background:writeOwn?"rgba(201,168,76,0.08)":"transparent",border:`1.5px dashed ${writeOwn?C.goldBorder:"rgba(201,168,76,0.18)"}`,borderRadius:4,padding:"12px 16px",cursor:"pointer",lineHeight:1.5,transition:"all 0.15s ease"}}>
+            style={{width:"100%",textAlign:"left",fontFamily:"'Figtree',sans-serif",fontWeight:writeOwn?600:400,fontSize:13,color:writeOwn?C.gold:C.parchmentDim,background:writeOwn?"rgba(201,168,76,0.08)":"transparent",border:`1.5px dashed ${writeOwn?C.goldBorder:"rgba(201,168,76,0.18)"}`,borderRadius:4,padding:"12px 16px",cursor:"pointer",lineHeight:1.5,transition:"all 0.15s ease",touchAction:"manipulation"}}>
             <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:10,color:writeOwn?C.gold:"rgba(201,168,76,0.4)",marginRight:10,letterSpacing:"0.1em"}}>✎</span>
             None of these fit me — write my own response
           </button>
@@ -183,13 +179,13 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
             You've used all {MAX_SKIPS} skips. Pick the closest answer even if it's not perfect.
           </div>
         )}
-        <div style={{display:"flex",gap:10,alignItems:"center",marginTop:6}}>
-          {qIndex>0&&<button onClick={handleBack} style={{fontFamily:"'Figtree',sans-serif",fontWeight:600,fontSize:13,color:C.parchmentDim,background:"transparent",border:"1px solid rgba(255,255,255,0.1)",borderRadius:4,padding:"13px 18px",cursor:"pointer",flexShrink:0}}>← Back</button>}
-          <button onClick={handleNext} disabled={!canProceed}
-            style={{flex:1,fontFamily:"'Figtree',sans-serif",fontWeight:800,fontSize:15,color:canProceed?C.bg:C.parchmentDim,background:canProceed?C.gold:"rgba(201,168,76,0.08)",border:"none",borderRadius:4,padding:15,cursor:canProceed?"pointer":"default",transition:"all 0.2s ease"}}>
-            Submit Answer →
-          </button>
-          {!skipWarn&&skippedCount<MAX_SKIPS&&<button onClick={handleSkip} style={{fontFamily:"'Figtree',sans-serif",fontWeight:600,fontSize:12,color:C.parchmentDim,background:"transparent",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,padding:"13px 14px",cursor:"pointer",flexShrink:0}}>Skip</button>}
+      </div>
+      <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0A0B0D",borderTop:"0.5px solid rgba(255,255,255,0.08)",padding:"14px 20px 36px",zIndex:10}}>
+        <ProgressBar current={qIndex+1} total={total} skipped={skippedCount} level={level}/>
+        <div style={{display:"flex",gap:10,alignItems:"center",marginTop:12}}>
+          {qIndex>0&&<button onClick={handleBack} style={{fontFamily:"Arial",fontWeight:600,fontSize:13,color:"#9A9488",background:"transparent",border:"1px solid rgba(255,255,255,0.1)",borderRadius:4,padding:"13px 18px",cursor:"pointer",flexShrink:0,touchAction:"manipulation"}}>← Back</button>}
+          <button onClick={handleNext} disabled={!canProceed} style={{flex:1,fontFamily:"Arial",fontWeight:800,fontSize:15,color:canProceed?"#0A0B0D":"#9A9488",background:canProceed?"#C9A84C":"rgba(201,168,76,0.08)",border:"none",borderRadius:4,padding:15,cursor:canProceed?"pointer":"default",transition:"all 0.2s ease",touchAction:"manipulation"}}>Submit Answer →</button>
+          {!skipWarn&&skippedCount<MAX_SKIPS&&<button onClick={handleSkip} style={{fontFamily:"Arial",fontWeight:600,fontSize:12,color:"#9A9488",background:"transparent",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,padding:"13px 14px",cursor:"pointer",flexShrink:0,touchAction:"manipulation"}}>Skip</button>}
         </div>
       </div>
     </div>
@@ -328,6 +324,8 @@ export default function QuizPage(){
   const[earnedBadges,setEarnedBadges]=useState([]);
   const[lvl,setLvl]=useState(1);
   const[shuffledL1]=useState(()=>shuffle(L1_QUESTIONS));
+  const[l1AnswerIndices,setL1AnswerIndices]=useState({});
+  const[l2AnswerIndices,setL2AnswerIndices]=useState({});
 
   useEffect(()=>{
     if(!router.isReady)return;
@@ -355,9 +353,10 @@ export default function QuizPage(){
   const l1Skipped=Object.values(l1Answers).filter(v=>v==="skipped").length;
   const l2Skipped=Object.values(l2Answers).filter(v=>v==="skipped").length;
 
-  const handleL1Answer=(dim,score,wt)=>{
+  const handleL1Answer=(dim,score,wt,selIdx)=>{
     const na={...l1Answers,[dim]:score};const nw=wt?{...l1Written,[dim]:wt}:l1Written;
     setL1Answers(na);setL1Written(nw);
+    if(selIdx!=null)setL1AnswerIndices(prev=>({...prev,[dim]:selIdx}));
     if(l1QIdx+1>=shuffledL1.length){setPhase("l1_processing");runL1(na,nw);}
     else setL1QIdx(i=>i+1);
   };
@@ -367,9 +366,10 @@ export default function QuizPage(){
     else setL1QIdx(i=>i+1);
   };
   const handleL1Back=()=>{if(l1QIdx>0)setL1QIdx(i=>i-1);};
-  const handleL2Answer=(dim,score,wt)=>{
+  const handleL2Answer=(dim,score,wt,selIdx)=>{
     const na={...l2Answers,[dim]:score};const nw=wt?{...l2Written,[dim]:wt}:l2Written;
     setL2Answers(na);setL2Written(nw);
+    if(selIdx!=null)setL2AnswerIndices(prev=>({...prev,[dim]:selIdx}));
     if(l2QIdx+1>=l2Questions.length){setPhase("l2_processing");runL2(na,nw);}
     else setL2QIdx(i=>i+1);
   };
@@ -385,7 +385,7 @@ export default function QuizPage(){
     const entries=Object.entries(written).filter(([,v])=>v&&v.trim());
     if(entries.length===0)return scores;
     try{
-      const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("AI timeout")),5000));
+      const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("AI timeout")),2500));
       const res=await Promise.race([
         fetch("/api/ai-refine",{
           method:"POST",headers:{"Content-Type":"application/json"},
@@ -400,6 +400,7 @@ export default function QuizPage(){
   };
 
   const runL1 = async (rawAnswers, writtenInputs) => {
+    const hardEscape = setTimeout(() => { setLvl(1); setPhase("l1_badges"); }, 9000);
     try {
       setProcMsg("Reading your answers…");
       const numeric = {};
@@ -501,12 +502,14 @@ export default function QuizPage(){
     } catch (e) {
       console.log("L1 error:", e.message);
     } finally {
+      clearTimeout(hardEscape);
       setLvl(1);
       setPhase("l1_badges");
     }
   };
 
   const runL2 = async (rawAnswers, writtenInputs) => {
+    const hardEscape = setTimeout(() => { setLvl(2); setPhase("l2_badges"); }, 9000);
     try {
       setProcMsg("Refining your thumbprint…");
       const numeric = {};
@@ -574,6 +577,7 @@ export default function QuizPage(){
     } catch (e) {
       console.log("L2 error:", e.message);
     } finally {
+      clearTimeout(hardEscape);
       setLvl(2);
       setPhase("l2_badges");
     }
@@ -582,7 +586,9 @@ export default function QuizPage(){
   const handleRetake=()=>{
     setL1QIdx(0);setL1Answers({});setL1Written({});setL1Scores(null);setL1Matches([]);
     setL2QIdx(0);setL2Answers({});setL2Written({});setL2Scores(null);setL2Questions([]);
-    setShowSave(false);setEarnedBadges([]);setLvl(1);setPhase("intro");
+    setShowSave(false);setEarnedBadges([]);setLvl(1);
+    setL1AnswerIndices({});setL2AnswerIndices({});
+    setPhase("intro");
   };
 
   if(phase==="intro")return(
@@ -599,11 +605,11 @@ export default function QuizPage(){
           </h1>
           <p style={{fontFamily:"'Figtree',sans-serif",fontSize:15,color:C.parchmentDim,lineHeight:1.8,marginBottom:12}}>12 real-world scenarios. No political jargon. No right or wrong answers.<br/>We'll map your beliefs across 12 policy dimensions and show you which members of Congress actually represent your values.</p>
           <p style={{fontFamily:"'Figtree',sans-serif",fontSize:13,color:C.parchmentDim,lineHeight:1.6,marginBottom:40,opacity:0.65}}>No ideology labels. Just your thumbprint.</p>
-          <div style={{margin:"0 auto 40px",opacity:0.3}}>
+          <button onClick={()=>setPhase("l1_question")} style={{fontFamily:"'Figtree',sans-serif",fontWeight:800,fontSize:16,color:C.bg,background:C.gold,border:"none",borderRadius:4,padding:"16px 52px",cursor:"pointer",marginBottom:14,animation:"pulseGold 2.8s ease-in-out infinite"}}>Start the Quiz →</button>
+          <div style={{fontFamily:"'Figtree',sans-serif",fontSize:12,color:C.parchmentDim,opacity:0.65,marginBottom:40}}>~5 minutes · No account required · Skip any question</div>
+          <div style={{margin:"0 auto 0",opacity:0.3}}>
             <ThumbprintSVG scores={Object.fromEntries(DIMS.map(d=>[d,30+Math.random()*50]))} animate={false} size={210}/>
           </div>
-          <button onClick={()=>setPhase("l1_question")} style={{fontFamily:"'Figtree',sans-serif",fontWeight:800,fontSize:16,color:C.bg,background:C.gold,border:"none",borderRadius:4,padding:"16px 52px",cursor:"pointer",marginBottom:14,animation:"pulseGold 2.8s ease-in-out infinite"}}>Start the Quiz →</button>
-          <div style={{fontFamily:"'Figtree',sans-serif",fontSize:12,color:C.parchmentDim,opacity:0.65}}>~5 minutes · No account required · Skip any question</div>
         </div>
       </div>
     </>
@@ -625,8 +631,8 @@ export default function QuizPage(){
   if(phase==="l1_results")return(<><Head><title>Your Political Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l1Scores} matches={l1Matches} onStartL2={startL2} onRetake={handleRetake} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={1}/></>);
   if(phase==="l2_results")return(<><Head><title>Your Refined Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l2Scores} matches={l1Matches} onStartL2={null} onRetake={handleRetake} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={2}/></>);
 
-  if(phase==="l1_question"){const q=shuffledL1[l1QIdx];return(<><Head><title>Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{minHeight:"100vh",background:C.bg,color:C.parchment}}><QuestionScreen q={q} qIndex={l1QIdx} total={shuffledL1.length} level={1} onAnswer={handleL1Answer} onBack={handleL1Back} onSkip={handleL1Skip} skippedCount={l1Skipped}/></div></>);}
-  if(phase==="l2_question"){const q=l2Questions[l2QIdx];return(<><Head><title>Level 2 Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{minHeight:"100vh",background:C.bg,color:C.parchment}}><QuestionScreen q={q} qIndex={l2QIdx} total={l2Questions.length} level={2} onAnswer={handleL2Answer} onBack={handleL2Back} onSkip={handleL2Skip} skippedCount={l2Skipped}/></div></>);}
+  if(phase==="l1_question"){const q=shuffledL1[l1QIdx];return(<><Head><title>Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{minHeight:"100vh",background:C.bg,color:C.parchment}}><QuestionScreen key={l1QIdx} q={q} qIndex={l1QIdx} total={shuffledL1.length} level={1} onAnswer={handleL1Answer} onBack={handleL1Back} onSkip={handleL1Skip} skippedCount={l1Skipped} previousAnswer={l1AnswerIndices[shuffledL1[l1QIdx]?.dimension]??null}/></div></>);}
+  if(phase==="l2_question"){const q=l2Questions[l2QIdx];return(<><Head><title>Level 2 Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{minHeight:"100vh",background:C.bg,color:C.parchment}}><QuestionScreen key={`l2-${l2QIdx}`} q={q} qIndex={l2QIdx} total={l2Questions.length} level={2} onAnswer={handleL2Answer} onBack={handleL2Back} onSkip={handleL2Skip} skippedCount={l2Skipped} previousAnswer={l2AnswerIndices[l2Questions[l2QIdx]?.dimension]??null}/></div></>);}
 
   return null;
 }

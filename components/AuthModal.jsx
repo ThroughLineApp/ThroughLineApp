@@ -3,233 +3,242 @@ import { useRouter } from "next/router";
 import supabase from "../lib/supabase";
 
 const C = {
-  bg:            "#0a0b0d",
-  bgCard:        "#11131a",
-  bgDeep:        "#0d0f14",
-  gold:          "#c9a84c",
-  goldDim:       "#8a6e30",
-  goldBorder:    "rgba(201,168,76,0.35)",
-  goldBorderDim: "rgba(201,168,76,0.12)",
-  parchment:     "#e8dfc8",
-  parchmentDim:  "#a89d88",
-  green:         "#4ca87c",
-  red:           "#c94c4c",
+  bg: "#0A0B0D",
+  bgCard: "#111318",
+  bgDeep: "#0d0f14",
+  gold: "#C9A84C",
+  goldDim: "#8a6e30",
+  goldBorder: "rgba(201,168,76,0.35)",
+  parchment: "#F0ECE4",
+  parchmentDim: "#9A9488",
+  green: "#4CAF7D",
+  red: "#E05C4B",
 };
 
 export default function AuthModal({ message, onDismiss }) {
   const router = useRouter();
-  const [mode, setMode]         = useState("signin"); // signin | signup | forgot | sent
-  const [email, setEmail]       = useState("");
+  const [mode, setMode] = useState("signin");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError]       = useState(null);
-  const [loading, setLoading]   = useState(false);
+  const [username, setUsername] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async () => {
+  const inputStyle = {
+    width: "100%", background: C.bgDeep,
+    border: `1.5px solid ${C.goldBorder}`, borderRadius: 4,
+    padding: "12px 14px", fontSize: 14, color: C.parchment,
+    outline: "none", fontFamily: "Arial", marginBottom: 10,
+    boxSizing: "border-box", display: "block",
+  };
+
+  const handleSignIn = async () => {
     setError(null);
-    if (!email || !email.includes("@")) { setError("Enter a valid email address."); return; }
-
-    if (mode === "forgot") {
-      setLoading(true);
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      setLoading(false);
-      if (error) { setError(error.message); return; }
-      setMode("sent");
-      return;
-    }
-
-    if (!password || password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (!email || !email.includes("@")) { setError("Enter a valid email."); return; }
+    if (!password || password.length < 6) { setError("Password must be 6+ characters."); return; }
     setLoading(true);
-
-    if (mode === "signup") {
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      setLoading(false);
-
-      if (error) {
-        let friendlyMessage = '';
-        const msg = error.message?.toLowerCase() || '';
-
-        if (msg.includes('already registered') || msg.includes('user already exists')) {
-          friendlyMessage = 'An account with this email already exists. Try signing in instead.';
-        } else if (msg.includes('password') && msg.includes('short')) {
-          friendlyMessage = 'Password must be at least 6 characters.';
-        } else if (msg.includes('invalid email') || msg.includes('valid email')) {
-          friendlyMessage = 'Please enter a valid email address.';
-        } else if (msg.includes('rate limit') || msg.includes('too many')) {
-          friendlyMessage = 'Too many attempts. Please wait a minute and try again.';
-        } else if (msg.includes('confirmation') || msg.includes('smtp') || msg.includes('email')) {
-          // SMTP errors — account was created, email just failed to send
-          friendlyMessage = null;
-        } else {
-          friendlyMessage = 'Something went wrong. Please try again.';
-        }
-
-        if (friendlyMessage) {
-          setError(friendlyMessage);
-          return;
-        }
-        // If friendlyMessage is null, fall through to success state below
-      }
-
-      // Success — fire Resend welcome email and show success screen
-      fetch('/api/send-confirmation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      }).catch(() => {});
-      setMode("signup_success");
-      return;
-    }
-
-    // signin
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (signInError) { setError(signInError.message); return; }
+    if (signInError) { setLoading(false); setError(signInError.message); return; }
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("profiles").upsert({
-      id: user.id,
-      email: user.email,
-      quiz_level: 0,
+      id: user.id, email: user.email, quiz_level: 0,
     }, { onConflict: "id", ignoreDuplicates: true });
     const { data: profile } = await supabase
-      .from("profiles")
-      .select("quiz_level")
-      .eq("id", user.id)
-      .single();
-    const level = profile?.quiz_level ?? 0;
+      .from("profiles").select("quiz_level").eq("id", user.id).single();
+    setLoading(false);
     onDismiss();
-    if (level === 0) {
+    if (!profile || profile.quiz_level === 0) {
       router.push("/quiz");
     } else {
       router.push("/profile");
     }
   };
 
-  const titles = {
-    signin:         "Sign in to Throughline",
-    signup:         "Create your free account",
-    forgot:         "Reset your password",
-    sent:           "Reset link sent",
-    signup_success: "Account created.",
+  const handleSignUp = async () => {
+    setError(null);
+    const trimmedUsername = username.trim().toLowerCase();
+    if (!trimmedUsername || trimmedUsername.length < 2) {
+      setError("Username must be at least 2 characters."); return;
+    }
+    if (/[^a-zA-Z0-9_]/.test(trimmedUsername)) {
+      setError("Username can only contain letters, numbers, and underscores."); return;
+    }
+    if (!email || !email.includes("@")) { setError("Enter a valid email."); return; }
+    if (!password || password.length < 6) { setError("Password must be 6+ characters."); return; }
+    setLoading(true);
+
+    const { data: existing } = await supabase
+      .from("profiles").select("id").eq("username", trimmedUsername).maybeSingle();
+    if (existing) { setLoading(false); setError("That username is taken. Try another."); return; }
+
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email, password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/confirm`,
+        data: { username: trimmedUsername },
+      }
+    });
+    setLoading(false);
+    if (signUpError) {
+      const msg = signUpError.message?.toLowerCase() || "";
+      if (msg.includes("already registered") || msg.includes("already exists")) {
+        setError("An account with this email already exists. Sign in instead.");
+      } else {
+        setError(signUpError.message);
+      }
+      return;
+    }
+    if (data?.user) {
+      await supabase.from("profiles").upsert({
+        id: data.user.id, email, username: trimmedUsername, quiz_level: 0,
+      }, { onConflict: "id" });
+    }
+    setMode("signup_success");
+  };
+
+  const handleForgot = async () => {
+    setError(null);
+    if (!email || !email.includes("@")) { setError("Enter your email address."); return; }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (error) { setError(error.message); return; }
+    setMode("forgot_sent");
   };
 
   return (
-    <div onClick={onDismiss} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: C.bgCard, border: `1px solid ${C.goldBorder}`, borderRadius: 2, padding: "32px 28px", maxWidth: 340, width: "90%", textAlign: "center" }}>
+    <div onClick={onDismiss} style={{
+      position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)",
+      zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center",
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: C.bgCard, border: `1px solid ${C.goldBorder}`,
+        borderRadius: 8, padding: "32px 28px", maxWidth: 360,
+        width: "90%", textAlign: "center",
+      }}>
+        <div style={{
+          fontFamily: "Arial Black", fontSize: 11,
+          letterSpacing: "0.25em", color: C.gold, marginBottom: 10,
+        }}>THROUGHLINE</div>
 
-        {/* Logo mark */}
-        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 10, letterSpacing: "0.3em", color: C.gold, marginBottom: 10 }}>THROUGHLINE</div>
-
-        {/* Title */}
-        <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 20, color: C.parchment, lineHeight: 1.25, marginBottom: 20 }}>
-          {message && mode === "signin" ? message : titles[mode]}
-        </div>
-
-        {/* Sent confirmation screen */}
-        {mode === "sent" && (
-          <div>
-            <div style={{ fontSize: 36, marginBottom: 16 }}>📬</div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7, marginBottom: 24 }}>
-              We sent an email to <strong style={{ color: C.parchment }}>{email}</strong>.<br />
-              {mode === "sent" && password === ""
-                ? "Click the link to reset your password."
-                : "Click the link to confirm your account."}
-            </div>
-            <button onClick={onDismiss}
-              style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.bg, background: C.gold, border: "none", borderRadius: 2, padding: "11px 24px", cursor: "pointer", width: "100%" }}>
-              GOT IT
-            </button>
+        {mode === "signin" && (<>
+          <div style={{ fontFamily: "Arial Black", fontSize: 18, color: C.parchment, marginBottom: 6 }}>
+            {message || "Sign in to Throughline"}
           </div>
-        )}
+          <p style={{ fontFamily: "Arial", fontSize: 12, color: C.parchmentDim, marginBottom: 20, lineHeight: 1.5 }}>
+            Don't have an account?{" "}
+            <span onClick={() => { setMode("signup"); setError(null); }}
+              style={{ color: C.gold, cursor: "pointer", textDecoration: "underline" }}>
+              Create one →
+            </span>
+          </p>
+          <input type="email" placeholder="Email address" value={email}
+            onChange={e => { setEmail(e.target.value); setError(null); }} style={inputStyle} />
+          <input type="password" placeholder="Password" value={password}
+            onChange={e => { setPassword(e.target.value); setError(null); }}
+            onKeyDown={e => e.key === "Enter" && handleSignIn()}
+            style={{ ...inputStyle, borderColor: error ? C.red : C.goldBorder }} />
+          {error && <div style={{ fontFamily: "Arial", fontSize: 11, color: C.red, marginBottom: 10 }}>{error}</div>}
+          <button onClick={handleSignIn} disabled={loading} style={{
+            fontFamily: "Arial Black", fontSize: 14, letterSpacing: "0.08em",
+            color: C.bg, background: loading ? C.goldDim : C.gold,
+            border: "none", borderRadius: 4, padding: "13px 0",
+            cursor: loading ? "default" : "pointer", width: "100%",
+            marginBottom: 12, touchAction: "manipulation",
+          }}>{loading ? "SIGNING IN…" : "SIGN IN →"}</button>
+          <button onClick={() => { setMode("forgot"); setError(null); }} style={{
+            fontFamily: "Arial", fontSize: 11, color: C.parchmentDim,
+            background: "none", border: "none", textDecoration: "underline",
+            cursor: "pointer", display: "block", width: "100%", marginBottom: 8,
+          }}>Forgot your password?</button>
+          <button onClick={onDismiss} style={{
+            fontFamily: "Arial", fontSize: 11, color: C.parchmentDim,
+            background: "none", border: "none", textDecoration: "underline", cursor: "pointer",
+          }}>Maybe later</button>
+        </>)}
 
-        {/* Signup success screen */}
-        {mode === "signup_success" && (
-          <div>
-            <div style={{ fontSize: 32, color: C.green, marginBottom: 12 }}>✓</div>
-            <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7, marginBottom: 24 }}>
-              We sent a confirmation email to <strong style={{ color: C.parchment }}>{email}</strong>. Click the link to activate your account, then come back and sign in.
-            </div>
-            <button onClick={onDismiss}
-              style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.gold, background: "transparent", border: `1px solid ${C.gold}`, borderRadius: 2, padding: "11px 24px", cursor: "pointer", width: "100%", marginBottom: 12 }}>
-              OK, GOT IT
-            </button>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, lineHeight: 1.6 }}>
-              Didn't get it? Check your spam folder or wait a minute and try again.
-            </div>
+        {mode === "signup" && (<>
+          <div style={{ fontFamily: "Arial Black", fontSize: 18, color: C.parchment, marginBottom: 6 }}>
+            Create your free account
           </div>
-        )}
+          <p style={{ fontFamily: "Arial", fontSize: 12, color: C.parchmentDim, marginBottom: 20, lineHeight: 1.5 }}>
+            Your username is how others see you in the feed and discussions.
+          </p>
+          <input type="text" placeholder="Username (letters, numbers, underscores)"
+            value={username}
+            onChange={e => { setUsername(e.target.value); setError(null); }} style={inputStyle} />
+          <input type="email" placeholder="Email address" value={email}
+            onChange={e => { setEmail(e.target.value); setError(null); }} style={inputStyle} />
+          <input type="password" placeholder="Password (6+ characters)" value={password}
+            onChange={e => { setPassword(e.target.value); setError(null); }}
+            onKeyDown={e => e.key === "Enter" && handleSignUp()}
+            style={{ ...inputStyle, borderColor: error ? C.red : C.goldBorder }} />
+          {error && <div style={{ fontFamily: "Arial", fontSize: 11, color: C.red, marginBottom: 10 }}>{error}</div>}
+          <button onClick={handleSignUp} disabled={loading} style={{
+            fontFamily: "Arial Black", fontSize: 14, letterSpacing: "0.08em",
+            color: C.bg, background: loading ? C.goldDim : C.gold,
+            border: "none", borderRadius: 4, padding: "13px 0",
+            cursor: loading ? "default" : "pointer", width: "100%",
+            marginBottom: 12, touchAction: "manipulation",
+          }}>{loading ? "CREATING ACCOUNT…" : "CREATE ACCOUNT →"}</button>
+          <button onClick={() => { setMode("signin"); setError(null); }} style={{
+            fontFamily: "Arial", fontSize: 11, color: C.parchmentDim,
+            background: "none", border: "none", textDecoration: "underline", cursor: "pointer",
+          }}>← Already have an account? Sign in</button>
+        </>)}
 
-        {/* Main form */}
-        {mode !== "sent" && mode !== "signup_success" && (
-          <>
-            {/* Mode toggle — only for signin/signup */}
-            {(mode === "signin" || mode === "signup") && (
-              <div style={{ display: "flex", gap: 0, marginBottom: 20, border: `1px solid ${C.goldBorder}`, borderRadius: 2, overflow: "hidden" }}>
-                {["signin", "signup"].map(m => (
-                  <button key={m} onClick={() => { setMode(m); setError(null); }}
-                    style={{ flex: 1, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.1em", padding: "8px", border: "none", cursor: "pointer", background: mode === m ? C.gold : "transparent", color: mode === m ? C.bg : C.parchmentDim }}>
-                    {m === "signin" ? "SIGN IN" : "SIGN UP"}
-                  </button>
-                ))}
-              </div>
-            )}
+        {mode === "signup_success" && (<>
+          <div style={{ fontSize: 32, color: C.green, marginBottom: 12 }}>✓</div>
+          <div style={{ fontFamily: "Arial Black", fontSize: 16, color: C.parchment, marginBottom: 8 }}>
+            Account created.
+          </div>
+          <div style={{ fontFamily: "Arial", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7, marginBottom: 24 }}>
+            We sent a confirmation email to{" "}
+            <strong style={{ color: C.parchment }}>{email}</strong>.
+            Click the link to activate your account, then come back and sign in.
+          </div>
+          <button onClick={onDismiss} style={{
+            fontFamily: "Arial Black", fontSize: 13, color: C.gold,
+            background: "transparent", border: `1px solid ${C.gold}`,
+            borderRadius: 4, padding: "11px 24px", cursor: "pointer", width: "100%",
+          }}>OK, GOT IT</button>
+        </>)}
 
-            {/* Email */}
-            <input
-              type="email"
-              placeholder="your@email.com"
-              value={email}
-              onChange={e => { setEmail(e.target.value); setError(null); }}
-              style={{ width: "100%", background: C.bgDeep, border: `1.5px solid ${C.goldBorder}`, borderRadius: 2, padding: "12px 14px", fontSize: 14, color: C.parchment, outline: "none", fontFamily: "'Inter', sans-serif", marginBottom: 10 }}
-            />
+        {mode === "forgot" && (<>
+          <div style={{ fontFamily: "Arial Black", fontSize: 18, color: C.parchment, marginBottom: 20 }}>
+            Reset your password
+          </div>
+          <input type="email" placeholder="Your email address" value={email}
+            onChange={e => { setEmail(e.target.value); setError(null); }} style={inputStyle} />
+          {error && <div style={{ fontFamily: "Arial", fontSize: 11, color: C.red, marginBottom: 10 }}>{error}</div>}
+          <button onClick={handleForgot} disabled={loading} style={{
+            fontFamily: "Arial Black", fontSize: 14, color: C.bg,
+            background: loading ? C.goldDim : C.gold, border: "none",
+            borderRadius: 4, padding: "13px 0",
+            cursor: loading ? "default" : "pointer", width: "100%",
+            marginBottom: 12, touchAction: "manipulation",
+          }}>{loading ? "SENDING…" : "SEND RESET LINK →"}</button>
+          <button onClick={() => { setMode("signin"); setError(null); }} style={{
+            fontFamily: "Arial", fontSize: 11, color: C.parchmentDim,
+            background: "none", border: "none", textDecoration: "underline", cursor: "pointer",
+          }}>← Back to sign in</button>
+        </>)}
 
-            {/* Password — hidden on forgot */}
-            {mode !== "forgot" && (
-              <input
-                type="password"
-                placeholder="password (6+ characters)"
-                value={password}
-                onChange={e => { setPassword(e.target.value); setError(null); }}
-                onKeyDown={e => e.key === "Enter" && handleSubmit()}
-                style={{ width: "100%", background: C.bgDeep, border: `1.5px solid ${error ? C.red : C.goldBorder}`, borderRadius: 2, padding: "12px 14px", fontSize: 14, color: C.parchment, outline: "none", fontFamily: "'Inter', sans-serif", marginBottom: 10 }}
-              />
-            )}
-
-            {/* Error */}
-            {error && (
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.red, marginBottom: 10 }}>{error}</div>
-            )}
-
-            {/* Submit */}
-            <button onClick={handleSubmit} disabled={loading}
-              style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 15, letterSpacing: "0.12em", color: C.bg, backgroundColor: loading ? C.goldDim : C.gold, border: "none", borderRadius: 2, padding: 13, cursor: loading ? "default" : "pointer", width: "100%", marginBottom: 14 }}>
-              {loading ? "LOADING…" : mode === "signup" ? "CREATE ACCOUNT →" : mode === "forgot" ? "SEND RESET LINK →" : "SIGN IN →"}
-            </button>
-
-            {/* Forgot password link */}
-            {mode === "signin" && (
-              <button onClick={() => { setMode("forgot"); setError(null); }}
-                style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, background: "none", border: "none", textDecoration: "underline", textUnderlineOffset: 3, cursor: "pointer", display: "block", marginBottom: 8, width: "100%" }}>
-                Forgot your password?
-              </button>
-            )}
-
-            {/* Back link on forgot */}
-            {mode === "forgot" && (
-              <button onClick={() => { setMode("signin"); setError(null); }}
-                style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, background: "none", border: "none", textDecoration: "underline", textUnderlineOffset: 3, cursor: "pointer", display: "block", marginBottom: 8, width: "100%" }}>
-                ← Back to sign in
-              </button>
-            )}
-
-            {/* Dismiss */}
-            <button onClick={onDismiss}
-              style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, background: "none", border: "none", textDecoration: "underline", textUnderlineOffset: 3, cursor: "pointer" }}>
-              maybe later
-            </button>
-          </>
-        )}
+        {mode === "forgot_sent" && (<>
+          <div style={{ fontSize: 36, marginBottom: 16 }}>📬</div>
+          <div style={{ fontFamily: "Arial", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7, marginBottom: 24 }}>
+            We sent a reset link to{" "}
+            <strong style={{ color: C.parchment }}>{email}</strong>.
+            Click it to set a new password.
+          </div>
+          <button onClick={onDismiss} style={{
+            fontFamily: "Arial Black", fontSize: 13, color: C.bg,
+            background: C.gold, border: "none", borderRadius: 4,
+            padding: "11px 24px", cursor: "pointer", width: "100%",
+          }}>GOT IT</button>
+        </>)}
       </div>
     </div>
   );
