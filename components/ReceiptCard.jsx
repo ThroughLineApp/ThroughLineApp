@@ -386,10 +386,7 @@ export default function ReceiptCard({ event }) {
             Follow this issue to track votes as they happen
           </div>
           <button
-            onClick={() => {
-              setFollowingIssue(true);
-              setTimeout(() => setFollowingIssue(false), 2000);
-            }}
+            onClick={() => handleFollowIssue(activeIssue)}
             style={{
               width: "100%",
               background: "rgba(201,168,76,0.1)",
@@ -408,6 +405,24 @@ export default function ReceiptCard({ event }) {
       </div>
     );
   }
+
+  const handleFollowIssue = async (dim) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setFollowingIssue(false);
+      return;
+    }
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("followed_dimensions")
+      .eq("id", user.id)
+      .single();
+    const current = prof?.followed_dimensions || [];
+    if (current.includes(dim)) { setFollowingIssue(true); return; }
+    const updated = [...current, dim];
+    await supabase.from("profiles").update({ followed_dimensions: updated }).eq("id", user.id);
+    setFollowingIssue(true);
+  };
 
   // ── Layer 1: Main Card ────────────────────────────────────────────────────
   // Outer wrapper is NOT overflow:hidden so the DAS modal overlay is not clipped
