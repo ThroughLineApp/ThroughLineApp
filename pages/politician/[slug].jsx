@@ -354,7 +354,10 @@ function TabThroughline({ politicianId }) {
   const tl = filtered[safeIdx] || filtered[0];
   if (!tl) return null;
 
-  const pacName    = tl.donor_pac_name || tl.donor_name || "Unknown PAC";
+  const rawPac = tl.donor_pac_name || tl.donor_name || "";
+  const pacName = (rawPac && !rawPac.match(/^C\d{8}$/i))
+    ? rawPac
+    : (tl.donor_industry ? tl.donor_industry + " PAC" : "Unknown PAC");
   const industry   = tl.donor_industry || "Unknown";
   const color      = tl.dimension ? DIMENSION_COLORS[tl.dimension] : C.gold;
   const howVoted   = tl.how_voted || "—";
@@ -468,7 +471,7 @@ function TabThroughline({ politicianId }) {
           )}
           {tl.corruption_contribution != null && (
             <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 12, color: C.red, letterSpacing: "0.1em" }}>
-              +{Number(tl.corruption_contribution).toFixed(1)} POINTS TO DONOR ALIGNMENT SCORE
+              +{Math.round(Number(tl.corruption_contribution))} POINTS TO DONOR ALIGNMENT SCORE
             </div>
           )}
         </div>
