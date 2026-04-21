@@ -262,7 +262,7 @@ export default function ReceiptCard({ event }) {
 
   const handleShare = (e) => {
     e.stopPropagation();
-    const url = `${window.location.origin}/politician/${politician_slug || ""}`;
+    const url = `${window.location.origin}/receipt/${id}`;
     if (navigator.share) {
       navigator.share({ title: politician_name, url }).catch(() => {});
     } else {
@@ -618,10 +618,26 @@ export default function ReceiptCard({ event }) {
               borderTop: "0.5px solid rgba(255,255,255,0.06)",
               paddingTop: 10,
               display: "flex",
-              justifyContent: "flex-end",
+              justifyContent: "space-between",
               gap: 12,
             }}
           >
+            <button
+              onClick={(e) => { e.stopPropagation(); router.push(`/receipt/${id}`); }}
+              style={{
+                background: "transparent",
+                border: "0.5px solid rgba(201,168,76,0.3)",
+                borderRadius: 6,
+                padding: "5px 12px",
+                fontFamily: "Arial Black, Arial",
+                fontSize: 11,
+                letterSpacing: "0.06em",
+                color: "#C9A84C",
+                cursor: "pointer",
+              }}
+            >
+              VIEW RECEIPT →
+            </button>
             <button
               onClick={handleShare}
               style={{ background: "none", border: "none", padding: 4, cursor: "pointer", display: "flex", alignItems: "center" }}
