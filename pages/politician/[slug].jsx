@@ -284,6 +284,7 @@ function TabReceipt({ politicianId }) {
 // ── Tab: The Throughline ──────────────────────────────────────────────────────
 // Shows full event detail: PAC → donation date → vote date → how voted → impact
 function TabThroughline({ politicianId }) {
+  const router = useRouter();
   const [events, setEvents]   = useState([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -296,6 +297,7 @@ function TabThroughline({ politicianId }) {
     supabase
       .from("throughline_events")
       .select(`
+        id,
         donor_pac_name,
         donor_name,
         donor_industry,
@@ -474,6 +476,20 @@ function TabThroughline({ politicianId }) {
               +{Math.round(Number(tl.corruption_contribution))} POINTS TO DONOR ALIGNMENT SCORE
             </div>
           )}
+        </div>
+      )}
+
+      {/* View Receipt deep link */}
+      {tl.id && (
+        <div style={{ marginTop: 16, marginBottom: 4 }}>
+          <button
+            onClick={() => router.push(`/receipt/${tl.id}`)}
+            style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.12em", color: C.gold, background: "transparent", border: `1px solid ${C.goldBorder}`, borderRadius: 2, padding: "8px 18px", cursor: "pointer" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(201,168,76,0.08)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+          >
+            VIEW RECEIPT →
+          </button>
         </div>
       )}
 
