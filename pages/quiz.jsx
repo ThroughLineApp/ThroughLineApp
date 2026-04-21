@@ -213,7 +213,7 @@ function BadgeScreen({earnedBadges,onContinue,continueLabel}){
   );
 }
 
-function ResultsScreen({scores,matches,onStartL2,onRetake,onExplore,user,showSavePrompt,onSignUp,level}){
+function ResultsScreen({scores,matches,onStartL2,onRetake,onFeed,user,showSavePrompt,onSignUp,level}){
   const router=useRouter();
   const safe=scores||Object.fromEntries(DIMS.map(d=>[d,50]));
   const pcolor=p=>p==="D"?C.blue:p==="R"?C.red:C.purple;
@@ -283,22 +283,8 @@ function ResultsScreen({scores,matches,onStartL2,onRetake,onExplore,user,showSav
             <button onClick={onSignUp} style={{fontFamily:"'Figtree',sans-serif",fontWeight:800,fontSize:15,color:C.bg,background:C.gold,border:"none",borderRadius:4,padding:"14px 36px",cursor:"pointer"}}>Create Free Account →</button>
           </div>
         )}
-        <div style={{display:"flex",flexDirection:"column",gap:10,animation:"fadeSlideIn 0.6s ease forwards 0.8s",opacity:0}}>
-          <button onClick={onExplore} style={{fontFamily:"'Figtree',sans-serif",fontWeight:800,fontSize:15,color:C.bg,background:C.gold,border:"none",borderRadius:4,padding:15,cursor:"pointer"}}>Explore Politicians →</button>
-          {level===1&&(
-            <div style={{padding:22,background:C.bgDeep,border:`1px solid ${C.goldBorderDim}`,borderRadius:4,textAlign:"center"}}>
-              <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:800,fontSize:13,letterSpacing:"0.12em",color:C.gold,marginBottom:8}}>WANT A MORE ACCURATE PICTURE?</div>
-              <div style={{fontFamily:"'Figtree',sans-serif",fontSize:13,color:C.parchmentDim,lineHeight:1.7,marginBottom:16}}>Answer 12 more targeted questions to refine your thumbprint. Level 2 selects questions specifically tailored to your results.</div>
-              <button onClick={onStartL2} style={{fontFamily:"'Figtree',sans-serif",fontWeight:700,fontSize:14,color:C.bg,background:C.gold,border:"none",borderRadius:4,padding:"12px 28px",cursor:"pointer"}}>Start Level 2 →</button>
-            </div>
-          )}
-          {level===2&&(
-            <div style={{padding:22,background:C.bgDeep,border:`1px solid ${C.goldBorderDim}`,borderRadius:4,textAlign:"center"}}>
-              <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:800,fontSize:13,letterSpacing:"0.12em",color:C.gold,marginBottom:8}}>LEVEL 3 — COMING SOON</div>
-              <div style={{fontFamily:"'Figtree',sans-serif",fontSize:13,color:C.parchmentDim,lineHeight:1.7}}>Level 3 goes deeper on the dimensions where your views are most nuanced. Questions are in development.</div>
-            </div>
-          )}
-          <button onClick={onRetake} style={{fontFamily:"'Figtree',sans-serif",fontWeight:600,fontSize:13,color:C.parchmentDim,background:"transparent",border:"1px solid rgba(255,255,255,0.1)",borderRadius:4,padding:13,cursor:"pointer"}}>Retake the Quiz</button>
+        <div style={{animation:"fadeSlideIn 0.6s ease forwards 0.8s",opacity:0}}>
+          <button onClick={onFeed} style={{width:"100%",padding:"16px",background:"#C9A84C",color:"#0A0B0D",border:"none",borderRadius:4,fontFamily:"Arial Black",fontSize:15,letterSpacing:"0.06em",cursor:"pointer",touchAction:"manipulation",marginTop:20}}>EXPLORE POLITICIANS →</button>
         </div>
       </div>
     </div>
@@ -628,8 +614,8 @@ export default function QuizPage(){
   if(phase==="l1_badges")return(<><Head><title>Badge Earned · Throughline</title></Head><style>{GLOBAL_STYLES}</style><BadgeScreen earnedBadges={earnedBadges.length>0?earnedBadges:[BADGES[0]]} onContinue={()=>setPhase("l1_results")} continueLabel="See My Results →"/></>);
   if(phase==="l2_badges")return(<><Head><title>Badge Earned · Throughline</title></Head><style>{GLOBAL_STYLES}</style><BadgeScreen earnedBadges={earnedBadges.length>0?earnedBadges:[BADGES[1]]} onContinue={()=>setPhase("l2_results")} continueLabel="See My Refined Results →"/></>);
 
-  if(phase==="l1_results")return(<><Head><title>Your Political Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l1Scores} matches={l1Matches} onStartL2={startL2} onRetake={handleRetake} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={1}/></>);
-  if(phase==="l2_results")return(<><Head><title>Your Refined Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l2Scores} matches={l1Matches} onStartL2={null} onRetake={handleRetake} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={2}/></>);
+  if(phase==="l1_results")return(<><Head><title>Your Political Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l1Scores} matches={l1Matches} onStartL2={startL2} onRetake={handleRetake} onFeed={()=>router.push("/feed")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={1}/></>);
+  if(phase==="l2_results")return(<><Head><title>Your Refined Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l2Scores} matches={l1Matches} onStartL2={null} onRetake={handleRetake} onFeed={()=>router.push("/feed")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={2}/></>);
 
   if(phase==="l1_question"){const q=shuffledL1[l1QIdx];return(<><Head><title>Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{minHeight:"100vh",background:C.bg,color:C.parchment}}><QuestionScreen key={l1QIdx} q={q} qIndex={l1QIdx} total={shuffledL1.length} level={1} onAnswer={handleL1Answer} onBack={handleL1Back} onSkip={handleL1Skip} skippedCount={l1Skipped} previousAnswer={l1AnswerIndices[shuffledL1[l1QIdx]?.dimension]??null}/></div></>);}
   if(phase==="l2_question"){const q=l2Questions[l2QIdx];return(<><Head><title>Level 2 Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{minHeight:"100vh",background:C.bg,color:C.parchment}}><QuestionScreen key={`l2-${l2QIdx}`} q={q} qIndex={l2QIdx} total={l2Questions.length} level={2} onAnswer={handleL2Answer} onBack={handleL2Back} onSkip={handleL2Skip} skippedCount={l2Skipped} previousAnswer={l2AnswerIndices[l2Questions[l2QIdx]?.dimension]??null}/></div></>);}
