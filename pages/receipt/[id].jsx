@@ -69,8 +69,7 @@ function formatDate(s) {
 
 export default function ReceiptPage({ event, politician }) {
   const router = useRouter();
-  const { user, profile } = useAuth();
-  const [showAuth, setShowAuth]       = useState(false);
+  const { user, profile, requireAuth, showAuthModal, authMessage, setShowAuthModal } = useAuth();
   const [quizResult, setQuizResult]   = useState(null);
   const [followedDim, setFollowedDim] = useState(false);
   const [copyDone, setCopyDone]       = useState(false);
@@ -131,7 +130,7 @@ export default function ReceiptPage({ event, politician }) {
   const userDimScore = quizResult ? quizResult[`score_${event.dimension}`] : null;
 
   const handleFollowDim = async () => {
-    if (!user) { setShowAuth(true); return; }
+    if (!user) { requireAuth("Sign in to follow issues and get alerts."); return; }
     const current = profile?.followed_dimensions || [];
     const updated = followedDim
       ? current.filter(d => d !== event.dimension)
@@ -325,7 +324,7 @@ export default function ReceiptPage({ event, politician }) {
                   Take the quiz to see how your values line up with this vote — and every other vote this politician has made.
                 </div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <button onClick={() => setShowAuth(true)} style={btnGold}>SIGN UP</button>
+                  <button onClick={() => requireAuth("Sign in to follow issues and get alerts.")} style={btnGold}>SIGN UP</button>
                   <button onClick={() => router.push("/quiz")} style={btnOutline}>TAKE THE QUIZ</button>
                 </div>
               </>
@@ -461,7 +460,7 @@ export default function ReceiptPage({ event, politician }) {
         </div>
       </div>
 
-      {showAuth && <AuthModal onDismiss={() => setShowAuth(false)} />}
+      {showAuthModal && <AuthModal message={authMessage} onDismiss={() => setShowAuthModal(false)} />}
     </>
   );
 }
