@@ -71,7 +71,7 @@ export default function Nav() {
         {/* Desktop center links */}
         {!isMobile && (
           <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
-            {[["Feed", "/feed"], ["Quiz", "/quiz"], ["Politicians", "/feed"]].map(([label, href]) => (
+            {[["Feed", "/feed"], ["Quiz", "/quiz"], ["Politicians", "/feed"], ["Events", "/events"], ["Calendar", "/calendar"]].map(([label, href]) => (
               <button key={label} onClick={() => router.push(href)} style={{
                 fontFamily: "Arial", fontSize: 14, color: "#F0ECE4",
                 background: "none", border: "none", cursor: "pointer",
@@ -142,6 +142,8 @@ export default function Nav() {
           {sectionHeader("DISCOVER")}
           {drawerLink("Feed", "/feed")}
           {drawerLink("Politicians", "/feed")}
+          {drawerLink("Events", "/events")}
+          {drawerLink("Calendar", "/calendar")}
 
           {sectionHeader("YOUR QUIZ")}
           {drawerLink("Level 1 — Voter", "/quiz")}
