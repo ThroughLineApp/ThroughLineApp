@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/router";
+import supabase from "../lib/supabase";
 import ReceiptCard from "../components/ReceiptCard";
 import QuizNudgeCard from "../components/QuizNudgeCard";
 import { formatAmountFull, formatAmount, zipToState, partyColor, dasColor, DIMENSION_LABELS, DIMENSION_COLORS } from "../lib/feedUtils";
@@ -217,8 +218,25 @@ export default function FeedPage() {
   const [savedZip, setSavedZip] = useState(null);
   const [followedInSession, setFollowedInSession] = useState({});
   const [signupPrompt, setSignupPrompt] = useState(null); // { trigger, message }
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
 
   const sentinelRef = useRef(null);
+
+  // ── Fetch upcoming events strip (next 7 days) ─────────────────────────────
+  useEffect(() => {
+    const now = new Date();
+    const in7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    supabase
+      .from("events")
+      .select("id, title, event_type, event_date")
+      .eq("is_visible", true)
+      .gte("event_date", now.toISOString())
+      .lte("event_date", in7.toISOString())
+      .or("flag_count.is.null,flag_count.lt.5")
+      .order("event_date", { ascending: true })
+      .limit(10)
+      .then(({ data }) => { if (data?.length) setUpcomingEvents(data); });
+  }, []);
 
   // ── Load zip from localStorage ────────────────────────────────────────────
   useEffect(() => {
@@ -399,6 +417,11 @@ export default function FeedPage() {
                 : "Highest-dollar donation-to-vote connections, nationwide"}
             </div>
           </div>
+
+          {/* Upcoming events strip */}
+          {upcomingEvents.length > 0 && (
+            <UpcomingEventsStrip events={upcomingEvents} />
+          )}
 
           {/* Cards */}
           {feedWithNudge().map((item) => {
@@ -1675,6 +1698,100 @@ function SignupSheet({ trigger, message, onClose, onSignIn }) {
           cursor: "pointer",
           padding: "8px 0",
         }}>Keep browsing without an account</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Upcoming Events Strip ─────────────────────────────────────────────────────
+function UpcomingEventsStrip({ events }) {
+  const router = useRouter();
+
+  const COLORS = {
+    rally: "#c9a84c", town_hall: "#5b9cf6", voter_reg: "#4caf7d",
+    phone_bank: "#9b8ff5", canvass: "#4cc9c9", speaker: "#c98e4c",
+  };
+  const LABELS = {
+    rally: "Rally", town_hall: "Town Hall", voter_reg: "Voter Reg",
+    phone_bank: "Phone Bank", canvass: "Canvassing", speaker: "Speaker",
+  };
+
+  function daysAway(dateStr) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const target = new Date(dateStr); target.setHours(0, 0, 0, 0);
+    return Math.round((target - today) / (1000 * 60 * 60 * 24));
+  }
+
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <style>{`.upcoming-strip::-webkit-scrollbar { display: none; }`}</style>
+      <div style={{
+        display: "flex", alignItems: "center",
+        justifyContent: "space-between", marginBottom: 10,
+      }}>
+        <div style={{
+          fontFamily: "Arial Black", fontSize: 11,
+          letterSpacing: "0.12em", color: T.text2, textTransform: "uppercase",
+        }}>
+          📅 Upcoming Near You
+        </div>
+        <button
+          onClick={() => router.push("/events")}
+          style={{
+            background: "none", border: "none",
+            fontFamily: "Arial", fontSize: 12,
+            color: T.gold, cursor: "pointer",
+          }}
+        >
+          See all →
+        </button>
+      </div>
+      <div
+        className="upcoming-strip"
+        style={{
+          display: "flex", gap: 10, overflowX: "auto",
+          scrollbarWidth: "none", msOverflowStyle: "none", paddingBottom: 2,
+        }}
+      >
+        {events.map(ev => {
+          const color = COLORS[ev.event_type] || T.text2;
+          const label = LABELS[ev.event_type] || ev.event_type;
+          const days  = daysAway(ev.event_date);
+          return (
+            <div
+              key={ev.id}
+              onClick={() => router.push("/events")}
+              style={{
+                flexShrink: 0, background: T.surface,
+                border: `0.5px solid ${T.border}`,
+                borderRadius: 10, padding: "12px 14px",
+                minWidth: 160, maxWidth: 200, cursor: "pointer",
+              }}
+            >
+              <div style={{ marginBottom: 6 }}>
+                <span style={{
+                  fontFamily: "Arial Black", fontSize: 9,
+                  letterSpacing: "0.1em", padding: "2px 8px",
+                  borderRadius: 20, background: color + "22",
+                  color, border: `1px solid ${color}44`,
+                }}>
+                  {label.toUpperCase()}
+                </span>
+              </div>
+              <div style={{
+                fontFamily: "Arial Black", fontSize: 12,
+                color: T.text, lineHeight: 1.3, marginBottom: 6,
+                display: "-webkit-box", WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical", overflow: "hidden",
+              }}>
+                {ev.title}
+              </div>
+              <div style={{ fontFamily: "Arial", fontSize: 11, color: T.gold }}>
+                {days === 0 ? "Today" : days === 1 ? "Tomorrow" : `${days} days away`}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
