@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabase";
+import Nav from "../components/Nav";
 import ReceiptCard from "../components/ReceiptCard";
 import QuizNudgeCard from "../components/QuizNudgeCard";
 import { formatAmountFull, formatAmount, zipToState, partyColor, dasColor, DIMENSION_LABELS, DIMENSION_COLORS } from "../lib/feedUtils";
@@ -355,32 +356,7 @@ export default function FeedPage() {
   return (
     <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "Arial, sans-serif" }}>
 
-      {/* ── Nav ─────────────────────────────────────────────────────────── */}
-      <div style={{
-        position: "sticky", top: 0, zIndex: 100,
-        background: T.bg + "ee",
-        backdropFilter: "blur(12px)",
-        borderBottom: `0.5px solid ${T.border}`,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "0 20px", height: 52,
-      }}>
-        <div style={{ fontFamily: "Arial Black, Arial", fontWeight: 900, fontSize: 15, color: T.gold, letterSpacing: "0.08em" }}>
-          THROUGHLINE
-        </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <button onClick={() => router.push("/quiz")} style={navBtnStyle}>Quiz</button>
-          <button onClick={() => router.push("/")} style={navBtnStyle}>Search</button>
-          {user ? (
-            <button onClick={() => router.push("/profile")} style={{ ...navBtnStyle, color: T.gold, borderColor: T.gold + "44" }}>
-              Profile
-            </button>
-          ) : (
-            <button onClick={() => setSignupPrompt({ trigger: "generic", message: "" })} style={{ ...navBtnStyle, background: T.gold, color: "#0A0B0D", border: "none", fontWeight: 700 }}>
-              Sign In
-            </button>
-          )}
-        </div>
-      </div>
+      <Nav />
 
       {/* ── Landing sequence OR feed ─────────────────────────────────────── */}
       {!landingDone ? (
@@ -1798,13 +1774,3 @@ function UpcomingEventsStrip({ events }) {
   );
 }
 
-const navBtnStyle = {
-  background: "transparent",
-  border: `0.5px solid rgba(255,255,255,0.08)`,
-  borderRadius: 6,
-  padding: "6px 14px",
-  fontFamily: "Arial",
-  fontSize: 13,
-  color: "#9A9488",
-  cursor: "pointer",
-};

@@ -4,6 +4,7 @@ import Head from "next/head";
 import supabase from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import AuthModal from "../../components/AuthModal";
+import Nav from "../../components/Nav";
 
 const C = {
   bg:            "#0a0b0d",
@@ -895,6 +896,8 @@ export default function PoliticianPage({ politician }) {
       <style>{GLOBAL_STYLES}</style>
       <div style={{ background: C.bg, color: C.parchment, fontFamily: "'Inter', sans-serif", minHeight: "100vh" }}>
 
+        <Nav />
+
         {/* STICKY HEADER */}
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 200, background: C.bgCard, borderBottom: `1px solid ${C.goldBorderDim}`, transform: isSticky ? "translateY(0)" : "translateY(-100%)", transition: "transform 0.25s ease", padding: "10px 20px", display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 36, height: 36, borderRadius: "50%", background: partyColor + "33", color: partyColor, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 13, flexShrink: 0, overflow: "hidden" }}>
@@ -918,17 +921,6 @@ export default function PoliticianPage({ politician }) {
           {photoUrl && <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}><img src={photoUrl} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", opacity: 0.35 }} onError={e => e.target.style.display = "none"} /></div>}
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 80, background: `linear-gradient(to bottom, ${C.bg}, transparent)` }} />
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 120, background: `linear-gradient(to top, ${C.bg}, transparent)` }} />
-          <div style={{ position: "relative", zIndex: 2, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px" }}>
-            <button onClick={() => router.push("/")} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", color: C.gold, background: "transparent", border: "none", cursor: "pointer" }}>← THROUGHLINE</button>
-            {user ? (
-              <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => router.push("/profile")} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", color: C.gold, background: "transparent", border: `1px solid ${C.goldBorder}`, borderRadius: 2, padding: "5px 12px", cursor: "pointer" }}>MY PROFILE</button>
-                <button onClick={signOut} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", color: C.parchmentDim, background: "transparent", border: `1px solid rgba(255,255,255,0.15)`, borderRadius: 2, padding: "5px 12px", cursor: "pointer" }}>SIGN OUT</button>
-              </div>
-            ) : (
-              <button onClick={() => setShowAuthModal(true)} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", color: C.gold, background: "transparent", border: `1px solid ${C.goldBorder}`, borderRadius: 2, padding: "5px 12px", cursor: "pointer" }}>SIGN IN</button>
-            )}
-          </div>
           <div style={{ position: "relative", zIndex: 2, padding: "40px 20px 32px" }}>
             <div style={{ width: 72, height: 72, borderRadius: "50%", background: partyColor + "33", color: partyColor, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 24, border: `2px solid ${partyColor}66`, marginBottom: 14, overflow: "hidden" }}>
               {photoUrl ? <img src={photoUrl} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} onError={e => { e.target.style.display = "none"; }} /> : initials}
