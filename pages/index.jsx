@@ -214,6 +214,17 @@ export default function LandingPage() {
       {/* Mobile swiper — full screen, hides everything else */}
       {isMobile && <MobileSwiper onShowAuth={() => { setAuthMode("signup"); setShowAuth(true); }} />}
 
+      {/* ZIP PROMPT — all screen sizes, logged-in users without ZIP */}
+      {user && needsZip && !zipDismissed && (
+        <div style={{ maxWidth: 480, margin: "0 auto 24px", padding: "0 24px" }}>
+          <ZipPrompt
+            context="feed"
+            onComplete={async () => { await refreshProfile(); setZipDismissed(true); }}
+            onDismiss={() => setZipDismissed(true)}
+          />
+        </div>
+      )}
+
       {/* Sticky nav — desktop only */}
       {!isMobile && (
         <div style={{
@@ -334,17 +345,6 @@ export default function LandingPage() {
               <div style={{ color: "#C9A84C", fontSize: 16 }}>↓</div>
             </div>
           </div>
-
-          {/* ZIP PROMPT — logged-in user who hasn't set a ZIP yet */}
-          {user && needsZip && !zipDismissed && (
-            <div style={{ maxWidth: 560, margin: "0 auto", padding: "0 24px 0" }}>
-              <ZipPrompt
-                context="feed"
-                onComplete={async () => { await refreshProfile(); setZipDismissed(true); }}
-                onDismiss={() => setZipDismissed(true)}
-              />
-            </div>
-          )}
 
           {/* HOW IT WORKS */}
           <div style={{

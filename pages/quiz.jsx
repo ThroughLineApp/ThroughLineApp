@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import supabase from "../lib/supabase";
 import { useAuth } from "../lib/auth";
+import ZipPrompt from "../components/ZipPrompt";
 
 const C={bg:"#0a0b0d",bgCard:"#11131a",bgDeep:"#0d0f14",gold:"#c9a84c",goldBorder:"rgba(201,168,76,0.35)",goldBorderDim:"rgba(201,168,76,0.12)",parchment:"#e8dfc8",parchmentDim:"#a89d88",green:"#4ca87c",red:"#c94c4c",blue:"#4c78c9",purple:"#8e4cc9"};
 
@@ -215,6 +216,8 @@ function BadgeScreen({earnedBadges,onContinue,continueLabel}){
 
 function ResultsScreen({scores,matches,onStartL2,onRetake,onExplore,user,showSavePrompt,onSignUp,level}){
   const router=useRouter();
+  const { needsZip, refreshProfile } = useAuth();
+  const [zipDismissed, setZipDismissed] = useState(false);
   const safe=scores||Object.fromEntries(DIMS.map(d=>[d,50]));
   const pcolor=p=>p==="D"?C.blue:p==="R"?C.red:C.purple;
   return(
@@ -248,6 +251,18 @@ function ResultsScreen({scores,matches,onStartL2,onRetake,onExplore,user,showSav
             );
           })}
         </div>
+        {user && needsZip && !zipDismissed && (
+          <div style={{ margin: "24px 0" }}>
+            <ZipPrompt
+              context="quiz"
+              onComplete={() => {
+                refreshProfile();
+                setZipDismissed(true);
+              }}
+              onDismiss={() => setZipDismissed(true)}
+            />
+          </div>
+        )}
         {matches&&matches.length>0&&(
           <div style={{marginBottom:44,animation:"fadeSlideIn 0.6s ease forwards 0.6s",opacity:0}}>
             <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:10,letterSpacing:"0.28em",color:C.parchmentDim,textTransform:"uppercase",marginBottom:16,display:"flex",alignItems:"center",gap:12}}>YOUR CLOSEST MATCHES<div style={{flex:1,height:1,background:"rgba(201,168,76,0.1)"}}/></div>
