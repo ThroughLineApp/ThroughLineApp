@@ -169,7 +169,7 @@ function MobileSwiper({ onShowAuth }) {
 
 export default function LandingPage() {
   const router = useRouter();
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, needsZip } = useAuth();
   const [showAuth, setShowAuth]       = useState(false);
   const [authMode, setAuthMode]       = useState("signin");
   const [scrolled, setScrolled]       = useState(false);
@@ -335,8 +335,8 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* ZIP PROMPT — logged-in user with no ZIP saved */}
-          {user && !profile?.zip_code && !zipDismissed && (
+          {/* ZIP PROMPT — logged-in user who hasn't set a ZIP yet */}
+          {user && needsZip && !zipDismissed && (
             <div style={{ maxWidth: 560, margin: "0 auto", padding: "0 24px 0" }}>
               <ZipPrompt
                 context="feed"

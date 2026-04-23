@@ -89,11 +89,6 @@ export default function AuthModal({ message, onDismiss }) {
       }
       return;
     }
-    if (data?.user) {
-      await supabase.from("profiles").upsert({
-        id: data.user.id, email, username: trimmedUsername, quiz_level: 0,
-      }, { onConflict: "id" });
-    }
     setMode("signup_success");
   };
 
@@ -195,20 +190,17 @@ export default function AuthModal({ message, onDismiss }) {
           <div style={{ fontFamily: "Arial Black", fontSize: 16, color: C.parchment, marginBottom: 8 }}>
             Account created.
           </div>
-          <div style={{ fontFamily: "Arial", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7, marginBottom: 24 }}>
+          <div style={{ fontFamily: "Arial", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7, marginBottom: 12 }}>
             We sent a confirmation email to{" "}
             <strong style={{ color: C.parchment }}>{email}</strong>.
             Click the link to activate your account, then come back and sign in.
           </div>
-          <button onClick={() => setMode("zip_prompt")} style={{
+          <div style={{ fontFamily: "Arial", fontSize: 12, color: "#9A9488", lineHeight: 1.6, marginBottom: 24 }}>
+            Once you confirm your email and sign in, we'll ask for your ZIP to find your representatives.
+          </div>
+          <button onClick={onDismiss} style={{
             fontFamily: "Arial Black", fontSize: 13, color: C.bg,
             background: C.gold, border: "none",
-            borderRadius: 4, padding: "11px 24px", cursor: "pointer", width: "100%",
-            marginBottom: 8,
-          }}>FIND MY REPS →</button>
-          <button onClick={onDismiss} style={{
-            fontFamily: "Arial Black", fontSize: 13, color: C.gold,
-            background: "transparent", border: `1px solid ${C.gold}`,
             borderRadius: 4, padding: "11px 24px", cursor: "pointer", width: "100%",
           }}>OK, GOT IT</button>
         </>)}
