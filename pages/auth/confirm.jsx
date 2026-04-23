@@ -56,12 +56,16 @@ export default function AuthConfirm() {
       // Get the now-authenticated user and upsert their profile
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // Read username from auth metadata (set during signUp)
+        const username = user.user_metadata?.username || null;
+
         await supabase.from("profiles").upsert({
           id: user.id,
           email: user.email,
+          username: username,
           quiz_level: 0,
           created_at: new Date().toISOString(),
-        }, { onConflict: "id", ignoreDuplicates: true });
+        }, { onConflict: "id", ignoreDuplicates: false });
       }
 
       setUiState("confirmed");

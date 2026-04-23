@@ -40,15 +40,29 @@ export default function AuthModal({ message, onDismiss }) {
     setLoading(true);
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) { setLoading(false); setError(signInError.message); return; }
-    const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from("profiles").upsert({
-      id: user.id, email: user.email, quiz_level: 0,
-    }, { onConflict: "id", ignoreDuplicates: true });
-    const { data: profile } = await supabase
-      .from("profiles").select("quiz_level").eq("id", user.id).single();
+    const { data: { user: signedInUser } } = await supabase.auth.getUser();
+    if (!signedInUser) {
+      setLoading(false);
+      setError("Sign in failed. Please try again.");
+      return;
+    }
+
+    // Explicitly fetch or create the profile and wait for it
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .upsert({
+        id: signedInUser.id,
+        email: signedInUser.email,
+        username: signedInUser.user_metadata?.username || null,
+        quiz_level: 0,
+      }, { onConflict: "id", ignoreDuplicates: false })
+      .select()
+      .single();
+
+    const level = profileData?.quiz_level ?? 0;
     setLoading(false);
     onDismiss();
-    if (!profile || profile.quiz_level === 0) {
+    if (level === 0) {
       router.push("/quiz");
     } else {
       router.push("/profile");
