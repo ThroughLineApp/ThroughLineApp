@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabase";
+import ZipPrompt from "./ZipPrompt";
 
 const C = {
   bg: "#0A0B0D",
@@ -199,12 +200,26 @@ export default function AuthModal({ message, onDismiss }) {
             <strong style={{ color: C.parchment }}>{email}</strong>.
             Click the link to activate your account, then come back and sign in.
           </div>
+          <button onClick={() => setMode("zip_prompt")} style={{
+            fontFamily: "Arial Black", fontSize: 13, color: C.bg,
+            background: C.gold, border: "none",
+            borderRadius: 4, padding: "11px 24px", cursor: "pointer", width: "100%",
+            marginBottom: 8,
+          }}>FIND MY REPS →</button>
           <button onClick={onDismiss} style={{
             fontFamily: "Arial Black", fontSize: 13, color: C.gold,
             background: "transparent", border: `1px solid ${C.gold}`,
             borderRadius: 4, padding: "11px 24px", cursor: "pointer", width: "100%",
           }}>OK, GOT IT</button>
         </>)}
+
+        {mode === "zip_prompt" && (
+          <ZipPrompt
+            context="signup"
+            onComplete={() => onDismiss()}
+            onDismiss={() => onDismiss()}
+          />
+        )}
 
         {mode === "forgot" && (<>
           <div style={{ fontFamily: "Arial Black", fontSize: 18, color: C.parchment, marginBottom: 20 }}>

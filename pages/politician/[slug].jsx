@@ -941,6 +941,21 @@ export default function PoliticianPage({ politician }) {
           </div>
         </div>
 
+        {/* YOUR REP BANNER */}
+        {profile?.my_reps?.includes(bioguide_id) && (
+          <div style={{
+            background:    "rgba(201,168,76,0.12)",
+            borderBottom:  "1px solid rgba(201,168,76,0.3)",
+            padding:       "8px 24px",
+            textAlign:     "center",
+            fontFamily:    "Arial",
+            fontSize:      13,
+            color:         "#c9a84c",
+          }}>
+            📍 This politician represents you
+          </div>
+        )}
+
         {/* FOLLOWER ROW */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: `1px solid ${C.goldBorderDim}`, gap: 12 }}>
           <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim }}>3,847 followers · FEC data through Q4 2024</div>

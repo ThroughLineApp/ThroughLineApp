@@ -158,7 +158,7 @@ const ARTICLES = {
 // Props from feed: event (object), onSave, onShare, onCallScript (accepted but
 // handled internally per redesign spec)
 // ═════════════════════════════════════════════════════════════════════════════
-export default function ReceiptCard({ event }) {
+export default function ReceiptCard({ event, isMyRep = false }) {
   const router = useRouter();
   const [activeIssue, setActiveIssue] = useState(null);
   const [showDasModal, setShowDasModal] = useState(false);
@@ -447,6 +447,7 @@ export default function ReceiptCard({ event }) {
           party={party}
           state={state}
           donor_alignment_score={donor_alignment_score}
+          isMyRep={isMyRep}
           onDasClick={(e) => { e.stopPropagation(); setShowDasModal(true); }}
         />
 
@@ -693,7 +694,7 @@ export default function ReceiptCard({ event }) {
 }
 
 // ── HeroSection ───────────────────────────────────────────────────────────────
-function HeroSection({ photoUrl, politician_name, party, state, donor_alignment_score, onDasClick }) {
+function HeroSection({ photoUrl, politician_name, party, state, donor_alignment_score, isMyRep, onDasClick }) {
   const [imgError, setImgError] = useState(false);
   const ini = getInitials(politician_name);
   const pColor = partyColor(party);
@@ -741,6 +742,22 @@ function HeroSection({ photoUrl, politician_name, party, state, donor_alignment_
           <span style={{ color: pColor }}>{party}</span>
           {state ? ` · ${state}` : ""}
         </div>
+        {isMyRep && (
+          <div style={{
+            display:       "inline-block",
+            marginTop:     5,
+            background:    "rgba(201,168,76,0.2)",
+            border:        "1px solid rgba(201,168,76,0.5)",
+            borderRadius:  20,
+            padding:       "2px 9px",
+            fontFamily:    "Arial Black",
+            fontSize:      9,
+            letterSpacing: "0.12em",
+            color:         T.gold,
+          }}>
+            YOUR REP
+          </div>
+        )}
       </div>
 
       {/* DAS badge */}

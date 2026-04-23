@@ -3,6 +3,8 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import supabase from "../lib/supabase";
 import AuthModal from "../components/AuthModal";
+import ZipPrompt from "../components/ZipPrompt";
+import { useAuth } from "../lib/auth";
 
 function MobileSwiper({ onShowAuth }) {
   const router = useRouter();
@@ -167,10 +169,12 @@ function MobileSwiper({ onShowAuth }) {
 
 export default function LandingPage() {
   const router = useRouter();
-  const [showAuth, setShowAuth] = useState(false);
-  const [authMode, setAuthMode] = useState("signin");
-  const [scrolled, setScrolled] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const { user, profile, refreshProfile } = useAuth();
+  const [showAuth, setShowAuth]       = useState(false);
+  const [authMode, setAuthMode]       = useState("signin");
+  const [scrolled, setScrolled]       = useState(false);
+  const [isMobile, setIsMobile]       = useState(false);
+  const [zipDismissed, setZipDismissed] = useState(false);
 
   useEffect(() => {
     async function check() {
@@ -330,6 +334,17 @@ export default function LandingPage() {
               <div style={{ color: "#C9A84C", fontSize: 16 }}>↓</div>
             </div>
           </div>
+
+          {/* ZIP PROMPT — logged-in user with no ZIP saved */}
+          {user && !profile?.zip_code && !zipDismissed && (
+            <div style={{ maxWidth: 560, margin: "0 auto", padding: "0 24px 0" }}>
+              <ZipPrompt
+                context="feed"
+                onComplete={async () => { await refreshProfile(); setZipDismissed(true); }}
+                onDismiss={() => setZipDismissed(true)}
+              />
+            </div>
+          )}
 
           {/* HOW IT WORKS */}
           <div style={{

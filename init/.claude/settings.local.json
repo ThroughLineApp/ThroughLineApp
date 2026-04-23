@@ -19,7 +19,13 @@
       "Bash(node -e \":*)",
       "Bash(/c/Users/mrhea/AppData/Local/Programs/Python/Python313/python enrich_pac_dimensions.py)",
       "Bash(node pipeline_fec.js --single \"Mitch McConnell\")",
-      "Bash(node enrich_pac_names.js)"
+      "Bash(node enrich_pac_names.js)",
+      "Read(//c/Users/mrhea/Downloads/**)",
+      "Bash(pandoc --track-changes=all \"Throughline_Product_Bible_v3.docx\" -o \"C:\\\\Users\\\\mrhea\\\\Downloads\\\\product_bible.md\")",
+      "Bash(python -c ':*)",
+      "Read(//c/Users/mrhea/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/d4955525-e629-4601-9c35-41514743179d/8c749b8e-1878-41fb-ae17-cb0886035345/skills/docx/**)",
+      "Bash(pandoc --track-changes=all \"C:/Users/mrhea/Downloads/Throughline_Handoff_v13.docx\" -o /tmp/handoff.md)",
+      "Bash(pandoc --track-changes=all \"C:/Users/mrhea/Downloads/Throughline_ReceiptCard_Redesign_Spec.docx\" -o /tmp/receipt_spec.md)"
     ]
   }
 }

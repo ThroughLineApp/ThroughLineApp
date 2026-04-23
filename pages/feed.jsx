@@ -435,6 +435,7 @@ export default function FeedPage() {
                 onSave={handleSave}
                 onShare={handleShare}
                 onCallScript={handleCallScript}
+                isMyRep={!!(profile?.my_reps?.includes(item.bioguide_id))}
               />
             );
           })}
