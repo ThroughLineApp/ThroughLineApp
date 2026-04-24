@@ -132,14 +132,15 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
       <div style={{flexShrink:0,padding:"6px 16px 2px"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
           <button onClick={handleBack} style={{fontFamily:"Arial",fontSize:12,color:"#9A9488",background:"none",border:"none",cursor:"pointer",padding:"4px 0",touchAction:"manipulation",visibility:qIndex>0?"visible":"hidden"}}>← Back</button>
-          <button onClick={()=>router.push("/feed")} style={{fontFamily:"Arial Black",fontSize:11,letterSpacing:"0.2em",color:C.gold,background:"none",border:"none",cursor:"pointer",textAlign:"center",touchAction:"manipulation"}}>THROUGHLINE</button>
+          <div style={{display:"flex",justifyContent:"center",alignItems:"center",flex:1}}>
+            <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"3px 10px",borderRadius:20,background:dc+"14",border:`1px solid ${dc}30`}}>
+              <span style={{fontSize:13,color:dc}}>{DIMENSION_ICONS[q.dimension]}</span>
+              <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:9,letterSpacing:"0.2em",color:dc,textTransform:"uppercase"}}>{q.label}</span>
+            </div>
+          </div>
           <span style={{fontFamily:"'Figtree',sans-serif",fontSize:12,color:C.parchmentDim,textAlign:"right"}}>{qIndex+1} of {total}</span>
         </div>
         <ProgressBar current={qIndex+1} total={total} skipped={skippedCount} level={level}/>
-        <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"3px 10px",borderRadius:20,background:dc+"14",border:`1px solid ${dc}30`,marginTop:8,marginBottom:1}}>
-          <span style={{fontSize:13,color:dc}}>{DIMENSION_ICONS[q.dimension]}</span>
-          <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:9,letterSpacing:"0.2em",color:dc,textTransform:"uppercase"}}>{q.label}</span>
-        </div>
       </div>
 
       {/* ZONE 2 — Content */}
@@ -190,6 +191,18 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
           <div
             style={{background:"#111318",borderRadius:12,padding:24,margin:24,maxWidth:480,width:"100%",animation:"popIn 0.2s ease forwards"}}
             onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",gap:10,marginBottom:16}}>
+              <button
+                onClick={()=>{if(!nuanceText.trim()){setNuanceError(true);return;}setSel("own");setOwnText(nuanceText);setNuanceError(false);setNuanceOpen(false);}}
+                style={{flex:1,fontFamily:"Arial Black",fontSize:13,color:"#0A0B0D",background:C.gold,border:"none",borderRadius:8,padding:"12px 16px",cursor:"pointer",letterSpacing:"0.04em"}}>
+                USE THIS RESPONSE →
+              </button>
+              <button
+                onClick={()=>{setNuanceText("");setNuanceError(false);setNuanceOpen(false);}}
+                style={{flex:0,fontFamily:"Arial Black",fontSize:13,color:C.gold,background:"transparent",border:`1px solid ${C.goldBorder}`,borderRadius:8,padding:"12px 16px",cursor:"pointer",whiteSpace:"nowrap"}}>
+                CANCEL
+              </button>
+            </div>
             <div style={{fontFamily:"Arial Black",fontSize:15,color:C.gold,marginBottom:16}}>Add your own response</div>
             <textarea
               placeholder="Type your response or add nuance..."
@@ -200,18 +213,6 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
               style={{width:"100%",minHeight:100,background:"#181C22",border:`1px solid ${nuanceError?"#c94c4c":"rgba(201,168,76,0.3)"}`,borderRadius:8,color:"#F0ECE4",fontSize:14,padding:12,fontFamily:"Arial",lineHeight:1.5,resize:"vertical",boxSizing:"border-box"}}
             />
             {nuanceError&&<div style={{fontFamily:"Arial",fontSize:12,color:"#c94c4c",marginTop:6}}>Please write something before submitting.</div>}
-            <div style={{display:"flex",gap:10,marginTop:14}}>
-              <button
-                onClick={()=>{setNuanceText("");setNuanceError(false);setNuanceOpen(false);}}
-                style={{flex:1,fontFamily:"Arial",fontWeight:600,fontSize:13,color:C.gold,background:"transparent",border:`1px solid ${C.goldBorder}`,borderRadius:8,padding:"11px 0",cursor:"pointer"}}>
-                CANCEL
-              </button>
-              <button
-                onClick={()=>{if(!nuanceText.trim()){setNuanceError(true);return;}setSel("own");setOwnText(nuanceText);setNuanceError(false);setNuanceOpen(false);}}
-                style={{flex:2,fontFamily:"Arial Black",fontSize:13,color:"#0A0B0D",background:C.gold,border:"none",borderRadius:8,padding:"11px 0",cursor:"pointer",letterSpacing:"0.04em"}}>
-                USE THIS RESPONSE →
-              </button>
-            </div>
           </div>
         </div>
       )}
