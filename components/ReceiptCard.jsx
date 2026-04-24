@@ -257,7 +257,15 @@ export default function ReceiptCard({ event, isMyRep = false }) {
   }
 
   const handleCardClick = () => {
-    if (politician_slug) router.push(`/politician/${politician_slug}`);
+    if (politician_slug) {
+      router.push(`/politician/${politician_slug}`);
+    } else if (politician_name) {
+      const fallbackSlug = politician_name
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+      router.push(`/politician/${fallbackSlug}`);
+    }
   };
 
   const handleShare = (e) => {

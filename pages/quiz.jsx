@@ -76,7 +76,7 @@ function shuffle(a){return[...a].sort(()=>Math.random()-0.5);}
 function buildL2(l1Scores){return DIMS.map(dim=>{const band=getScoreBand(l1Scores[dim]??50);const q=L2_QUESTIONS[dim][band];return{id:`l2_${dim}`,dimension:dim,label:q.label,scenario:q.scenario,question:q.question,answers:shuffle(q.answers)};});}
 function profileLabel(scores){return"Your Political Thumbprint";}
 
-function ThumbprintSVG({scores,size=280,animate=true}){
+function ThumbprintSVG({scores,size=160,animate=true}){
   const cx=size/2,cy=size/2,r=size*0.40;
   const pt=(i,rr)=>{const a=(Math.PI*2*i)/DIMS.length-Math.PI/2;return[cx+rr*Math.cos(a),cy+rr*Math.sin(a)];};
   const pts=DIMS.map((dim,i)=>{const rr=((scores[dim]??50)/100)*r;return pt(i,rr);});
@@ -142,8 +142,8 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
         <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:14,marginTop:20}}>
           {q.answers.map((ans,i)=>(
             <button key={i} className={`answer-btn${sel===i?" selected":""}`}
-              onClick={()=>{setSel(i);setWriteOwn(false);setOwnText("");}}
-              style={{width:"100%",textAlign:"left",fontFamily:"'Figtree',sans-serif",fontWeight:sel===i?600:400,fontSize:14,color:sel===i?C.parchment:C.parchmentDim,background:sel===i?"rgba(201,168,76,0.1)":C.bgCard,border:`1.5px solid ${sel===i?C.gold:"rgba(201,168,76,0.1)"}`,borderRadius:4,padding:"14px 16px",cursor:"pointer",lineHeight:1.6,touchAction:"manipulation"}}>
+              onPointerDown={(e)=>{e.preventDefault();setSel(i);setWriteOwn(false);setOwnText("");}}
+              style={{width:"100%",textAlign:"left",fontFamily:"'Figtree',sans-serif",fontWeight:sel===i?600:400,fontSize:14,color:sel===i?C.parchment:C.parchmentDim,background:sel===i?"rgba(201,168,76,0.1)":C.bgCard,border:`1.5px solid ${sel===i?C.gold:"rgba(201,168,76,0.1)"}`,borderRadius:4,padding:"14px 16px",cursor:"pointer",lineHeight:1.6,touchAction:"manipulation",userSelect:"none",WebkitUserSelect:"none"}}>
               <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:11,color:sel===i?C.gold:"rgba(201,168,76,0.35)",marginRight:10,letterSpacing:"0.06em"}}>{String.fromCharCode(65+i)}</span>
               {ans.text}
             </button>
@@ -646,8 +646,8 @@ export default function QuizPage(){
   if(phase==="l1_results")return(<><Head><title>Your Political Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l1Scores} matches={l1Matches} onStartL2={startL2} onRetake={handleRetake} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={1}/></>);
   if(phase==="l2_results")return(<><Head><title>Your Refined Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l2Scores} matches={l1Matches} onStartL2={null} onRetake={handleRetake} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={2}/></>);
 
-  if(phase==="l1_question"){const q=shuffledL1[l1QIdx];return(<><Head><title>Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{minHeight:"100vh",background:C.bg,color:C.parchment}}><QuestionScreen key={l1QIdx} q={q} qIndex={l1QIdx} total={shuffledL1.length} level={1} onAnswer={handleL1Answer} onBack={handleL1Back} onSkip={handleL1Skip} skippedCount={l1Skipped} previousAnswer={l1AnswerIndices[shuffledL1[l1QIdx]?.dimension]??null}/></div></>);}
-  if(phase==="l2_question"){const q=l2Questions[l2QIdx];return(<><Head><title>Level 2 Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{minHeight:"100vh",background:C.bg,color:C.parchment}}><QuestionScreen key={`l2-${l2QIdx}`} q={q} qIndex={l2QIdx} total={l2Questions.length} level={2} onAnswer={handleL2Answer} onBack={handleL2Back} onSkip={handleL2Skip} skippedCount={l2Skipped} previousAnswer={l2AnswerIndices[l2Questions[l2QIdx]?.dimension]??null}/></div></>);}
+  if(phase==="l1_question"){const q=shuffledL1[l1QIdx];return(<><Head><title>Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100vh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment,overflowY:"auto"}}><QuestionScreen key={l1QIdx} q={q} qIndex={l1QIdx} total={shuffledL1.length} level={1} onAnswer={handleL1Answer} onBack={handleL1Back} onSkip={handleL1Skip} skippedCount={l1Skipped} previousAnswer={l1AnswerIndices[shuffledL1[l1QIdx]?.dimension]??null}/></div></>);}
+  if(phase==="l2_question"){const q=l2Questions[l2QIdx];return(<><Head><title>Level 2 Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100vh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment,overflowY:"auto"}}><QuestionScreen key={`l2-${l2QIdx}`} q={q} qIndex={l2QIdx} total={l2Questions.length} level={2} onAnswer={handleL2Answer} onBack={handleL2Back} onSkip={handleL2Skip} skippedCount={l2Skipped} previousAnswer={l2AnswerIndices[l2Questions[l2QIdx]?.dimension]??null}/></div></>);}
 
   return null;
 }

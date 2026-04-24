@@ -26,21 +26,58 @@ const STYLES = `
 
 export default function ZipPrompt({ context = "feed", onComplete, onDismiss }) {
   const { user } = useAuth();
-  const [zip, setZip]         = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState(null);
-  const [reps, setReps]       = useState(null); // null = not yet submitted
+  const [zip, setZip]             = useState("");
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState(null);
+  const [reps, setReps]           = useState(null); // null = not yet submitted
+  const [geoLoading, setGeoLoading] = useState(false);
 
   const subtitle  = COPY[context] || COPY.feed;
   const showSkip  = context !== "signup" && context !== "script";
 
-  const handleSubmit = async () => {
-    if (zip.length < 5) { setError("Enter a 5-digit ZIP code."); return; }
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) { setError("Geolocation not supported on this device."); return; }
+    setGeoLoading(true);
+    setError(null);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+            { headers: { "Accept-Language": "en" } }
+          );
+          const data = await res.json();
+          const detectedZip = data?.address?.postcode?.slice(0, 5) || "";
+          if (!detectedZip || detectedZip.length < 5) {
+            setError("Couldn't detect your ZIP. Please enter it manually.");
+            setGeoLoading(false);
+            return;
+          }
+          setZip(detectedZip);
+          setGeoLoading(false);
+          setTimeout(() => handleSubmit(detectedZip), 800);
+        } catch {
+          setError("Location lookup failed. Please enter your ZIP manually.");
+          setGeoLoading(false);
+        }
+      },
+      () => {
+        setError("Location access denied. Please enter your ZIP manually.");
+        setGeoLoading(false);
+      },
+      { timeout: 8000 }
+    );
+  };
+
+  const handleSubmit = async (overrideZip) => {
+    const zipToUse = overrideZip || zip;
+    if (zipToUse.length < 5) { setError("Enter a 5-digit ZIP code."); return; }
     setError(null);
     setLoading(true);
 
     try {
-      const body = { zip_code: zip };
+      const body = { zip_code: zipToUse };
       if (user?.id) body.user_id = user.id;
 
       const res  = await fetch("/api/call/save-zip", {
@@ -61,7 +98,7 @@ export default function ZipPrompt({ context = "feed", onComplete, onDismiss }) {
 
       // Show success briefly, then call onComplete
       setTimeout(() => {
-        onComplete?.({ zip, reps: data.reps || [] });
+        onComplete?.({ zip: zipToUse, reps: data.reps || [] });
       }, 1200);
     } catch {
       setError("Something went wrong. Please try again.");
@@ -105,13 +142,19 @@ export default function ZipPrompt({ context = "feed", onComplete, onDismiss }) {
         className="zip-prompt-input"
         type="text"
         inputMode="numeric"
+        pattern="[0-9]*"
         maxLength={5}
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck="false"
         value={zip}
         placeholder="Enter ZIP code"
         onChange={e => {
           setZip(e.target.value.replace(/\D/g, "").slice(0, 5));
           setError(null);
         }}
+        onBlur={zip.length < 5 ? (e => e.target.focus()) : undefined}
         onKeyDown={e => e.key === "Enter" && !loading && handleSubmit()}
         style={{
           width:        "100%",
@@ -138,6 +181,30 @@ export default function ZipPrompt({ context = "feed", onComplete, onDismiss }) {
         }}>
           {error}
         </div>
+      )}
+
+      {/* Detect location link */}
+      {reps === null && !loading && (
+        <button
+          onClick={handleDetectLocation}
+          disabled={geoLoading}
+          style={{
+            background:     "none",
+            border:         "none",
+            fontFamily:     "Arial",
+            fontSize:       12,
+            color:          geoLoading ? C.text2 : C.gold,
+            cursor:         geoLoading ? "default" : "pointer",
+            display:        "block",
+            textAlign:      "center",
+            width:          "100%",
+            marginBottom:   10,
+            padding:        "2px 0",
+            textDecoration: "underline",
+          }}
+        >
+          {geoLoading ? "Detecting location…" : "📍 Use my location automatically"}
+        </button>
       )}
 
       {/* Success state */}
