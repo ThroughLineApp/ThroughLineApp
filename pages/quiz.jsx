@@ -117,10 +117,11 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
   const[animDir,setAnimDir]=useState("forward");
   const[pointerMoved,setPointerMoved]=useState(false);
   const[pointerStartY,setPointerStartY]=useState(0);
-  const canProceed=sel!==null||(writeOwn&&ownText.trim().length>0);
+  const[nuanceError,setNuanceError]=useState(false);
+  const canProceed=sel!==null||(writeOwn&&ownText.trim().length>0)||sel==="own"||(nuanceText&&nuanceText.trim().length>0);
   const dc=DIMENSION_COLORS[q.dimension];
   const go=(dir,fn)=>{if(anim)return;setAnimDir(dir);setAnim(true);setTimeout(()=>{fn();setAnim(false);},280);};
-  const handleNext=()=>{if(!canProceed)return;const score=writeOwn?50:q.answers[sel].score;const wt=writeOwn?ownText.trim():(nuanceText.trim()||null);const ansIdx=writeOwn?null:sel;go("forward",()=>onAnswer(q.dimension,score,wt,ansIdx));};
+  const handleNext=()=>{if(!canProceed)return;const isOwn=writeOwn||sel==="own";const score=isOwn?50:q.answers[sel].score;const wt=isOwn?ownText.trim():(nuanceText.trim()||null);const ansIdx=isOwn?null:sel;go("forward",()=>onAnswer(q.dimension,score,wt,ansIdx));};
   const handleBack=()=>{if(qIndex===0)return;go("back",()=>onBack());};
   const handleSkip=()=>{if(skippedCount>=MAX_SKIPS){setSkipWarn(true);return;}go("forward",()=>onSkip(q.dimension));};
   const animStyle=anim?{animation:`${animDir==="forward"?"fadeSlideOut":"fadeSlideIn"} 0.28s ease forwards`}:{animation:`${animDir==="back"?"fadeSlideBack":"fadeSlideIn"} 0.32s ease forwards`};
@@ -142,19 +143,19 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
       </div>
 
       {/* ZONE 2 — Content */}
-      <div style={{flex:1,overflow:"hidden",padding:"0 16px 8px"}}>
+      <div style={{flex:1,overflow:"hidden",padding:"0 16px 8px"}} onTouchMove={(e)=>e.stopPropagation()}>
         <div style={animStyle}>
           <div style={{background:C.bgCard,borderLeft:`3px solid ${dc}`,borderRadius:"0 4px 4px 0",padding:"6px 10px",marginBottom:6}}>
-            <p style={{fontFamily:"'Figtree',sans-serif",fontSize:12,color:C.parchmentDim,lineHeight:1.3,marginBottom:4}}>{q.scenario}</p>
-            <p style={{fontFamily:"'Figtree',sans-serif",fontWeight:700,fontSize:15,color:C.parchment,lineHeight:1.2}}>{q.question}</p>
+            <p style={{fontFamily:"'Figtree',sans-serif",fontSize:13,color:C.parchmentDim,lineHeight:1.35,marginBottom:4}}>{q.scenario}</p>
+            <p style={{fontFamily:"'Figtree',sans-serif",fontWeight:700,fontSize:17,color:C.parchment,lineHeight:1.3}}>{q.question}</p>
           </div>
-          <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:8,marginTop:6}}>
+          <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:8,marginTop:6}}>
             {q.answers.map((ans,i)=>(
               <button key={i} className={`answer-btn${sel===i?" selected":""}`}
-                onPointerDown={(e)=>{setPointerMoved(false);setPointerStartY(e.clientY);}}
+                onPointerDown={(e)=>{setPointerMoved(false);setPointerStartY(e.clientY);e.currentTarget.releasePointerCapture(e.pointerId);}}
                 onPointerMove={(e)=>{if(Math.abs(e.clientY-pointerStartY)>8){setPointerMoved(true);}}}
                 onPointerUp={(e)=>{if(!pointerMoved){e.preventDefault();setSel(i);setWriteOwn(false);setOwnText("");}}}
-                style={{width:"100%",textAlign:"left",fontFamily:"'Figtree',sans-serif",fontWeight:sel===i?600:400,fontSize:13,color:sel===i?C.parchment:C.parchmentDim,background:sel===i?"rgba(201,168,76,0.1)":C.bgCard,border:`1.5px solid ${sel===i?C.gold:"rgba(201,168,76,0.1)"}`,borderRadius:4,padding:"7px 10px",cursor:"pointer",lineHeight:1.25,touchAction:"none",userSelect:"none",WebkitUserSelect:"none",WebkitTapHighlightColor:"transparent",WebkitTouchCallout:"none",outline:"none"}}>
+                style={{width:"100%",textAlign:"left",fontFamily:"'Figtree',sans-serif",fontWeight:sel===i?600:400,fontSize:15,color:sel===i?C.parchment:C.parchmentDim,background:sel===i?"rgba(201,168,76,0.1)":C.bgCard,border:`1.5px solid ${sel===i?C.gold:"rgba(201,168,76,0.1)"}`,borderRadius:4,padding:"9px 12px",cursor:"pointer",lineHeight:1.35,touchAction:"none",userSelect:"none",WebkitUserSelect:"none",MozUserSelect:"none",WebkitTapHighlightColor:"transparent",WebkitTouchCallout:"none",outline:"none"}}>
                 <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:11,color:sel===i?C.gold:"rgba(201,168,76,0.35)",marginRight:10,letterSpacing:"0.06em"}}>{String.fromCharCode(65+i)}</span>
                 {ans.text}
               </button>
@@ -185,7 +186,7 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
       {nuanceOpen&&(
         <div
           style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center"}}
-          onClick={()=>{setNuanceText("");setNuanceOpen(false);}}>
+          onClick={()=>{setNuanceText("");setNuanceError(false);setNuanceOpen(false);}}>
           <div
             style={{background:"#111318",borderRadius:12,padding:24,margin:24,maxWidth:480,width:"100%",animation:"popIn 0.2s ease forwards"}}
             onClick={e=>e.stopPropagation()}>
@@ -193,19 +194,20 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
             <textarea
               placeholder="Type your response or add nuance..."
               value={nuanceText}
-              onChange={e=>setNuanceText(e.target.value)}
+              onChange={e=>{setNuanceText(e.target.value);if(nuanceError)setNuanceError(false);}}
               rows={4}
               autoFocus
-              style={{width:"100%",minHeight:100,background:"#181C22",border:"1px solid rgba(201,168,76,0.3)",borderRadius:8,color:"#F0ECE4",fontSize:14,padding:12,fontFamily:"Arial",lineHeight:1.5,resize:"vertical",boxSizing:"border-box"}}
+              style={{width:"100%",minHeight:100,background:"#181C22",border:`1px solid ${nuanceError?"#c94c4c":"rgba(201,168,76,0.3)"}`,borderRadius:8,color:"#F0ECE4",fontSize:14,padding:12,fontFamily:"Arial",lineHeight:1.5,resize:"vertical",boxSizing:"border-box"}}
             />
+            {nuanceError&&<div style={{fontFamily:"Arial",fontSize:12,color:"#c94c4c",marginTop:6}}>Please write something before submitting.</div>}
             <div style={{display:"flex",gap:10,marginTop:14}}>
               <button
-                onClick={()=>{setNuanceText("");setNuanceOpen(false);}}
+                onClick={()=>{setNuanceText("");setNuanceError(false);setNuanceOpen(false);}}
                 style={{flex:1,fontFamily:"Arial",fontWeight:600,fontSize:13,color:C.gold,background:"transparent",border:`1px solid ${C.goldBorder}`,borderRadius:8,padding:"11px 0",cursor:"pointer"}}>
                 CANCEL
               </button>
               <button
-                onClick={()=>{if(sel===null){setOwnText(nuanceText);setWriteOwn(true);}setNuanceOpen(false);}}
+                onClick={()=>{if(!nuanceText.trim()){setNuanceError(true);return;}setSel("own");setOwnText(nuanceText);setNuanceError(false);setNuanceOpen(false);}}
                 style={{flex:2,fontFamily:"Arial Black",fontSize:13,color:"#0A0B0D",background:C.gold,border:"none",borderRadius:8,padding:"11px 0",cursor:"pointer",letterSpacing:"0.04em"}}>
                 USE THIS RESPONSE →
               </button>
