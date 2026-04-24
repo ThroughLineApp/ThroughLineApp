@@ -129,7 +129,7 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
   const isLongQuestion=q.question?.length>80;
   const isLongScenario=q.scenario?.length>120;
   return(
-    <div style={{height:"100vh",display:"flex",flexDirection:"column",maxWidth:600,margin:"0 auto"}}>
+    <div style={{height:"100%",overflow:"hidden",display:"flex",flexDirection:"column",maxWidth:600,margin:"0 auto"}}>
 
       {/* ZONE 1 — Header */}
       <div style={{flexShrink:0,padding:"12px 20px 8px"}}>
@@ -144,17 +144,17 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
       </div>
 
       {/* ZONE 2 — Scrollable content */}
-      <div style={{flex:1,overflowY:"auto",padding:"0 20px 16px"}}>
+      <div style={{flex:1,overflow:"hidden",padding:"0 20px 16px"}}>
         <div style={animStyle}>
           <div style={{background:C.bgCard,borderLeft:`3px solid ${dc}`,borderRadius:"0 4px 4px 0",padding:isLongScenario?"12px 16px":"16px 20px",marginBottom:8}}>
             <p style={{fontFamily:"'Figtree',sans-serif",fontSize:isLongScenario?13:15,color:C.parchmentDim,lineHeight:1.7,marginBottom:isLongScenario?6:10}}>{q.scenario}</p>
-            <p style={{fontFamily:"'Figtree',sans-serif",fontWeight:700,fontSize:isLongQuestion?16:19,color:C.parchment,lineHeight:1.35}}>{q.question}</p>
+            <p style={{fontFamily:"'Figtree',sans-serif",fontWeight:700,fontSize:isLongQuestion?16:17,color:C.parchment,lineHeight:1.3}}>{q.question}</p>
           </div>
-          <div style={{display:"flex",flexDirection:"column",gap:answerCount>=5?7:9,marginBottom:14,marginTop:isLongScenario||isLongQuestion?12:20}}>
+          <div style={{display:"flex",flexDirection:"column",gap:answerCount>=5?7:6,marginBottom:14,marginTop:isLongScenario||isLongQuestion?12:20}}>
             {q.answers.map((ans,i)=>(
               <button key={i} className={`answer-btn${sel===i?" selected":""}`}
                 onPointerDown={(e)=>{e.preventDefault();setSel(i);setWriteOwn(false);setOwnText("");}}
-                style={{width:"100%",textAlign:"left",fontFamily:"'Figtree',sans-serif",fontWeight:sel===i?600:400,fontSize:answerCount>=5&&isLongQuestion?13:14,color:sel===i?C.parchment:C.parchmentDim,background:sel===i?"rgba(201,168,76,0.1)":C.bgCard,border:`1.5px solid ${sel===i?C.gold:"rgba(201,168,76,0.1)"}`,borderRadius:4,padding:answerCount>=5?"11px 14px":"14px 16px",cursor:"pointer",lineHeight:1.6,touchAction:"manipulation",userSelect:"none",WebkitUserSelect:"none"}}>
+                style={{width:"100%",textAlign:"left",fontFamily:"'Figtree',sans-serif",fontWeight:sel===i?600:400,fontSize:answerCount>=5&&isLongQuestion?13:13,color:sel===i?C.parchment:C.parchmentDim,background:sel===i?"rgba(201,168,76,0.1)":C.bgCard,border:`1.5px solid ${sel===i?C.gold:"rgba(201,168,76,0.1)"}`,borderRadius:4,padding:answerCount>=5?"11px 14px":"10px 12px",cursor:"pointer",lineHeight:1.6,touchAction:"manipulation",userSelect:"none",WebkitUserSelect:"none"}}>
                 <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:11,color:sel===i?C.gold:"rgba(201,168,76,0.35)",marginRight:10,letterSpacing:"0.06em"}}>{String.fromCharCode(65+i)}</span>
                 {ans.text}
               </button>
