@@ -1,14 +1,17 @@
 // pages/api/call/bills-for-rep.js
-// GET ?bioguide=X&chamber=senate|house
-// Returns up to 8 recent bills the member voted on, with dimension tagging.
+// GET ?bioguide=X
+// Returns up to 8 bills for a member.
+// SOURCE 1: our own throughline_events table (preferred — real vote data)
+// SOURCE 2: Congress.gov sponsored-legislation (fallback supplement if <3 results)
 
-const CONGRESS_BASE = "https://api.congress.gov/v3";
+import { createClient } from "@supabase/supabase-js";
 
-// ── In-memory cache: { [bioguide]: { data, fetchedAt } } ─────────────────────
-const _cache = {};
-const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
-// ── Procedural vote titles to filter out ─────────────────────────────────────
+// ── Procedural titles to filter out ──────────────────────────────────────────
 const PROCEDURAL = [
   "cloture",
   "motion to proceed",
@@ -16,6 +19,11 @@ const PROCEDURAL = [
   "on the conference report",
   "quorum",
 ];
+
+function isProcedural(title = "") {
+  const t = title.toLowerCase();
+  return PROCEDURAL.some(p => t.includes(p));
+}
 
 // ── Dimension keyword mapping ─────────────────────────────────────────────────
 function guessDimension(title = "") {
@@ -34,86 +42,94 @@ function guessDimension(title = "") {
   return "economic";
 }
 
-function isProcedural(title = "") {
-  const t = title.toLowerCase();
-  return PROCEDURAL.some(p => t.includes(p));
-}
+// ── SOURCE 1: throughline_events via Supabase ─────────────────────────────────
+async function fromThroughlineEvents(bioguide) {
+  // First resolve politician_id from bioguide_id
+  const { data: polRow, error: polErr } = await supabase
+    .from("politicians")
+    .select("id")
+    .eq("bioguide_id", bioguide)
+    .limit(1)
+    .single();
 
-async function fetchBillsForRep(bioguide) {
-  const now = Date.now();
-  if (_cache[bioguide] && now - _cache[bioguide].fetchedAt < CACHE_TTL) {
-    return _cache[bioguide].data;
+  if (polErr || !polRow) {
+    throw new Error(`No politician found for bioguide ${bioguide}`);
   }
 
-  const apiKey = process.env.CONGRESS_API_KEY;
-  if (!apiKey) throw new Error("CONGRESS_API_KEY not set");
+  const politicianId = polRow.id;
 
-  const url = `${CONGRESS_BASE}/member/${bioguide}/votes?limit=20&api_key=${apiKey}`;
+  // Fetch distinct bills voted on by this politician
+  const { data, error } = await supabase
+    .from("throughline_events")
+    .select("bill_id, bill_name, vote_date, how_voted, dimension, vote_impact, relevant_excerpt")
+    .eq("politician_id", politicianId)
+    .not("bill_id", "is", null)
+    .not("bill_name", "is", null)
+    .order("vote_date", { ascending: false })
+    .limit(30); // fetch extra, deduplicate below
+
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) return [];
+
+  // Deduplicate by bill_id — keep most recent vote per bill
+  const seen = new Set();
+  const bills = [];
+  for (const row of data) {
+    if (seen.has(row.bill_id)) continue;
+    seen.add(row.bill_id);
+
+    // Attempt a congress.gov URL if the bill_id looks like a slug
+    const billUrl = row.bill_id && /[a-z]/.test(row.bill_id)
+      ? `https://congress.gov/bill/${row.bill_id}`
+      : null;
+
+    bills.push({
+      bill_id:     row.bill_id,
+      title:       row.bill_name,
+      short_title: row.bill_name,
+      summary:     row.vote_impact || null,
+      vote_date:   row.vote_date,
+      how_voted:   row.how_voted,
+      dimension:   row.dimension || guessDimension(row.bill_name),
+      bill_url:    billUrl,
+      source:      "throughline",
+    });
+
+    if (bills.length >= 15) break;
+  }
+
+  return bills;
+}
+
+// ── SOURCE 2: Congress.gov sponsored legislation ──────────────────────────────
+async function fromSponsoredLegislation(bioguide) {
+  const apiKey = process.env.CONGRESS_API_KEY;
+  if (!apiKey) return []; // no key → skip silently
+
+  const url = `https://api.congress.gov/v3/member/${bioguide}/sponsored-legislation?limit=10&api_key=${apiKey}`;
   const res = await fetch(url, { headers: { Accept: "application/json" } });
 
   if (!res.ok) {
-    throw new Error(`Congress API returned ${res.status} for member ${bioguide}`);
+    console.warn(`[bills-for-rep] Congress.gov sponsored-legislation returned ${res.status}`);
+    return [];
   }
 
   const json = await res.json();
-  const voteItems = json?.votes || [];
+  const items = json?.sponsoredLegislation || [];
 
-  // Deduplicate by bill_id, filter procedural, build bill objects
-  const seen = new Set();
-  const bills = [];
-
-  for (const item of voteItems) {
-    // Congress API vote record shape varies — normalize what we can
-    const title =
-      item.description ||
-      item.question ||
-      item.bill?.title ||
-      item.amendment?.description ||
-      "";
-
-    if (!title || isProcedural(title)) continue;
-
-    // Build a stable bill_id
-    const billNumber = item.bill?.number || "";
-    const billType   = item.bill?.type   || "";
-    const congress   = item.congress     || item.bill?.congress || "";
-    const bill_id    = billNumber && congress
-      ? `${billType.toLowerCase()}${billNumber}-${congress}`
-      : `vote-${item.rollCall || Math.random().toString(36).slice(2)}`;
-
-    if (seen.has(bill_id)) continue;
-    seen.add(bill_id);
-
-    const billUrl =
-      item.bill?.url ||
-      (billNumber && congress
-        ? `https://www.congress.gov/bill/${congress}th-congress/${billType.toLowerCase()}-bill/${billNumber}`
-        : null);
-
-    bills.push({
-      bill_id,
-      title,
-      short_title: item.bill?.title || title,
-      summary: item.description || null,
-      vote_date:  item.date || null,
-      how_voted:  item.memberVoted || item.voted || null,
-      congress:   String(congress),
-      bill_url:   billUrl,
-      dimension:  guessDimension(title),
-    });
-
-    if (bills.length >= 8) break;
-  }
-
-  // Sort descending by vote_date
-  bills.sort((a, b) => {
-    if (!a.vote_date) return 1;
-    if (!b.vote_date) return -1;
-    return new Date(b.vote_date) - new Date(a.vote_date);
-  });
-
-  _cache[bioguide] = { data: bills, fetchedAt: now };
-  return bills;
+  return items
+    .filter(item => item.title && !isProcedural(item.title))
+    .map(item => ({
+      bill_id:     `${item.number || ""}-${item.type || ""}`.toLowerCase(),
+      title:       item.title,
+      short_title: item.title,
+      summary:     item.latestAction?.text || null,
+      vote_date:   item.introducedDate || null,
+      how_voted:   "SPONSORED",
+      dimension:   guessDimension(item.title),
+      bill_url:    item.url || null,
+      source:      "congress",
+    }));
 }
 
 // ── API handler ───────────────────────────────────────────────────────────────
@@ -127,11 +143,52 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "bioguide query param is required" });
   }
 
+  let throughlineBills = [];
+  let supplementBills  = [];
+
+  // ── SOURCE 1 ──────────────────────────────────────────────────────────────
   try {
-    const bills = await fetchBillsForRep(bioguide);
-    return res.status(200).json({ bills });
+    throughlineBills = await fromThroughlineEvents(bioguide);
   } catch (err) {
-    console.error("[bills-for-rep] error:", err.message);
-    return res.status(500).json({ error: "Could not fetch bills" });
+    console.error("[bills-for-rep] throughline_events error:", err.message);
+    // Fall through — will try SOURCE 2 below
   }
+
+  // ── SOURCE 2 (only if throughline returned < 3) ──────────────────────────
+  if (throughlineBills.length < 3) {
+    try {
+      supplementBills = await fromSponsoredLegislation(bioguide);
+    } catch (err) {
+      console.error("[bills-for-rep] Congress.gov error:", err.message);
+    }
+  }
+
+  // ── Combine + deduplicate ─────────────────────────────────────────────────
+  if (throughlineBills.length === 0 && supplementBills.length === 0) {
+    return res.status(200).json({ bills: [], empty: true });
+  }
+
+  const seen = new Set(throughlineBills.map(b => b.bill_id));
+  const combined = [...throughlineBills];
+
+  for (const bill of supplementBills) {
+    if (!seen.has(bill.bill_id)) {
+      seen.add(bill.bill_id);
+      combined.push(bill);
+    }
+    if (combined.length >= 8) break;
+  }
+
+  // Sort throughline bills by vote_date DESC; sponsored appended after
+  const throughline = combined.filter(b => b.source === "throughline")
+    .sort((a, b) => {
+      if (!a.vote_date) return 1;
+      if (!b.vote_date) return -1;
+      return new Date(b.vote_date) - new Date(a.vote_date);
+    });
+  const sponsored = combined.filter(b => b.source === "congress");
+
+  const bills = [...throughline, ...sponsored].slice(0, 8);
+
+  return res.status(200).json({ bills });
 }
