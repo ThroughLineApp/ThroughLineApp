@@ -610,7 +610,7 @@ export default function QuizPage(){
     <>
       <Head><title>Your Political Thumbprint · Throughline</title></Head>
       <style>{GLOBAL_STYLES}</style>
-      <div style={{minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 24px",textAlign:"center"}}>
+      <div style={{height:"100vh",overflow:"hidden",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 24px",textAlign:"center"}}>
         <div style={{position:"fixed",top:"28%",left:"50%",transform:"translateX(-50%)",width:600,height:400,background:"radial-gradient(ellipse,rgba(201,168,76,0.04) 0%,transparent 70%)",pointerEvents:"none"}}/>
         <div style={{maxWidth:520,animation:"fadeSlideIn 0.6s ease forwards"}}>
           <button onClick={()=>router.push("/")} style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:12,letterSpacing:"0.2em",color:C.gold,background:"none",border:"none",cursor:"pointer",marginBottom:44}}>← THROUGHLINE</button>
@@ -621,10 +621,7 @@ export default function QuizPage(){
           <p style={{fontFamily:"'Figtree',sans-serif",fontSize:15,color:C.parchmentDim,lineHeight:1.8,marginBottom:12}}>12 real-world scenarios. No political jargon. No right or wrong answers.<br/>We'll map your beliefs across 12 policy dimensions and show you which members of Congress actually represent your values.</p>
           <p style={{fontFamily:"'Figtree',sans-serif",fontSize:13,color:C.parchmentDim,lineHeight:1.6,marginBottom:40,opacity:0.65}}>No ideology labels. Just your thumbprint.</p>
           <button onClick={()=>setPhase("l1_question")} style={{fontFamily:"'Figtree',sans-serif",fontWeight:800,fontSize:16,color:C.bg,background:C.gold,border:"none",borderRadius:4,padding:"16px 52px",cursor:"pointer",marginBottom:14,animation:"pulseGold 2.8s ease-in-out infinite"}}>Start the Quiz →</button>
-          <div style={{fontFamily:"'Figtree',sans-serif",fontSize:12,color:C.parchmentDim,opacity:0.65,marginBottom:40}}>~5 minutes · No account required · Skip any question</div>
-          <div style={{margin:"0 auto 0",opacity:0.3}}>
-            <ThumbprintSVG scores={Object.fromEntries(DIMS.map(d=>[d,30+Math.random()*50]))} animate={false} size={210}/>
-          </div>
+          <div style={{fontFamily:"'Figtree',sans-serif",fontSize:12,color:C.parchmentDim,opacity:0.65}}>~5 minutes · No account required · Skip any question</div>
         </div>
       </div>
     </>
@@ -646,8 +643,8 @@ export default function QuizPage(){
   if(phase==="l1_results")return(<><Head><title>Your Political Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l1Scores} matches={l1Matches} onStartL2={startL2} onRetake={handleRetake} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={1}/></>);
   if(phase==="l2_results")return(<><Head><title>Your Refined Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l2Scores} matches={l1Matches} onStartL2={null} onRetake={handleRetake} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={2}/></>);
 
-  if(phase==="l1_question"){const q=shuffledL1[l1QIdx];return(<><Head><title>Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100vh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment,overflowY:"auto"}}><QuestionScreen key={l1QIdx} q={q} qIndex={l1QIdx} total={shuffledL1.length} level={1} onAnswer={handleL1Answer} onBack={handleL1Back} onSkip={handleL1Skip} skippedCount={l1Skipped} previousAnswer={l1AnswerIndices[shuffledL1[l1QIdx]?.dimension]??null}/></div></>);}
-  if(phase==="l2_question"){const q=l2Questions[l2QIdx];return(<><Head><title>Level 2 Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100vh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment,overflowY:"auto"}}><QuestionScreen key={`l2-${l2QIdx}`} q={q} qIndex={l2QIdx} total={l2Questions.length} level={2} onAnswer={handleL2Answer} onBack={handleL2Back} onSkip={handleL2Skip} skippedCount={l2Skipped} previousAnswer={l2AnswerIndices[l2Questions[l2QIdx]?.dimension]??null}/></div></>);}
+  if(phase==="l1_question"){const q=shuffledL1[l1QIdx];return(<><Head><title>Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100vh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment}}><QuestionScreen key={l1QIdx} q={q} qIndex={l1QIdx} total={shuffledL1.length} level={1} onAnswer={handleL1Answer} onBack={handleL1Back} onSkip={handleL1Skip} skippedCount={l1Skipped} previousAnswer={l1AnswerIndices[shuffledL1[l1QIdx]?.dimension]??null}/></div></>);}
+  if(phase==="l2_question"){const q=l2Questions[l2QIdx];return(<><Head><title>Level 2 Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100vh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment}}><QuestionScreen key={`l2-${l2QIdx}`} q={q} qIndex={l2QIdx} total={l2Questions.length} level={2} onAnswer={handleL2Answer} onBack={handleL2Back} onSkip={handleL2Skip} skippedCount={l2Skipped} previousAnswer={l2AnswerIndices[l2Questions[l2QIdx]?.dimension]??null}/></div></>);}
 
   return null;
 }

@@ -281,7 +281,7 @@ export default function Nav() {
               cursor: "pointer", letterSpacing: "0.04em",
               touchAction: "manipulation",
               textAlign: "center",
-            }}>Sign In / Create Account</button>
+            }}>SIGN IN</button>
           </div>
         )}
       </div>
