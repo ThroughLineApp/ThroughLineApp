@@ -97,10 +97,6 @@ function Spinner(){return<div style={{width:42,height:42,borderRadius:"50%",bord
 function ProgressBar({current,total,skipped,level}){
   return(
     <div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-        <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:10,letterSpacing:"0.2em",color:C.gold}}>LEVEL {level}</span>
-        <span style={{fontFamily:"'Figtree',sans-serif",fontSize:12,color:C.parchmentDim}}>{current} of {total}</span>
-      </div>
       <div style={{width:"100%",height:3,background:"rgba(201,168,76,0.08)",borderRadius:2,overflow:"hidden",marginBottom:4}}>
         <div style={{height:"100%",width:`${(current/total)*100}%`,background:C.gold,borderRadius:2,transition:"width 0.4s ease"}}/>
       </div>
@@ -110,69 +106,60 @@ function ProgressBar({current,total,skipped,level}){
 }
 
 function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCount,previousAnswer}){
+  const router=useRouter();
   const[sel,setSel]=useState(previousAnswer??null);
   const[writeOwn,setWriteOwn]=useState(false);
   const[ownText,setOwnText]=useState("");
-  const[deeperOpen,setDeeperOpen]=useState(false);
+  const[nuanceOpen,setNuanceOpen]=useState(false);
   const[nuanceText,setNuanceText]=useState("");
   const[skipWarn,setSkipWarn]=useState(false);
   const[anim,setAnim]=useState(false);
   const[animDir,setAnimDir]=useState("forward");
+  const[pointerMoved,setPointerMoved]=useState(false);
+  const[pointerStartY,setPointerStartY]=useState(0);
   const canProceed=sel!==null||(writeOwn&&ownText.trim().length>0);
   const dc=DIMENSION_COLORS[q.dimension];
   const go=(dir,fn)=>{if(anim)return;setAnimDir(dir);setAnim(true);setTimeout(()=>{fn();setAnim(false);},280);};
-  const handleNext=()=>{if(!canProceed)return;const score=writeOwn?50:q.answers[sel].score;const wt=writeOwn?ownText.trim():(deeperOpen&&nuanceText.trim()?nuanceText.trim():null);const ansIdx=writeOwn?null:sel;go("forward",()=>onAnswer(q.dimension,score,wt,ansIdx));};
+  const handleNext=()=>{if(!canProceed)return;const score=writeOwn?50:q.answers[sel].score;const wt=writeOwn?ownText.trim():(nuanceText.trim()||null);const ansIdx=writeOwn?null:sel;go("forward",()=>onAnswer(q.dimension,score,wt,ansIdx));};
   const handleBack=()=>{if(qIndex===0)return;go("back",()=>onBack());};
   const handleSkip=()=>{if(skippedCount>=MAX_SKIPS){setSkipWarn(true);return;}go("forward",()=>onSkip(q.dimension));};
   const animStyle=anim?{animation:`${animDir==="forward"?"fadeSlideOut":"fadeSlideIn"} 0.28s ease forwards`}:{animation:`${animDir==="back"?"fadeSlideBack":"fadeSlideIn"} 0.32s ease forwards`};
-  const answerCount=q.answers?.length||5;
-  const isLongQuestion=q.question?.length>80;
-  const isLongScenario=q.scenario?.length>120;
   return(
     <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column",maxWidth:600,margin:"0 auto"}}>
 
       {/* ZONE 1 — Header */}
-      <div style={{flexShrink:0,padding:"8px 20px 4px"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-          <button onClick={()=>window.location.href="/"} style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:12,letterSpacing:"0.15em",color:C.parchmentDim,background:"none",border:"none",cursor:"pointer"}}>← THROUGHLINE</button>
+      <div style={{flexShrink:0,padding:"6px 16px 2px"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+          <button onClick={handleBack} style={{fontFamily:"Arial",fontSize:12,color:"#9A9488",background:"none",border:"none",cursor:"pointer",padding:"4px 0",touchAction:"manipulation",visibility:qIndex>0?"visible":"hidden"}}>← Back</button>
+          <button onClick={()=>router.push("/feed")} style={{fontFamily:"Arial Black",fontSize:11,letterSpacing:"0.2em",color:C.gold,background:"none",border:"none",cursor:"pointer",textAlign:"center",touchAction:"manipulation"}}>THROUGHLINE</button>
+          <span style={{fontFamily:"'Figtree',sans-serif",fontSize:12,color:C.parchmentDim,textAlign:"right"}}>{qIndex+1} of {total}</span>
         </div>
         <ProgressBar current={qIndex+1} total={total} skipped={skippedCount} level={level}/>
-        <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:20,background:dc+"14",border:`1px solid ${dc}30`,marginTop:10,marginBottom:2}}>
-          <span style={{fontSize:14,color:dc}}>{DIMENSION_ICONS[q.dimension]}</span>
-          <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:10,letterSpacing:"0.2em",color:dc,textTransform:"uppercase"}}>{q.label}</span>
+        <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"3px 10px",borderRadius:20,background:dc+"14",border:`1px solid ${dc}30`,marginTop:8,marginBottom:1}}>
+          <span style={{fontSize:13,color:dc}}>{DIMENSION_ICONS[q.dimension]}</span>
+          <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:9,letterSpacing:"0.2em",color:dc,textTransform:"uppercase"}}>{q.label}</span>
         </div>
       </div>
 
-      {/* ZONE 2 — Scrollable content */}
-      <div style={{flex:1,overflow:"hidden",padding:"0 20px 16px"}}>
+      {/* ZONE 2 — Content */}
+      <div style={{flex:1,overflow:"hidden",padding:"0 16px 8px"}}>
         <div style={animStyle}>
-          <div style={{background:C.bgCard,borderLeft:`3px solid ${dc}`,borderRadius:"0 4px 4px 0",padding:"8px 12px",marginBottom:6}}>
-            <p style={{fontFamily:"'Figtree',sans-serif",fontSize:isLongScenario?13:15,color:C.parchmentDim,lineHeight:1.4,marginBottom:6}}>{q.scenario}</p>
-            <p style={{fontFamily:"'Figtree',sans-serif",fontWeight:700,fontSize:isLongQuestion?16:17,color:C.parchment,lineHeight:1.25}}>{q.question}</p>
+          <div style={{background:C.bgCard,borderLeft:`3px solid ${dc}`,borderRadius:"0 4px 4px 0",padding:"6px 10px",marginBottom:6}}>
+            <p style={{fontFamily:"'Figtree',sans-serif",fontSize:12,color:C.parchmentDim,lineHeight:1.3,marginBottom:4}}>{q.scenario}</p>
+            <p style={{fontFamily:"'Figtree',sans-serif",fontWeight:700,fontSize:15,color:C.parchment,lineHeight:1.2}}>{q.question}</p>
           </div>
-          <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:14,marginTop:8}}>
+          <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:8,marginTop:6}}>
             {q.answers.map((ans,i)=>(
               <button key={i} className={`answer-btn${sel===i?" selected":""}`}
-                onPointerDown={(e)=>{e.preventDefault();setSel(i);setWriteOwn(false);setOwnText("");}}
-                style={{width:"100%",textAlign:"left",fontFamily:"'Figtree',sans-serif",fontWeight:sel===i?600:400,fontSize:14,color:sel===i?C.parchment:C.parchmentDim,background:sel===i?"rgba(201,168,76,0.1)":C.bgCard,border:`1.5px solid ${sel===i?C.gold:"rgba(201,168,76,0.1)"}`,borderRadius:4,padding:"9px 12px",cursor:"pointer",lineHeight:1.3,touchAction:"manipulation",userSelect:"none",WebkitUserSelect:"none",WebkitTapHighlightColor:"transparent",WebkitTouchCallout:"none",outline:"none"}}>
+                onPointerDown={(e)=>{setPointerMoved(false);setPointerStartY(e.clientY);}}
+                onPointerMove={(e)=>{if(Math.abs(e.clientY-pointerStartY)>8){setPointerMoved(true);}}}
+                onPointerUp={(e)=>{if(!pointerMoved){e.preventDefault();setSel(i);setWriteOwn(false);setOwnText("");}}}
+                style={{width:"100%",textAlign:"left",fontFamily:"'Figtree',sans-serif",fontWeight:sel===i?600:400,fontSize:13,color:sel===i?C.parchment:C.parchmentDim,background:sel===i?"rgba(201,168,76,0.1)":C.bgCard,border:`1.5px solid ${sel===i?C.gold:"rgba(201,168,76,0.1)"}`,borderRadius:4,padding:"7px 10px",cursor:"pointer",lineHeight:1.25,touchAction:"none",userSelect:"none",WebkitUserSelect:"none",WebkitTapHighlightColor:"transparent",WebkitTouchCallout:"none",outline:"none"}}>
                 <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:11,color:sel===i?C.gold:"rgba(201,168,76,0.35)",marginRight:10,letterSpacing:"0.06em"}}>{String.fromCharCode(65+i)}</span>
                 {ans.text}
               </button>
             ))}
           </div>
-          {writeOwn&&(
-            <div style={{marginBottom:16,animation:"fadeSlideIn 0.25s ease forwards"}}>
-              <p style={{fontFamily:"'Figtree',sans-serif",fontSize:13,color:C.parchmentDim,marginBottom:8,lineHeight:1.65}}>Describe how you actually see this issue. Our AI will analyze your response and map it to your thumbprint.</p>
-              <textarea placeholder="Type your view here…" value={ownText} onChange={e=>setOwnText(e.target.value)} rows={4}
-                style={{width:"100%",background:C.bgDeep,border:`1.5px solid rgba(201,168,76,0.15)`,borderRadius:4,padding:"12px 14px",fontSize:14,color:C.parchment,fontFamily:"'Figtree',sans-serif",lineHeight:1.65,resize:"vertical"}}/>
-            </div>
-          )}
-          {deeperOpen&&(
-            <div style={{marginBottom:16,animation:"fadeSlideIn 0.25s ease forwards"}}>
-              <textarea placeholder="Add context or nuance here — our AI will factor it in." value={nuanceText} onChange={e=>setNuanceText(e.target.value)} rows={3}
-                style={{width:"100%",background:C.bgDeep,border:`1.5px solid rgba(201,168,76,0.15)`,borderRadius:4,padding:"12px 14px",fontSize:13,color:C.parchment,fontFamily:"'Figtree',sans-serif",lineHeight:1.65,resize:"vertical"}}/>
-            </div>
-          )}
           {skipWarn&&(
             <div style={{marginBottom:12,padding:"10px 14px",background:"rgba(201,168,76,0.07)",border:`1px solid ${C.goldBorder}`,borderRadius:4,fontFamily:"'Figtree',sans-serif",fontSize:13,color:C.parchmentDim,lineHeight:1.6}}>
               You've used all {MAX_SKIPS} skips. Pick the closest answer even if it's not perfect.
@@ -182,18 +169,50 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
       </div>
 
       {/* ZONE 3 — Footer */}
-      <div style={{flexShrink:0,padding:"8px 16px 16px",background:C.bg,borderTop:"0.5px solid rgba(255,255,255,0.08)"}}>
+      <div style={{flexShrink:0,padding:"6px 16px 12px",background:C.bg,borderTop:"0.5px solid rgba(255,255,255,0.08)"}}>
         <button
-          onClick={sel===null?()=>{setWriteOwn(w=>!w);}:()=>setDeeperOpen(o=>!o)}
+          onClick={()=>setNuanceOpen(true)}
           style={{width:"100%",fontSize:12,color:"#9A9488",background:"none",border:"none",cursor:"pointer",padding:"6px 0 2px",fontFamily:"'Figtree',sans-serif",textAlign:"center",touchAction:"manipulation"}}>
           {sel===null?"✏️ Write my own response":"✏️ Add nuance to my answer"}
         </button>
         <div style={{display:"flex",gap:10,alignItems:"center"}}>
-          {qIndex>0&&<button onClick={handleBack} style={{fontFamily:"Arial",fontWeight:600,fontSize:13,color:"#9A9488",background:"transparent",border:"1px solid rgba(255,255,255,0.1)",borderRadius:4,padding:"13px 18px",cursor:"pointer",flexShrink:0,touchAction:"manipulation"}}>← Back</button>}
           <button onClick={handleNext} disabled={!canProceed} style={{flex:1,fontFamily:"Arial",fontWeight:800,fontSize:15,color:canProceed?"#0A0B0D":"#9A9488",background:canProceed?"#C9A84C":"rgba(201,168,76,0.08)",border:"none",borderRadius:4,padding:15,cursor:canProceed?"pointer":"default",transition:"all 0.2s ease",touchAction:"manipulation"}}>Submit Answer →</button>
           {!skipWarn&&skippedCount<MAX_SKIPS&&<button onClick={handleSkip} style={{fontFamily:"Arial",fontWeight:600,fontSize:12,color:"#9A9488",background:"transparent",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,padding:"13px 14px",cursor:"pointer",flexShrink:0,touchAction:"manipulation"}}>Skip</button>}
         </div>
       </div>
+
+      {/* Nuance / Write-own popup */}
+      {nuanceOpen&&(
+        <div
+          style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center"}}
+          onClick={()=>{setNuanceText("");setNuanceOpen(false);}}>
+          <div
+            style={{background:"#111318",borderRadius:12,padding:24,margin:24,maxWidth:480,width:"100%",animation:"popIn 0.2s ease forwards"}}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{fontFamily:"Arial Black",fontSize:15,color:C.gold,marginBottom:16}}>Add your own response</div>
+            <textarea
+              placeholder="Type your response or add nuance..."
+              value={nuanceText}
+              onChange={e=>setNuanceText(e.target.value)}
+              rows={4}
+              autoFocus
+              style={{width:"100%",minHeight:100,background:"#181C22",border:"1px solid rgba(201,168,76,0.3)",borderRadius:8,color:"#F0ECE4",fontSize:14,padding:12,fontFamily:"Arial",lineHeight:1.5,resize:"vertical",boxSizing:"border-box"}}
+            />
+            <div style={{display:"flex",gap:10,marginTop:14}}>
+              <button
+                onClick={()=>{setNuanceText("");setNuanceOpen(false);}}
+                style={{flex:1,fontFamily:"Arial",fontWeight:600,fontSize:13,color:C.gold,background:"transparent",border:`1px solid ${C.goldBorder}`,borderRadius:8,padding:"11px 0",cursor:"pointer"}}>
+                CANCEL
+              </button>
+              <button
+                onClick={()=>{if(sel===null){setOwnText(nuanceText);setWriteOwn(true);}setNuanceOpen(false);}}
+                style={{flex:2,fontFamily:"Arial Black",fontSize:13,color:"#0A0B0D",background:C.gold,border:"none",borderRadius:8,padding:"11px 0",cursor:"pointer",letterSpacing:"0.04em"}}>
+                USE THIS RESPONSE →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
