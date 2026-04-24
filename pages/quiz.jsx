@@ -186,7 +186,7 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
       {/* Nuance / Write-own popup */}
       {nuanceOpen&&(
         <div
-          style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center"}}
+          style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:500,display:"flex",flexDirection:"column",justifyContent:"flex-start",alignItems:"center",paddingTop:"60px"}}
           onClick={()=>{setNuanceText("");setNuanceError(false);setNuanceOpen(false);}}>
           <div
             style={{background:"#111318",borderRadius:12,padding:24,margin:24,maxWidth:480,width:"100%",animation:"popIn 0.2s ease forwards"}}
