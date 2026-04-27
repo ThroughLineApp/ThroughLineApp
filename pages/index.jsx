@@ -542,13 +542,11 @@ export default function FeedPage() {
 
     async function loadFeed() {
       try {
-        // ── Query 1: flat events (no nested join) ────────────────────────────
-        const { data: events } = await supabase
-          .from("throughline_events")
-          .select("id, corruption_contribution, dimension, donor_name, donation_amount, donation_date, bill_name, how_voted, days_between, vote_impact, throughline_summary, politician_id")
-          .not("corruption_contribution", "is", null)
-          .order("corruption_contribution", { ascending: false })
-          .limit(200);
+        // ── Query 1: one best event per politician via RPC ──────────────────
+        const { data: events, error: eventsError } = await supabase
+          .rpc("get_feed_events");
+
+        if (eventsError) throw eventsError;
 
         // ── Query 2: flat rep events (logged in + my_reps) ──────────────────
         let rawRepEvents = null;
@@ -569,7 +567,7 @@ export default function FeedPage() {
 
         // ── Fetch politicians in one separate query ───────────────────────
         const allRawEvents = [...(events || []), ...(rawRepEvents || [])];
-        const politicianIds = [...new Set(allRawEvents.map(e => e.politician_id).filter(Boolean))];
+        const politicianIds = allRawEvents.map(e => e.politician_id).filter(Boolean);
         const politicianMap = {};
         if (politicianIds.length > 0) {
           const { data: politicianRows } = await supabase
@@ -581,7 +579,7 @@ export default function FeedPage() {
           }
         }
 
-        // ── Attach politicians to events ─────────────────────────────────
+        // ── Attach politicians to events (RPC already deduped by politician) ─
         const enrichedEvents = (events || []).map(e => ({
           ...e,
           politicians: politicianMap[e.politician_id] || null,
@@ -620,20 +618,11 @@ export default function FeedPage() {
         setPacNameMap(resolvedPacNameMap);
 
         // ── Diagnostic logging ───────────────────────────────────────────
-        console.log("Total events fetched:", events?.length);
+        console.log("Total unique politicians from RPC:", events?.length);
         console.log("politicianMap size:", Object.keys(politicianMap).length);
 
-        // ── Deduplicate: one event per politician ────────────────────────
-        const seenPoliticians = new Set();
-        const dedupedEvents = [];
-        for (const event of enrichedEvents) {
-          const politicianId = event.politicians?.slug || event.politicians?.name;
-          if (politicianId && !seenPoliticians.has(politicianId)) {
-            seenPoliticians.add(politicianId);
-            dedupedEvents.push(event);
-          }
-        }
-        console.log("Unique politicians after dedup:", dedupedEvents.length);
+        // RPC returns one row per politician — no JS dedup needed
+        const dedupedEvents = enrichedEvents;
 
         // ── Ideology weighting (if quiz taken) ────────────────────────────
         let sorted = dedupedEvents;
