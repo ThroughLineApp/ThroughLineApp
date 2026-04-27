@@ -536,78 +536,67 @@ export default function FeedPage() {
 
     async function loadFeed() {
       try {
-        // ── Query 1: top corruption events ──────────────────────────────────
+        // ── Query 1: flat events (no nested join) ────────────────────────────
         const { data: events } = await supabase
           .from("throughline_events")
-          .select(`
-            id,
-            corruption_contribution,
-            dimension,
-            donor_name,
-            donation_amount,
-            donation_date,
-            bill_name,
-            how_voted,
-            days_between,
-            vote_impact,
-            throughline_summary,
-            politicians (
-              id,
-              name,
-              party,
-              state,
-              chamber,
-              slug,
-              bioguide_id,
-              donor_alignment_score
-            )
-          `)
+          .select("id, corruption_contribution, dimension, donor_name, donation_amount, donation_date, bill_name, how_voted, days_between, vote_impact, throughline_summary, politician_id")
           .not("corruption_contribution", "is", null)
           .order("corruption_contribution", { ascending: false })
-          .limit(60);
+          .limit(200);
 
-        // ── Query 2: your rep event (logged in + my_reps) ───────────────────
-        let repEvent = null;
+        // ── Query 2: flat rep events (logged in + my_reps) ──────────────────
+        let rawRepEvents = null;
         const myReps = profile?.my_reps;
         if (user && Array.isArray(myReps) && myReps.length > 0) {
           try {
             const { data: repEvents } = await supabase
               .from("throughline_events")
-              .select(`
-                id,
-                corruption_contribution,
-                dimension,
-                donor_name,
-                donation_amount,
-                donation_date,
-                bill_name,
-                how_voted,
-                days_between,
-                vote_impact,
-                throughline_summary,
-                politicians (
-                  id, name, party, state, chamber, slug, bioguide_id, donor_alignment_score
-                )
-              `)
+              .select("id, corruption_contribution, dimension, donor_name, donation_amount, donation_date, bill_name, how_voted, days_between, vote_impact, throughline_summary, politician_id")
               .not("corruption_contribution", "is", null)
               .order("corruption_contribution", { ascending: false })
               .limit(20);
-
-            // Filter client-side for reps in my_reps
-            if (repEvents) {
-              const match = repEvents.find(
-                (e) => e.politicians && myReps.includes(e.politicians.bioguide_id)
-              );
-              if (match) repEvent = match;
-            }
+            rawRepEvents = repEvents;
           } catch (e) {
             console.log("Rep event fetch silently failed:", e.message);
           }
         }
 
+        // ── Fetch politicians in one separate query ───────────────────────
+        const allRawEvents = [...(events || []), ...(rawRepEvents || [])];
+        const politicianIds = [...new Set(allRawEvents.map(e => e.politician_id).filter(Boolean))];
+        const politicianMap = {};
+        if (politicianIds.length > 0) {
+          const { data: politicianRows } = await supabase
+            .from("politicians")
+            .select("id, name, party, state, chamber, slug, bioguide_id, donor_alignment_score")
+            .in("id", politicianIds);
+          if (politicianRows) {
+            politicianRows.forEach(p => { politicianMap[p.id] = p; });
+          }
+        }
+
+        // ── Attach politicians to events ─────────────────────────────────
+        const enrichedEvents = (events || []).map(e => ({
+          ...e,
+          politicians: politicianMap[e.politician_id] || null,
+        }));
+
+        // ── Find rep event from raw rep events ───────────────────────────
+        let repEvent = null;
+        if (rawRepEvents && Array.isArray(myReps) && myReps.length > 0) {
+          const enrichedRepEvents = rawRepEvents.map(e => ({
+            ...e,
+            politicians: politicianMap[e.politician_id] || null,
+          }));
+          const match = enrichedRepEvents.find(
+            (e) => e.politicians && myReps.includes(e.politicians.bioguide_id)
+          );
+          if (match) repEvent = match;
+        }
+
         // ── PAC name lookup (separate query, won't block feed) ───────────
-        const allEvents = [...(events || []), ...(repEvent ? [repEvent] : [])];
-        const pacIds = [...new Set(allEvents.map(e => e.donor_name).filter(Boolean))];
+        const allEnrichedEvents = [...enrichedEvents, ...(repEvent ? [repEvent] : [])];
+        const pacIds = [...new Set(allEnrichedEvents.map(e => e.donor_name).filter(Boolean))];
         const resolvedPacNameMap = {};
         if (pacIds.length > 0) {
           try {
@@ -624,10 +613,10 @@ export default function FeedPage() {
         }
         setPacNameMap(resolvedPacNameMap);
 
-        // ── Deduplicate: keep only the highest-DAS event per politician ──
+        // ── Deduplicate: one event per politician ────────────────────────
         const seenPoliticians = new Set();
         const dedupedEvents = [];
-        for (const event of (events || [])) {
+        for (const event of enrichedEvents) {
           const politicianId = event.politicians?.slug || event.politicians?.name;
           if (politicianId && !seenPoliticians.has(politicianId)) {
             seenPoliticians.add(politicianId);
