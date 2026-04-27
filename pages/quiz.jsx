@@ -340,7 +340,7 @@ function MatchesSection({matches,matchesLoading,isL1,followedPoliticians,onFollo
   );
 }
 
-function ResultsScreen({scores,matches,matchesLoading,onStartL2,onRetake,onContinueToL2,onExplore,user,showSavePrompt,onSignUp,level,isL1,followedPoliticians,onFollowToggle}){
+function ResultsScreen({scores,matches,matchesLoading,onStartL2,onRetake,onContinueToL2,onExplore,user,showSavePrompt,onSignUp,level,isL1,followedPoliticians,onFollowToggle,isReturningUser}){
   const router=useRouter();
   const { needsZip, refreshProfile } = useAuth();
   const [zipDismissed, setZipDismissed] = useState(false);
@@ -349,6 +349,15 @@ function ResultsScreen({scores,matches,matchesLoading,onStartL2,onRetake,onConti
   return(
     <div style={{minHeight:"100vh",background:C.bg,color:C.parchment}}>
       <div style={{maxWidth:580,margin:"0 auto",padding:"44px 24px 80px"}}>
+        {isReturningUser&&(
+          <div style={{marginBottom:24,padding:"12px 18px",background:"rgba(201,168,76,0.08)",border:"1px solid rgba(201,168,76,0.25)",borderRadius:4,display:"flex",alignItems:"center",gap:12,animation:"fadeSlideIn 0.5s ease forwards"}}>
+            <span style={{fontSize:18}}>👋</span>
+            <div>
+              <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,fontWeight:700,letterSpacing:"0.12em",color:C.gold,marginBottom:2}}>WELCOME BACK</div>
+              <div style={{fontFamily:"'Figtree',sans-serif",fontSize:13,color:C.parchmentDim}}>Here are your saved results. Retake the quiz anytime to update your thumbprint.</div>
+            </div>
+          </div>
+        )}
         <div style={{textAlign:"center",marginBottom:36,animation:"fadeSlideIn 0.6s ease forwards"}}>
           <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:10,letterSpacing:"0.35em",color:C.gold,marginBottom:8}}>{level===1?"LEVEL 1 COMPLETE":"LEVEL 2 COMPLETE"}</div>
           <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:800,fontSize:"clamp(22px,5vw,32px)",letterSpacing:"0.08em",color:C.gold,marginBottom:6}}>YOUR POLITICAL THUMBPRINT</div>
@@ -452,6 +461,8 @@ export default function QuizPage(){
   const[shuffledL1]=useState(()=>shuffle(L1_QUESTIONS));
   const[l1AnswerIndices,setL1AnswerIndices]=useState({});
   const[l2AnswerIndices,setL2AnswerIndices]=useState({});
+  const[checkingExisting,setCheckingExisting]=useState(true);
+  const[isReturningUser,setIsReturningUser]=useState(false);
 
   useEffect(()=>{
     if(phase!=="l1_results"&&phase!=="l2_results")return;
@@ -466,6 +477,48 @@ export default function QuizPage(){
       setMatchesLoading(false);
     });
   },[phase]);
+
+  useEffect(()=>{
+    async function checkExistingResults(){
+      try{
+        const{data:{user:authUser}}=await supabase.auth.getUser();
+        if(!authUser){setCheckingExisting(false);return;}
+        const{data:savedResults,error}=await supabase
+          .from("quiz_results")
+          .select("*")
+          .eq("user_id",authUser.id)
+          .order("quiz_level",{ascending:false})
+          .limit(1)
+          .single();
+        if(error||!savedResults){setCheckingExisting(false);return;}
+        const savedScores={
+          economic:savedResults.score_economic??50,
+          healthcare:savedResults.score_healthcare??50,
+          climate:savedResults.score_climate??50,
+          criminal:savedResults.score_criminal??50,
+          immigration:savedResults.score_immigration??50,
+          foreign:savedResults.score_foreign??50,
+          education:savedResults.score_education??50,
+          freedom:savedResults.score_freedom??50,
+          guns:savedResults.score_guns??50,
+          housing:savedResults.score_housing??50,
+          tech:savedResults.score_tech??50,
+          voting:savedResults.score_voting??50,
+        };
+        setIsReturningUser(true);
+        if(savedResults.quiz_level===2){
+          setL2Scores(savedScores);
+          setL1Scores(savedScores);
+          setPhase("l2_results");
+        }else{
+          setL1Scores(savedScores);
+          setPhase("l1_results");
+        }
+      }catch(e){console.log("checkExistingResults error:",e.message);}
+      finally{setCheckingExisting(false);}
+    }
+    checkExistingResults();
+  },[]);
 
   useEffect(()=>{
     if(!router.isReady)return;
@@ -742,6 +795,16 @@ export default function QuizPage(){
     setPhase("intro");
   };
 
+  if(checkingExisting)return(
+    <>
+      <style>{GLOBAL_STYLES}</style>
+      <div style={{minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20}}>
+        <Spinner/>
+        <div style={{fontFamily:"'Figtree',sans-serif",fontSize:14,color:C.parchmentDim}}>Loading…</div>
+      </div>
+    </>
+  );
+
   if(phase==="intro")return(
     <>
       <Head><title>Your Political Thumbprint · Throughline</title></Head>
@@ -776,8 +839,8 @@ export default function QuizPage(){
   if(phase==="l1_badges")return(<><Head><title>Badge Earned · Throughline</title></Head><style>{GLOBAL_STYLES}</style><BadgeScreen earnedBadges={earnedBadges.length>0?earnedBadges:[BADGES[0]]} onContinue={()=>setPhase("l1_results")} continueLabel="See My Results →"/></>);
   if(phase==="l2_badges")return(<><Head><title>Badge Earned · Throughline</title></Head><style>{GLOBAL_STYLES}</style><BadgeScreen earnedBadges={earnedBadges.length>0?earnedBadges:[BADGES[1]]} onContinue={()=>setPhase("l2_results")} continueLabel="See My Refined Results →"/></>);
 
-  if(phase==="l1_results")return(<><Head><title>Your Political Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l1Scores} matches={matches} matchesLoading={matchesLoading} onStartL2={startL2} onRetake={handleRetake} onContinueToL2={startL2} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={1} isL1={true} followedPoliticians={followedPoliticians} onFollowToggle={handleFollowToggle}/></>);
-  if(phase==="l2_results")return(<><Head><title>Your Refined Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l2Scores} matches={matches} matchesLoading={matchesLoading} onStartL2={null} onRetake={handleRetake} onContinueToL2={null} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={2} isL1={false} followedPoliticians={followedPoliticians} onFollowToggle={handleFollowToggle}/></>);
+  if(phase==="l1_results")return(<><Head><title>Your Political Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l1Scores} matches={matches} matchesLoading={matchesLoading} onStartL2={startL2} onRetake={handleRetake} onContinueToL2={startL2} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={1} isL1={true} followedPoliticians={followedPoliticians} onFollowToggle={handleFollowToggle} isReturningUser={isReturningUser}/></>);
+  if(phase==="l2_results")return(<><Head><title>Your Refined Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l2Scores} matches={matches} matchesLoading={matchesLoading} onStartL2={null} onRetake={handleRetake} onContinueToL2={null} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={2} isL1={false} followedPoliticians={followedPoliticians} onFollowToggle={handleFollowToggle} isReturningUser={isReturningUser}/></>);
 
   if(phase==="l1_question"){const q=shuffledL1[l1QIdx];return(<><Head><title>Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100vh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment,display:"flex",flexDirection:"column"}}><QuestionScreen key={l1QIdx} q={q} qIndex={l1QIdx} total={shuffledL1.length} level={1} onAnswer={handleL1Answer} onBack={handleL1Back} onSkip={handleL1Skip} skippedCount={l1Skipped} previousAnswer={l1AnswerIndices[shuffledL1[l1QIdx]?.dimension]??null}/></div></>);}
   if(phase==="l2_question"){const q=l2Questions[l2QIdx];return(<><Head><title>Level 2 Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100vh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment,display:"flex",flexDirection:"column"}}><QuestionScreen key={`l2-${l2QIdx}`} q={q} qIndex={l2QIdx} total={l2Questions.length} level={2} onAnswer={handleL2Answer} onBack={handleL2Back} onSkip={handleL2Skip} skippedCount={l2Skipped} previousAnswer={l2AnswerIndices[l2Questions[l2QIdx]?.dimension]??null}/></div></>);}
