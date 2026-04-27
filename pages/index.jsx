@@ -414,7 +414,7 @@ function BottomNav({ router }) {
       ),
     },
     {
-      id: "explore", label: "Explore", route: "/",
+      id: "explore", label: "Explore", route: null,
       icon: (a) => (
         <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
           <circle cx={12} cy={12} r={9} stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} />
@@ -444,7 +444,7 @@ function BottomNav({ router }) {
       ),
     },
     {
-      id: "issues", label: "Issues", route: "/",
+      id: "issues", label: "Issues", route: null,
       icon: (a) => (
         <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
           <line x1={3} y1={6} x2={21} y2={6} stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} strokeLinecap="round" />
@@ -457,13 +457,19 @@ function BottomNav({ router }) {
 
   return (
     <div style={{
-      position: "fixed", bottom: 0, left: 0, right: 0,
-      height: 56,
+      position: "fixed",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      width: "100%",
+      zIndex: 9999,
       background: "#0a0b0d",
       borderTop: "1px solid rgba(201,168,76,0.10)",
-      display: "flex", alignItems: "center",
+      height: "56px",
+      display: "flex",
+      alignItems: "center",
       justifyContent: "space-around",
-      zIndex: 200,
+      paddingBottom: "env(safe-area-inset-bottom, 0px)",
     }}>
       {tabs.map((tab) => {
         const active = tab.id === activeId;
@@ -471,7 +477,7 @@ function BottomNav({ router }) {
           <button
             type="button"
             key={tab.id}
-            onClick={() => router.push(tab.route)}
+            onClick={() => tab.route ? router.push(tab.route) : alert(`${tab.label} — coming soon`)}
             style={{
               flex: 1,
               height: "100%",
@@ -613,6 +619,10 @@ export default function FeedPage() {
         }
         setPacNameMap(resolvedPacNameMap);
 
+        // ── Diagnostic logging ───────────────────────────────────────────
+        console.log("Total events fetched:", events?.length);
+        console.log("politicianMap size:", Object.keys(politicianMap).length);
+
         // ── Deduplicate: one event per politician ────────────────────────
         const seenPoliticians = new Set();
         const dedupedEvents = [];
@@ -623,6 +633,7 @@ export default function FeedPage() {
             dedupedEvents.push(event);
           }
         }
+        console.log("Unique politicians after dedup:", dedupedEvents.length);
 
         // ── Ideology weighting (if quiz taken) ────────────────────────────
         let sorted = dedupedEvents;
