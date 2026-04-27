@@ -5,6 +5,31 @@ import supabase from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import ZipPrompt from "../components/ZipPrompt";
 
+async function fetchPoliticianMatches(scores, myReps=[]) {
+  const {data, error} = await supabase.rpc('match_politicians_weighted', {
+    user_economic:    scores.economic??0,
+    user_healthcare:  scores.healthcare??0,
+    user_climate:     scores.climate??0,
+    user_criminal:    scores.criminal??0,
+    user_immigration: scores.immigration??0,
+    user_foreign:     scores.foreign??0,
+    user_education:   scores.education??0,
+    user_freedom:     scores.freedom??0,
+    user_guns:        scores.guns??0,
+    user_housing:     scores.housing??0,
+    user_tech:        scores.tech??0,
+    user_voting:      scores.voting??0,
+  });
+  if(error){console.error('Match fetch error:',error);return[];}
+  return (data||[]).map(p=>({
+    ...p,
+    isYourRep: myReps.includes(p.bioguide_id),
+    photoUrl: p.bioguide_id
+      ?`https://bioguide.congress.gov/bioguide/photo/${p.bioguide_id[0]}/${p.bioguide_id}.jpg`
+      :null,
+  }));
+}
+
 const C={bg:"#0a0b0d",bgCard:"#11131a",bgDeep:"#0d0f14",gold:"#c9a84c",goldBorder:"rgba(201,168,76,0.35)",goldBorderDim:"rgba(201,168,76,0.12)",parchment:"#e8dfc8",parchmentDim:"#a89d88",green:"#4ca87c",red:"#c94c4c",blue:"#4c78c9",purple:"#8e4cc9"};
 
 const GLOBAL_STYLES=`
@@ -242,7 +267,7 @@ function BadgeScreen({earnedBadges,onContinue,continueLabel}){
   );
 }
 
-function ResultsScreen({scores,matches,onStartL2,onRetake,onExplore,user,showSavePrompt,onSignUp,level}){
+function ResultsScreen({scores,matches,matchesLoading,onStartL2,onRetake,onExplore,user,showSavePrompt,onSignUp,level}){
   const router=useRouter();
   const { needsZip, refreshProfile } = useAuth();
   const [zipDismissed, setZipDismissed] = useState(false);
@@ -291,33 +316,42 @@ function ResultsScreen({scores,matches,onStartL2,onRetake,onExplore,user,showSav
             />
           </div>
         )}
-        {matches&&matches.length>0&&(
-          <div style={{marginBottom:44,animation:"fadeSlideIn 0.6s ease forwards 0.6s",opacity:0}}>
-            <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:10,letterSpacing:"0.28em",color:C.parchmentDim,textTransform:"uppercase",marginBottom:16,display:"flex",alignItems:"center",gap:12}}>YOUR CLOSEST MATCHES<div style={{flex:1,height:1,background:"rgba(201,168,76,0.1)"}}/></div>
-            {matches.map(pol=>{
-              const pc=pcolor(pol.party);
-              const initials=pol.name.split(" ").map(w=>w[0]).slice(0,2).join("");
-              const photoUrl=pol.bioguide_id?`https://bioguide.congress.gov/bioguide/photo/${pol.bioguide_id[0]}/${pol.bioguide_id}.jpg`:null;
-              const pct=Math.max(55,Math.round(100-(pol.distance/10)));
-              return(
-                <div key={pol.slug} onClick={()=>router.push(`/politician/${pol.slug}`)}
-                  style={{display:"flex",alignItems:"center",gap:14,padding:"14px 16px",background:C.bgCard,border:`1px solid ${C.goldBorderDim}`,borderRadius:4,marginBottom:8,cursor:"pointer"}}>
-                  <div style={{width:46,height:46,borderRadius:"50%",background:pc+"20",color:pc,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Barlow Condensed',sans-serif",fontWeight:800,fontSize:14,flexShrink:0,overflow:"hidden",border:`1.5px solid ${pc}40`}}>
-                    {photoUrl?<img src={photoUrl} alt={pol.name} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"top"}} onError={e=>e.target.style.display="none"}/>:initials}
+        <div style={{marginBottom:44,animation:"fadeSlideIn 0.6s ease forwards 0.6s",opacity:0}}>
+          <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:10,letterSpacing:"0.28em",color:C.parchmentDim,textTransform:"uppercase",marginBottom:16,display:"flex",alignItems:"center",gap:12}}>YOUR CLOSEST MATCHES<div style={{flex:1,height:1,background:"rgba(201,168,76,0.1)"}}/></div>
+          {matchesLoading&&(
+            <div style={{fontFamily:"'Figtree',sans-serif",fontSize:13,color:C.parchmentDim,textAlign:"center",padding:"20px 0"}}>Finding your matches…</div>
+          )}
+          {!matchesLoading&&(!matches||matches.length===0)&&(
+            <div style={{fontFamily:"'Figtree',sans-serif",fontSize:13,color:C.parchmentDim,textAlign:"center",padding:"20px 0"}}>Match data is being processed. Check back soon.</div>
+          )}
+          {!matchesLoading&&matches&&matches.map(pol=>{
+            const pc=pcolor(pol.party);
+            const initials=pol.name.split(" ").map(w=>w[0]).slice(0,2).join("");
+            return(
+              <div key={pol.slug||pol.id} onClick={()=>router.push(`/politician/${pol.slug}`)}
+                style={{display:"flex",alignItems:"center",gap:14,padding:"14px 16px",background:C.bgCard,border:`1px solid ${C.goldBorderDim}`,borderRadius:4,marginBottom:8,cursor:"pointer"}}>
+                <div style={{position:"relative",flexShrink:0}}>
+                  <div style={{width:46,height:46,borderRadius:"50%",background:pc+"20",color:pc,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Barlow Condensed',sans-serif",fontWeight:800,fontSize:14,overflow:"hidden",border:`1.5px solid ${pc}40`}}>
+                    {pol.photoUrl
+                      ?<img src={pol.photoUrl} alt={pol.name} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"top"}} onError={e=>e.target.style.display="none"}/>
+                      :initials}
                   </div>
-                  <div style={{flex:1}}>
-                    <div style={{fontFamily:"'Figtree',sans-serif",fontWeight:700,fontSize:15,color:C.parchment}}>{pol.name}</div>
-                    <div style={{fontFamily:"'Figtree',sans-serif",fontSize:12,color:C.parchmentDim}}>{pol.party} · {pol.state} · {pol.chamber}</div>
-                  </div>
-                  <div style={{textAlign:"center",flexShrink:0}}>
-                    <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:800,fontSize:24,color:C.green}}>{pct}%</div>
-                    <div style={{fontFamily:"'Figtree',sans-serif",fontSize:10,color:C.parchmentDim}}>match</div>
-                  </div>
+                  {pol.isYourRep&&(
+                    <div style={{position:"absolute",bottom:-2,right:-2,background:C.gold,borderRadius:2,fontFamily:"'Barlow Condensed',sans-serif",fontSize:7,letterSpacing:"0.05em",color:C.bg,padding:"1px 3px",lineHeight:1}}>REP</div>
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        )}
+                <div style={{flex:1}}>
+                  <div style={{fontFamily:"'Figtree',sans-serif",fontWeight:700,fontSize:15,color:C.parchment}}>{pol.name}</div>
+                  <div style={{fontFamily:"'Figtree',sans-serif",fontSize:12,color:C.parchmentDim}}>{pol.party} · {pol.state} · {pol.chamber}</div>
+                </div>
+                <div style={{textAlign:"center",flexShrink:0}}>
+                  <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:800,fontSize:24,color:C.green}}>{pol.match_pct}%</div>
+                  <div style={{fontFamily:"'Figtree',sans-serif",fontSize:10,color:C.parchmentDim}}>match</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
         {showSavePrompt&&!user&&(
           <div style={{marginBottom:32,padding:26,background:C.bgCard,border:`1px solid ${C.goldBorder}`,borderRadius:4,textAlign:"center",animation:"popIn 0.4s ease forwards"}}>
             <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:10,letterSpacing:"0.3em",color:C.gold,marginBottom:10}}>SAVE YOUR THUMBPRINT</div>
@@ -357,6 +391,7 @@ export default function QuizPage(){
   const[l1Written,setL1Written]=useState({});
   const[l1Scores,setL1Scores]=useState(null);
   const[l1Matches,setL1Matches]=useState([]);
+  const[matchesLoading,setMatchesLoading]=useState(false);
   const[l2Questions,setL2Questions]=useState([]);
   const[l2QIdx,setL2QIdx]=useState(0);
   const[l2Answers,setL2Answers]=useState({});
@@ -369,6 +404,18 @@ export default function QuizPage(){
   const[shuffledL1]=useState(()=>shuffle(L1_QUESTIONS));
   const[l1AnswerIndices,setL1AnswerIndices]=useState({});
   const[l2AnswerIndices,setL2AnswerIndices]=useState({});
+
+  useEffect(()=>{
+    if(phase!=="l1_results"&&phase!=="l2_results")return;
+    const scores=phase==="l2_results"?l2Scores:l1Scores;
+    if(!scores)return;
+    setMatchesLoading(true);
+    const myReps=user?.user_metadata?.my_reps||[];
+    fetchPoliticianMatches(scores,myReps).then(results=>{
+      setL1Matches(results);
+      setMatchesLoading(false);
+    });
+  },[phase]);
 
   useEffect(()=>{
     if(!router.isReady)return;
@@ -668,8 +715,8 @@ export default function QuizPage(){
   if(phase==="l1_badges")return(<><Head><title>Badge Earned · Throughline</title></Head><style>{GLOBAL_STYLES}</style><BadgeScreen earnedBadges={earnedBadges.length>0?earnedBadges:[BADGES[0]]} onContinue={()=>setPhase("l1_results")} continueLabel="See My Results →"/></>);
   if(phase==="l2_badges")return(<><Head><title>Badge Earned · Throughline</title></Head><style>{GLOBAL_STYLES}</style><BadgeScreen earnedBadges={earnedBadges.length>0?earnedBadges:[BADGES[1]]} onContinue={()=>setPhase("l2_results")} continueLabel="See My Refined Results →"/></>);
 
-  if(phase==="l1_results")return(<><Head><title>Your Political Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l1Scores} matches={l1Matches} onStartL2={startL2} onRetake={handleRetake} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={1}/></>);
-  if(phase==="l2_results")return(<><Head><title>Your Refined Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l2Scores} matches={l1Matches} onStartL2={null} onRetake={handleRetake} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={2}/></>);
+  if(phase==="l1_results")return(<><Head><title>Your Political Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l1Scores} matches={l1Matches} matchesLoading={matchesLoading} onStartL2={startL2} onRetake={handleRetake} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={1}/></>);
+  if(phase==="l2_results")return(<><Head><title>Your Refined Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l2Scores} matches={l1Matches} matchesLoading={matchesLoading} onStartL2={null} onRetake={handleRetake} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={2}/></>);
 
   if(phase==="l1_question"){const q=shuffledL1[l1QIdx];return(<><Head><title>Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100vh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment,display:"flex",flexDirection:"column"}}><QuestionScreen key={l1QIdx} q={q} qIndex={l1QIdx} total={shuffledL1.length} level={1} onAnswer={handleL1Answer} onBack={handleL1Back} onSkip={handleL1Skip} skippedCount={l1Skipped} previousAnswer={l1AnswerIndices[shuffledL1[l1QIdx]?.dimension]??null}/></div></>);}
   if(phase==="l2_question"){const q=l2Questions[l2QIdx];return(<><Head><title>Level 2 Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100vh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment,display:"flex",flexDirection:"column"}}><QuestionScreen key={`l2-${l2QIdx}`} q={q} qIndex={l2QIdx} total={l2Questions.length} level={2} onAnswer={handleL2Answer} onBack={handleL2Back} onSkip={handleL2Skip} skippedCount={l2Skipped} previousAnswer={l2AnswerIndices[l2Questions[l2QIdx]?.dimension]??null}/></div></>);}
