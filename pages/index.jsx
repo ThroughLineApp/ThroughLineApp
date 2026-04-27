@@ -1,459 +1,778 @@
-import { useEffect, useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import supabase from "../lib/supabase";
-import AuthModal from "../components/AuthModal";
-import ZipPrompt from "../components/ZipPrompt";
 import { useAuth } from "../lib/auth";
+import Nav from "../components/Nav";
 
-function MobileSwiper({ onShowAuth }) {
-  const router = useRouter();
-  const [card, setCard] = useState(0);
-  const touchStartY = useRef(null);
-  const TOTAL = 3;
+// ── Global styles ────────────────────────────────────────────────────────────
+const GLOBAL_STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Barlow+Condensed:wght@400;600;700;800&family=Playfair+Display:ital,wght@1,400&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0b0d; font-family: 'Figtree', sans-serif; }
+  @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+`;
 
-  const onTouchStart = (e) => { touchStartY.current = e.touches[0].clientY; };
-  const onTouchEnd = (e) => {
-    if (touchStartY.current === null) return;
-    const delta = touchStartY.current - e.changedTouches[0].clientY;
-    if (Math.abs(delta) < 40) return;
-    if (delta > 0 && card < TOTAL - 1) setCard(c => c + 1);
-    if (delta < 0 && card > 0) setCard(c => c - 1);
-    touchStartY.current = null;
-  };
+// ── Design tokens ────────────────────────────────────────────────────────────
+const C = {
+  bg: "#0a0b0d",
+  card: "#11131a",
+  cardHover: "#161922",
+  gold: "#c9a84c",
+  parchment: "#e8dfc8",
+  parchmentDim: "#a89d88",
+  red: "#c94c4c",
+  blue: "#4c78c9",
+  green: "#4ca87c",
+  purple: "#8e4cc9",
+  border: "rgba(201,168,76,0.15)",
+  borderHover: "rgba(201,168,76,0.40)",
+};
 
-  const cardStyle = (i) => ({
-    position: "absolute", inset: 0,
-    transform: `translateY(${(i - card) * 100}%)`,
-    transition: "transform 0.4s ease",
-    display: "flex", flexDirection: "column",
-    alignItems: "center", justifyContent: "center",
-    overflow: "hidden",
-  });
+const DIMENSION_COLORS = {
+  economic: "#c9a84c",
+  healthcare: "#c94c78",
+  climate: "#4ca87c",
+  criminal: "#c94c4c",
+  immigration: "#4c78c9",
+  foreign: "#7c4cc9",
+  education: "#c98e4c",
+  freedom: "#4cc9c9",
+  guns: "#c94c4c",
+  housing: "#78c94c",
+  tech: "#4c8ec9",
+  voting: "#c94c9e",
+};
+
+const DIMENSION_LABELS = {
+  economic: "Economic Policy",
+  healthcare: "Healthcare",
+  climate: "Climate & Energy",
+  criminal: "Criminal Justice",
+  immigration: "Immigration",
+  foreign: "Foreign Policy",
+  education: "Education",
+  freedom: "Personal Freedom",
+  guns: "Gun Policy",
+  housing: "Housing & Urban",
+  tech: "Tech & Privacy",
+  voting: "Electoral Rights",
+};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function formatCurrency(n) {
+  if (!n) return "";
+  if (n >= 1000000) return "$" + (n / 1000000).toFixed(1) + "M";
+  if (n >= 1000) return "$" + (n / 1000).toFixed(0) + "K";
+  return "$" + n.toLocaleString();
+}
+
+function partyColor(party) {
+  if (party === "D") return "#4c78c9";
+  if (party === "R") return "#c94c4c";
+  return "#8e4cc9";
+}
+
+function partyLabel(party) {
+  if (party === "D") return "Democrat";
+  if (party === "R") return "Republican";
+  return "Independent";
+}
+
+function dasColor(score) {
+  if (score <= 33) return "#4ca87c";
+  if (score <= 66) return "#c9a84c";
+  return "#c94c4c";
+}
+
+function bioguidePhotoUrl(bioguide_id) {
+  if (!bioguide_id) return null;
+  const letter = bioguide_id[0].toUpperCase();
+  return `https://bioguide.congress.gov/bioguide/photo/${letter}/${bioguide_id}.jpg`;
+}
+
+// ── CorruptionCard ────────────────────────────────────────────────────────────
+function CorruptionCard({ event, userDimensions, router, noLeftBorder }) {
+  const [imgError, setImgError] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const pol = event.politicians || {};
+  const photoUrl = bioguidePhotoUrl(pol.bioguide_id);
+  const pColor = partyColor(pol.party);
+  const das = pol.donor_alignment_score;
+
+  // Build headline from available fields
+  const namePart = pol.name || null;
+  const votedPart = event.how_voted ? `voted ${event.how_voted}` : null;
+  const billPart = event.bill_name ? `on ${event.bill_name}` : null;
+  const daysPart = event.days_between != null ? `${event.days_between} days` : null;
+  const amountPart = event.donation_amount ? formatCurrency(event.donation_amount) : null;
+  const donorPart = event.donor_name || null;
+
+  let headline = [namePart, votedPart, billPart].filter(Boolean).join(" ");
+  if (daysPart && amountPart && donorPart) {
+    headline += ` — ${daysPart} after a ${amountPart} donation from ${donorPart}.`;
+  } else if (amountPart && donorPart) {
+    headline += ` — after a ${amountPart} donation from ${donorPart}.`;
+  } else if (donorPart) {
+    headline += ` — after a donation from ${donorPart}.`;
+  }
+
+  const dimColor = DIMENSION_COLORS[event.dimension] || C.gold;
+  const dimLabel = DIMENSION_LABELS[event.dimension] || event.dimension;
+  const userCaresDimension =
+    userDimensions &&
+    event.dimension &&
+    userDimensions[event.dimension] != null;
 
   return (
     <div
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
-      style={{ position: "fixed", inset: 0, zIndex: 50, background: "#000", overflow: "hidden" }}
+      onClick={() => pol.slug && router.push("/politician/" + pol.slug)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: hovered ? C.cardHover : C.card,
+        borderRadius: noLeftBorder ? 0 : 8,
+        borderLeft: noLeftBorder ? "none" : "3px solid #c9a84c",
+        overflow: "hidden",
+        padding: 16,
+        cursor: pol.slug ? "pointer" : "default",
+        transition: "background 0.15s ease",
+        animation: "fadeIn 0.3s ease forwards",
+      }}
     >
-      {/* Card 0 — Video */}
-      <div style={cardStyle(0)}>
-        <video
-          src="/videos/landing_card_1.mp4"
-          autoPlay muted loop playsInline
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-        />
-        {/* Dark gradient overlay */}
-        <div style={{
-          position: "absolute", inset: 0,
-          background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.82) 100%)",
-        }} />
-        <div style={{ position: "relative", zIndex: 1, padding: "0 28px", textAlign: "center", maxWidth: 400 }}>
-          <div style={{
-            display: "inline-block", background: "#C9A84C", color: "#0A0B0D",
-            fontFamily: "Arial Black", fontSize: 10, letterSpacing: "0.22em",
-            padding: "5px 14px", borderRadius: 2, marginBottom: 22,
-          }}>THROUGHLINE</div>
-          <h1 style={{
-            fontFamily: "Arial Black", fontSize: "clamp(38px, 9vw, 58px)",
-            color: "#F0ECE4", lineHeight: 1.05, margin: "0 0 6px",
-            letterSpacing: "-0.02em",
-          }}>Every vote</h1>
-          <h1 style={{
-            fontFamily: "Arial Black", fontSize: "clamp(38px, 9vw, 58px)",
-            color: "#C9A84C", lineHeight: 1.05, margin: "0 0 20px",
-            letterSpacing: "-0.02em",
-          }}>has a price.</h1>
-          <p style={{
-            fontFamily: "Arial", fontSize: 15, color: "rgba(240,236,228,0.8)",
-            lineHeight: 1.7, marginBottom: 32,
-          }}>
-            Track the money behind every congressional vote.
-          </p>
-          <button
-            onClick={() => router.push("/feed")}
-            style={{
-              fontFamily: "Arial Black", fontSize: 14, color: "#0A0B0D",
-              background: "#C9A84C", border: "none", borderRadius: 4,
-              padding: "14px 32px", cursor: "pointer",
-              letterSpacing: "0.04em", touchAction: "manipulation",
-              boxShadow: "0 0 32px rgba(201,168,76,0.3)",
-              display: "block", width: "100%", marginBottom: 14,
-            }}
-          >EXPLORE POLITICIANS →</button>
-          <button
-            onClick={() => setCard(1)}
-            style={{
-              fontFamily: "Arial", fontSize: 13, color: "rgba(240,236,228,0.6)",
-              background: "none", border: "none", cursor: "pointer",
-              touchAction: "manipulation", textDecoration: "underline",
-            }}
-          >or swipe to learn more ↓</button>
+      {/* Top row */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ position: "relative", flexShrink: 0 }}>
+          {photoUrl && !imgError ? (
+            <img
+              src={photoUrl}
+              alt={pol.name || "Politician"}
+              onError={() => setImgError(true)}
+              style={{
+                width: 44, height: 44, borderRadius: "50%",
+                objectFit: "cover", border: `2px solid ${pColor}`,
+              }}
+            />
+          ) : (
+            <div style={{
+              width: 44, height: 44, borderRadius: "50%",
+              background: pColor,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 18, fontWeight: 700, color: "#e8dfc8",
+            }}>
+              {pol.name ? pol.name.charAt(0) : "?"}
+            </div>
+          )}
         </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontWeight: 700, fontSize: 16,
+            color: C.parchment,
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          }}>{pol.name || "Unknown"}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2, flexWrap: "wrap" }}>
+            <span style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 10, fontWeight: 700,
+              color: pColor,
+              background: pColor + "22",
+              padding: "1px 6px", borderRadius: 10,
+              letterSpacing: "0.05em",
+            }}>{partyLabel(pol.party)}</span>
+            {pol.state && (
+              <span style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: C.parchmentDim }}>
+                {pol.state}
+              </span>
+            )}
+            {pol.chamber && (
+              <span style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: C.parchmentDim }}>
+                · {pol.chamber === "senate" ? "Senate" : "House"}
+              </span>
+            )}
+          </div>
+        </div>
+        {das != null && (
+          <div style={{ flexShrink: 0, textAlign: "center" }}>
+            <div style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 20, fontWeight: 700,
+              color: dasColor(das),
+            }}>{das}</div>
+            <div style={{
+              fontFamily: "'Figtree', sans-serif",
+              fontSize: 9, color: C.parchmentDim,
+              letterSpacing: "0.08em",
+            }}>DAS</div>
+          </div>
+        )}
       </div>
 
-      {/* Card 1 — Meet Your Reps */}
-      <div style={{ ...cardStyle(1), background: "#111318" }}>
-        <div style={{ position: "relative", zIndex: 1, padding: "0 32px", textAlign: "center", maxWidth: 400 }}>
-          <div style={{ fontSize: 52, marginBottom: 20 }}>🏛️</div>
-          <h2 style={{
-            fontFamily: "Arial Black", fontSize: 32, color: "#F0ECE4",
-            margin: "0 0 16px", letterSpacing: "-0.01em",
-          }}>Meet Your Representatives</h2>
-          <p style={{
-            fontFamily: "Arial", fontSize: 15, color: "#9A9488",
-            lineHeight: 1.75, marginBottom: 28,
-          }}>
-            See which members of Congress actually vote like you — and which ones vote for their donors instead.
-          </p>
-          <div style={{
+      {/* Headline */}
+      {headline && (
+        <p style={{
+          fontFamily: "'Playfair Display', serif",
+          fontStyle: "italic",
+          fontSize: 15, color: C.parchment,
+          lineHeight: 1.45, marginTop: 12,
+        }}>{headline}</p>
+      )}
+
+      {/* Dimension pill */}
+      {event.dimension && (
+        <div style={{ marginTop: 10 }}>
+          <span style={{
             display: "inline-block",
-            background: "rgba(201,168,76,0.12)",
-            border: "1px solid rgba(201,168,76,0.3)",
-            borderRadius: 20, padding: "8px 18px",
-            fontFamily: "Arial", fontSize: 12, color: "#C9A84C",
-            letterSpacing: "0.05em",
-          }}>More videos coming soon</div>
+            background: dimColor + "22",
+            border: `1px solid ${dimColor}44`,
+            color: dimColor,
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: 10, fontWeight: 700,
+            letterSpacing: "0.1em",
+            padding: "2px 8px", borderRadius: 10,
+            textTransform: "uppercase",
+          }}>{dimLabel}</span>
         </div>
-      </div>
+      )}
 
-      {/* Card 2 — Follow the Money */}
-      <div style={{ ...cardStyle(2), background: "#0A0B0D" }}>
-        <div style={{ position: "relative", zIndex: 1, padding: "0 32px", textAlign: "center", maxWidth: 400 }}>
-          <div style={{ fontSize: 52, marginBottom: 20 }}>💰</div>
-          <h2 style={{
-            fontFamily: "Arial Black", fontSize: 32, color: "#F0ECE4",
-            margin: "0 0 16px", letterSpacing: "-0.01em",
-          }}>Follow the Money</h2>
-          <p style={{
-            fontFamily: "Arial", fontSize: 15, color: "#9A9488",
-            lineHeight: 1.75, marginBottom: 32,
-          }}>
-            Every PAC donation mapped to every vote. The receipts don't lie. We show you exactly who paid for what.
-          </p>
-          <button
-            onClick={() => onShowAuth()}
-            style={{
-              fontFamily: "Arial Black", fontSize: 15, color: "#0A0B0D",
-              background: "#C9A84C", border: "none", borderRadius: 4,
-              padding: "16px 36px", cursor: "pointer",
-              letterSpacing: "0.04em", touchAction: "manipulation",
-              boxShadow: "0 0 40px rgba(201,168,76,0.25)",
-              display: "block", width: "100%",
-            }}
-          >Start for free →</button>
-        </div>
-      </div>
+      {/* DAS impact line */}
+      {event.corruption_contribution != null && (
+        <div style={{
+          fontFamily: "'Figtree', sans-serif",
+          fontSize: 11, color: C.red,
+          marginTop: 6,
+        }}>+{event.corruption_contribution} pts to Donor Alignment Score</div>
+      )}
 
-      {/* Dot indicators — right side */}
+      {/* Ideology match line */}
+      {userCaresDimension && (
+        <div style={{
+          fontFamily: "'Playfair Display', serif",
+          fontStyle: "italic",
+          fontSize: 12, color: C.gold,
+          marginTop: 4,
+        }}>This affects an issue you care about: {dimLabel}</div>
+      )}
+
+      {/* CTA row */}
       <div style={{
-        position: "absolute", right: 18, top: "50%", transform: "translateY(-50%)",
-        display: "flex", flexDirection: "column", gap: 8, zIndex: 10,
+        marginTop: 12,
+        borderTop: "1px solid rgba(201,168,76,0.10)",
+        paddingTop: 10,
       }}>
-        {Array.from({ length: TOTAL }).map((_, i) => (
-          <div
-            key={i}
-            onClick={() => setCard(i)}
-            style={{
-              width: 6, height: 6, borderRadius: "50%",
-              background: i === card ? "#C9A84C" : "rgba(255,255,255,0.3)",
-              cursor: "pointer", transition: "background 0.2s",
-            }}
-          />
-        ))}
+        <span style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontSize: 11, letterSpacing: "0.15em",
+          color: C.gold,
+        }}>VIEW THROUGHLINE →</span>
       </div>
     </div>
   );
 }
 
-export default function LandingPage() {
+// ── YourRepCard ───────────────────────────────────────────────────────────────
+function YourRepCard({ event, userDimensions, router }) {
+  return (
+    <div style={{
+      borderRadius: 8,
+      overflow: "hidden",
+      border: "1px solid rgba(201,168,76,0.35)",
+    }}>
+      <div style={{
+        height: 28,
+        background: "rgba(201,168,76,0.12)",
+        borderBottom: "1px solid rgba(201,168,76,0.25)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <span style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontSize: 10, fontWeight: 700,
+          color: "#c9a84c", letterSpacing: "0.3em",
+        }}>YOUR REP</span>
+      </div>
+      <CorruptionCard
+        event={event}
+        userDimensions={userDimensions}
+        router={router}
+        noLeftBorder={true}
+      />
+    </div>
+  );
+}
+
+// ── QuizPromptCard ────────────────────────────────────────────────────────────
+function QuizPromptCard({ router }) {
+  return (
+    <div style={{
+      background: C.card,
+      borderRadius: 8,
+      padding: 24,
+      textAlign: "center",
+      border: "1px solid rgba(201,168,76,0.25)",
+    }}>
+      <svg
+        width={60} height={60} viewBox="0 0 60 60"
+        style={{ opacity: 0.4, marginBottom: 12, display: "block", margin: "0 auto 12px" }}
+      >
+        <polygon
+          points="30,4 54,17 54,43 30,56 6,43 6,17"
+          fill="none" stroke="#c9a84c" strokeWidth="1.5"
+        />
+        <polygon
+          points="30,14 44,22 44,38 30,46 16,38 16,22"
+          fill="none" stroke="#c9a84c" strokeWidth="0.75" opacity="0.5"
+        />
+      </svg>
+      <div style={{
+        fontFamily: "'Barlow Condensed', sans-serif",
+        fontSize: 22, fontWeight: 700,
+        color: C.parchment, marginBottom: 8,
+      }}>Your feed is running on raw data.</div>
+      <div style={{
+        fontFamily: "'Figtree', sans-serif",
+        fontSize: 13, color: C.parchmentDim,
+        lineHeight: 1.5,
+      }}>12 questions unlock your political thumbprint and personalize everything you see.</div>
+      <button
+        onClick={() => router.push("/quiz")}
+        style={{
+          width: "100%",
+          marginTop: 20,
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontSize: 16, fontWeight: 700,
+          letterSpacing: "0.2em",
+          color: "#0a0b0d",
+          background: "#c9a84c",
+          border: "none",
+          borderRadius: 4,
+          padding: 14,
+          cursor: "pointer",
+        }}
+      >TAKE THE QUIZ →</button>
+    </div>
+  );
+}
+
+// ── SkeletonCard ──────────────────────────────────────────────────────────────
+function SkeletonCard() {
+  const bar = (w, h, extra = {}) => (
+    <div style={{
+      height: h, width: w,
+      background: "rgba(201,168,76,0.06)",
+      borderRadius: 4,
+      animation: "pulse 1.4s infinite",
+      ...extra,
+    }} />
+  );
+  return (
+    <div style={{ background: C.card, borderRadius: 8, padding: 16, overflow: "hidden" }}>
+      <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}>
+        <div style={{
+          width: 44, height: 44, borderRadius: "50%",
+          background: "rgba(201,168,76,0.06)",
+          animation: "pulse 1.4s infinite",
+          flexShrink: 0,
+        }} />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+          {bar("55%", 14)}
+          {bar("35%", 10)}
+        </div>
+        {bar(36, 36, { borderRadius: 4 })}
+      </div>
+      {bar("92%", 13, { marginBottom: 6 })}
+      {bar("78%", 13, { marginBottom: 6 })}
+      {bar("62%", 13, { marginBottom: 10 })}
+      {bar("28%", 20, { borderRadius: 10 })}
+    </div>
+  );
+}
+
+// ── BottomNav ─────────────────────────────────────────────────────────────────
+function BottomNav({ router }) {
+  const tabs = [
+    {
+      id: "feed", label: "Feed", route: "/",
+      icon: (active) => (
+        <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"
+            stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} fill="none" />
+          <path d="M9 21V12h6v9" stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} />
+        </svg>
+      ),
+    },
+    {
+      id: "explore", label: "Explore", route: null,
+      icon: (active) => (
+        <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+          <circle cx={12} cy={12} r={9} stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} />
+          <path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"
+            stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.4} />
+        </svg>
+      ),
+    },
+    {
+      id: "quiz", label: "Quiz", route: "/quiz",
+      icon: (active) => (
+        <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+          <circle cx={12} cy={12} r={9} stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} />
+          <circle cx={12} cy={12} r={5} stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.3} />
+          <circle cx={12} cy={12} r={2} fill={active ? "#c9a84c" : "#a89d88"} />
+        </svg>
+      ),
+    },
+    {
+      id: "profile", label: "Profile", route: "/profile",
+      icon: (active) => (
+        <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+          <circle cx={12} cy={8} r={3.5} stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} />
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"
+            stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} strokeLinecap="round" />
+        </svg>
+      ),
+    },
+    {
+      id: "call", label: "Call", route: null,
+      icon: (active) => (
+        <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+          <path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"
+            stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} fill="none" />
+        </svg>
+      ),
+    },
+  ];
+
+  return (
+    <div style={{
+      position: "fixed", bottom: 0, left: 0, right: 0,
+      height: 56,
+      background: "#0a0b0d",
+      borderTop: "1px solid rgba(201,168,76,0.10)",
+      display: "flex", alignItems: "center",
+      zIndex: 90,
+    }}>
+      {tabs.map((tab) => {
+        const active = tab.id === "feed";
+        return (
+          <button
+            key={tab.id}
+            onClick={() => tab.route && router.push(tab.route)}
+            style={{
+              flex: 1,
+              height: "100%",
+              background: "none",
+              border: "none",
+              cursor: tab.route ? "pointer" : "default",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 3,
+              padding: 0,
+            }}
+          >
+            {tab.icon(active)}
+            <span style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 9, fontWeight: 700,
+              letterSpacing: "0.08em",
+              color: active ? "#c9a84c" : "#a89d88",
+              textTransform: "uppercase",
+            }}>{tab.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+export default function FeedPage() {
   const router = useRouter();
-  const { user, profile, refreshProfile, needsZip } = useAuth();
-  const [showAuth, setShowAuth]       = useState(false);
-  const [authMode, setAuthMode]       = useState("signin");
-  const [scrolled, setScrolled]       = useState(false);
-  const [isMobile, setIsMobile]       = useState(false);
-  const [zipDismissed, setZipDismissed] = useState(false);
+  const { user, profile, loading: authLoading, setShowAuthModal } = useAuth();
+  const [cards, setCards] = useState([]);
+  const [feedLoading, setFeedLoading] = useState(true);
+
+  // Build quiz scores object from profile columns (0–100 scale)
+  const quizScores =
+    profile && profile.quiz_level >= 1
+      ? {
+          economic: profile.score_economic,
+          healthcare: profile.score_healthcare,
+          climate: profile.score_climate,
+          criminal: profile.score_criminal,
+          immigration: profile.score_immigration,
+          foreign: profile.score_foreign,
+          education: profile.score_education,
+          freedom: profile.score_freedom,
+          guns: profile.score_guns,
+          housing: profile.score_housing,
+          tech: profile.score_tech,
+          voting: profile.score_voting,
+        }
+      : null;
+
+  const hasQuiz = quizScores != null && Object.values(quizScores).some((v) => v != null);
 
   useEffect(() => {
-    async function check() {
-      const visited = localStorage.getItem("throughline_visited");
-      const { data: { user } } = await supabase.auth.getUser();
-      if (visited && user) {
-        router.push("/feed");
-        return;
+    if (authLoading) return; // wait for auth state to resolve
+
+    async function loadFeed() {
+      try {
+        // ── Query 1: top corruption events ──────────────────────────────────
+        const { data: events } = await supabase
+          .from("throughline_events")
+          .select(`
+            id,
+            corruption_contribution,
+            dimension,
+            donor_name,
+            donation_amount,
+            donation_date,
+            bill_name,
+            how_voted,
+            days_between,
+            vote_impact,
+            throughline_summary,
+            politicians (
+              id,
+              name,
+              party,
+              state,
+              chamber,
+              slug,
+              bioguide_id,
+              donor_alignment_score
+            )
+          `)
+          .not("corruption_contribution", "is", null)
+          .order("corruption_contribution", { ascending: false })
+          .limit(60);
+
+        // ── Query 2: your rep event (logged in + my_reps) ───────────────────
+        let repEvent = null;
+        const myReps = profile?.my_reps;
+        if (user && Array.isArray(myReps) && myReps.length > 0) {
+          try {
+            const { data: repEvents } = await supabase
+              .from("throughline_events")
+              .select(`
+                id,
+                corruption_contribution,
+                dimension,
+                donor_name,
+                donation_amount,
+                donation_date,
+                bill_name,
+                how_voted,
+                days_between,
+                vote_impact,
+                throughline_summary,
+                politicians (
+                  id, name, party, state, chamber, slug, bioguide_id, donor_alignment_score
+                )
+              `)
+              .not("corruption_contribution", "is", null)
+              .order("corruption_contribution", { ascending: false })
+              .limit(20);
+
+            // Filter client-side for reps in my_reps
+            if (repEvents) {
+              const match = repEvents.find(
+                (e) => e.politicians && myReps.includes(e.politicians.bioguide_id)
+              );
+              if (match) repEvent = match;
+            }
+          } catch (e) {
+            console.log("Rep event fetch silently failed:", e.message);
+          }
+        }
+
+        // ── Ideology weighting (if quiz taken) ────────────────────────────
+        let sorted = events || [];
+        if (hasQuiz && quizScores) {
+          sorted = sorted
+            .map((e) => {
+              const userScore = quizScores[e.dimension] ?? 50; // 0–100 scale
+              const weight = 1 + (userScore / 100) * 0.8; // 1.0–1.8 multiplier
+              return { ...e, _weightedScore: (e.corruption_contribution || 0) * weight };
+            })
+            .sort((a, b) => b._weightedScore - a._weightedScore);
+        }
+
+        // ── Assemble feed array ───────────────────────────────────────────
+        const feedCards = sorted.map((e) => ({ type: "corruption", event: e }));
+
+        // Insert your-rep card at index 0 if available
+        if (repEvent) {
+          feedCards.unshift({ type: "your_rep", event: repEvent });
+        }
+
+        // Splice quiz prompt at index 2 if user hasn't taken quiz
+        if (!hasQuiz) {
+          feedCards.splice(2, 0, { type: "quiz_prompt" });
+        }
+
+        setCards(feedCards);
+      } catch (e) {
+        console.error("Feed load error:", e.message);
+        setCards([]);
+      } finally {
+        setFeedLoading(false);
       }
-      localStorage.setItem("throughline_visited", "true");
     }
-    check();
 
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", onScroll);
+    loadFeed();
+  }, [authLoading, user?.id]);
 
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", checkMobile);
-    };
-  }, []);
-
-  const openSignup = () => { setAuthMode("signup"); setShowAuth(true); };
-  const openSignin = () => { setAuthMode("signin"); setShowAuth(true); };
-
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <>
       <Head>
         <title>Throughline — Every vote has a price. We show you the receipt.</title>
-        <meta name="description" content="Track the money behind every congressional vote. See exactly who funds your representatives — and how they vote for those donors." />
-      </Head>
-
-      {/* Mobile swiper — full screen, hides everything else */}
-      {isMobile && <MobileSwiper onShowAuth={() => { setAuthMode("signup"); setShowAuth(true); }} />}
-
-      {/* ZIP PROMPT — all screen sizes, logged-in users without ZIP */}
-      {user && needsZip && !zipDismissed && (
-        <div style={{ maxWidth: 480, margin: "0 auto 24px", padding: "0 24px" }}>
-          <ZipPrompt
-            context="feed"
-            onComplete={async () => { await refreshProfile(); setZipDismissed(true); }}
-            onDismiss={() => setZipDismissed(true)}
-          />
-        </div>
-      )}
-
-      {/* Sticky nav — desktop only */}
-      {!isMobile && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-          background: scrolled ? "rgba(10,11,13,0.97)" : "transparent",
-          borderBottom: scrolled ? "0.5px solid rgba(201,168,76,0.15)" : "none",
-          transition: "all 0.3s ease",
-          padding: "16px 32px",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-        }}>
-          <div style={{ fontFamily: "Arial Black", fontSize: 13, letterSpacing: "0.25em", color: "#C9A84C" }}>
-            THROUGHLINE
-          </div>
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <button onClick={() => router.push("/feed")} style={{
-              fontFamily: "Arial", fontSize: 13, color: "#9A9488",
-              background: "none", border: "none", cursor: "pointer",
-            }}>Feed</button>
-            <button onClick={openSignin} style={{
-              fontFamily: "Arial Black", fontSize: 12, color: "#0A0B0D",
-              background: "#C9A84C", border: "none", borderRadius: 4,
-              padding: "8px 18px", cursor: "pointer", letterSpacing: "0.06em",
-              touchAction: "manipulation",
-            }}>SIGN IN</button>
-          </div>
-        </div>
-      )}
-
-      {/* Desktop content */}
-      {!isMobile && (
-        <>
-          {/* HERO */}
-          <div style={{
-            minHeight: "100vh", background: "#0A0B0D",
-            display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
-            padding: "120px 24px 80px", textAlign: "center",
-            position: "relative", overflow: "hidden",
-          }}>
-            <div style={{
-              position: "absolute", top: "30%", left: "50%",
-              transform: "translateX(-50%)",
-              width: 700, height: 400,
-              background: "radial-gradient(ellipse, rgba(201,168,76,0.08) 0%, transparent 70%)",
-              pointerEvents: "none",
-            }} />
-
-            <div style={{ position: "relative", maxWidth: 720 }}>
-              <div style={{
-                display: "inline-block",
-                background: "#C9A84C", color: "#0A0B0D",
-                fontFamily: "Arial Black", fontSize: 11,
-                letterSpacing: "0.2em", padding: "6px 16px",
-                borderRadius: 2, marginBottom: 32,
-              }}>
-                POLITICAL TRANSPARENCY
-              </div>
-
-              <h1 style={{
-                fontFamily: "Arial Black",
-                fontSize: "clamp(44px, 9vw, 88px)",
-                color: "#F0ECE4", lineHeight: 1.05,
-                margin: "0 0 8px", letterSpacing: "-0.02em",
-              }}>
-                Every vote
-              </h1>
-              <h1 style={{
-                fontFamily: "Arial Black",
-                fontSize: "clamp(44px, 9vw, 88px)",
-                color: "#C9A84C", lineHeight: 1.05,
-                margin: "0 0 32px", letterSpacing: "-0.02em",
-              }}>
-                has a price.
-              </h1>
-
-              <p style={{
-                fontFamily: "Arial", fontSize: "clamp(15px, 2vw, 18px)",
-                color: "#9A9488", lineHeight: 1.8,
-                maxWidth: 540, margin: "0 auto 48px",
-              }}>
-                Track the money behind every congressional vote.
-                See exactly who funds your representatives —
-                and how they vote for those donors.
-              </p>
-
-              <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-                <button onClick={() => router.push("/quiz")} style={{
-                  fontFamily: "Arial Black", fontSize: 16, color: "#0A0B0D",
-                  background: "#C9A84C", border: "none", borderRadius: 4,
-                  padding: "18px 44px", cursor: "pointer",
-                  letterSpacing: "0.04em", touchAction: "manipulation",
-                  boxShadow: "0 0 40px rgba(201,168,76,0.25)",
-                }}>TAKE THE QUIZ →</button>
-                <button onClick={() => router.push("/feed")} style={{
-                  fontFamily: "Arial Black", fontSize: 14, color: "#C9A84C",
-                  background: "transparent",
-                  border: "1.5px solid rgba(201,168,76,0.4)",
-                  borderRadius: 4, padding: "18px 32px",
-                  cursor: "pointer", letterSpacing: "0.04em",
-                  touchAction: "manipulation",
-                }}>EXPLORE POLITICIANS</button>
-              </div>
-
-              <p style={{
-                fontFamily: "Arial", fontSize: 12, color: "#9A9488",
-                marginTop: 20, opacity: 0.6,
-              }}>
-                Free · No credit card · Takes 5 minutes
-              </p>
-            </div>
-
-            <div style={{
-              position: "absolute", bottom: 32, left: "50%", transform: "translateX(-50%)",
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-              animation: "bounce 2s ease-in-out infinite",
-            }}>
-              <div style={{ fontFamily: "Arial", fontSize: 10, color: "#9A9488", letterSpacing: "0.15em" }}>SCROLL</div>
-              <div style={{ color: "#C9A84C", fontSize: 16 }}>↓</div>
-            </div>
-          </div>
-
-          {/* HOW IT WORKS */}
-          <div style={{
-            background: "#111318", padding: "100px 24px",
-            borderTop: "0.5px solid rgba(255,255,255,0.05)",
-          }}>
-            <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-              <div style={{
-                fontFamily: "Arial Black", fontSize: 11,
-                letterSpacing: "0.3em", color: "#C9A84C",
-                marginBottom: 60, textAlign: "center",
-              }}>HOW IT WORKS</div>
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-                gap: 24,
-              }}>
-                {[
-                  { icon: "🗳️", title: "Take the Quiz", body: "Answer 12 real-world scenarios. Get your Political Thumbprint mapped across 12 policy dimensions. No jargon. No labels." },
-                  { icon: "🏛️", title: "Meet Your Reps", body: "See which members of Congress actually vote like you — and which ones vote for their donors instead." },
-                  { icon: "💰", title: "Follow the Money", body: "Every PAC donation mapped to every vote. The receipts don't lie. We show you exactly who paid for what." },
-                ].map((card, i) => (
-                  <div key={i} style={{
-                    background: "#181C22",
-                    border: "0.5px solid rgba(255,255,255,0.06)",
-                    borderRadius: 8, padding: "36px 28px",
-                  }}>
-                    <div style={{ fontSize: 36, marginBottom: 16 }}>{card.icon}</div>
-                    <div style={{
-                      fontFamily: "Arial Black", fontSize: 18,
-                      color: "#F0ECE4", marginBottom: 12,
-                    }}>{card.title}</div>
-                    <div style={{
-                      fontFamily: "Arial", fontSize: 14,
-                      color: "#9A9488", lineHeight: 1.75,
-                    }}>{card.body}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* BOTTOM CTA */}
-          <div style={{
-            background: "#0A0B0D", padding: "120px 24px",
-            textAlign: "center",
-            borderTop: "0.5px solid rgba(255,255,255,0.04)",
-          }}>
-            <div style={{ maxWidth: 700, margin: "0 auto" }}>
-              <h2 style={{
-                fontFamily: "Arial Black",
-                fontSize: "clamp(32px, 6vw, 64px)",
-                color: "#F0ECE4", margin: "0 0 8px",
-                letterSpacing: "-0.02em",
-              }}>Every vote has a price.</h2>
-              <div style={{
-                width: 60, height: 3, background: "#C9A84C",
-                margin: "24px auto",
-              }} />
-              <h2 style={{
-                fontFamily: "Arial Black",
-                fontSize: "clamp(32px, 6vw, 64px)",
-                color: "#C9A84C", margin: "0 0 48px",
-                letterSpacing: "-0.02em",
-              }}>We show you the receipt.</h2>
-              <button onClick={openSignup} style={{
-                fontFamily: "Arial Black", fontSize: 16, color: "#0A0B0D",
-                background: "#C9A84C", border: "none", borderRadius: 4,
-                padding: "18px 52px", cursor: "pointer",
-                letterSpacing: "0.04em", touchAction: "manipulation",
-                boxShadow: "0 0 60px rgba(201,168,76,0.2)",
-              }}>START FOR FREE →</button>
-              <p style={{
-                fontFamily: "Arial", fontSize: 12, color: "#9A9488",
-                marginTop: 16, opacity: 0.6,
-              }}>No credit card required</p>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div style={{
-            background: "#0A0B0D", borderTop: "0.5px solid rgba(255,255,255,0.05)",
-            padding: "24px 32px",
-            display: "flex", justifyContent: "space-between", alignItems: "center",
-            flexWrap: "wrap", gap: 12,
-          }}>
-            <div style={{ fontFamily: "Arial Black", fontSize: 11, letterSpacing: "0.2em", color: "#C9A84C" }}>
-              THROUGHLINE
-            </div>
-            <div style={{ fontFamily: "Arial", fontSize: 11, color: "#9A9488" }}>
-              throughlinenews.org · Every vote has a price.
-            </div>
-          </div>
-        </>
-      )}
-
-      <style>{`
-        @keyframes bounce {
-          0%, 100% { transform: translateX(-50%) translateY(0); }
-          50% { transform: translateX(-50%) translateY(8px); }
-        }
-      `}</style>
-
-      {showAuth && (
-        <AuthModal
-          message={authMode === "signup" ? "Create your free account" : "Sign in to Throughline"}
-          onDismiss={() => setShowAuth(false)}
+        <meta
+          name="description"
+          content="Track the money behind every congressional vote. See which politicians vote for their donors."
         />
-      )}
+      </Head>
+      <style>{GLOBAL_STYLES}</style>
+
+      <Nav />
+
+      {/* ── Sticky top bar ──────────────────────────────────────────────────── */}
+      <div style={{
+        position: "fixed", top: 0, left: 0, right: 0,
+        height: 52,
+        background: "#0a0b0d",
+        borderBottom: "1px solid rgba(201,168,76,0.10)",
+        display: "flex", alignItems: "center",
+        justifyContent: "space-between",
+        padding: "0 16px",
+        zIndex: 100,
+      }}>
+        {/* Wordmark */}
+        <div style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontWeight: 800, fontSize: 15,
+          letterSpacing: "0.25em",
+          color: "#c9a84c",
+        }}>THROUGHLINE</div>
+
+        {/* Right: bell + avatar/sign-in */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          {/* Notification bell — non-functional placeholder */}
+          <button style={{
+            background: "none", border: "none",
+            cursor: "default", padding: 4,
+            color: "#a89d88",
+          }}>
+            <svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"
+                stroke="#a89d88" strokeWidth={1.6} strokeLinecap="round" />
+            </svg>
+          </button>
+
+          {/* Avatar or Sign In */}
+          {user ? (
+            <div
+              onClick={() => router.push("/profile")}
+              style={{
+                width: 30, height: 30,
+                borderRadius: "50%",
+                background: "#c9a84c",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: 14, fontWeight: 700,
+                color: "#0a0b0d",
+                cursor: "pointer",
+              }}
+            >
+              {(user.email || "?").charAt(0).toUpperCase()}
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAuthModal(true)}
+              style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 700, fontSize: 12,
+                letterSpacing: "0.1em",
+                color: "#0a0b0d",
+                background: "#c9a84c",
+                border: "none",
+                borderRadius: 3,
+                padding: "5px 12px",
+                cursor: "pointer",
+              }}
+            >SIGN IN</button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Feed column ─────────────────────────────────────────────────────── */}
+      <div style={{
+        maxWidth: 600,
+        margin: "0 auto",
+        paddingTop: 68,
+        paddingBottom: 80,
+        paddingLeft: 16,
+        paddingRight: 16,
+      }}>
+        {feedLoading ? (
+          // Skeleton loading state
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {[0, 1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : cards.length === 0 ? (
+          // Empty state
+          <div style={{
+            textAlign: "center",
+            padding: "60px 24px",
+            fontFamily: "'Figtree', sans-serif",
+            fontSize: 14,
+            color: "#a89d88",
+            lineHeight: 1.6,
+          }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>📡</div>
+            <div style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 16, fontWeight: 700,
+              color: "#e8dfc8", marginBottom: 8,
+            }}>Feed loading…</div>
+            Data is being processed. Check back shortly.
+          </div>
+        ) : (
+          // Feed cards
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {cards.map((card, idx) => {
+              if (card.type === "your_rep") {
+                return (
+                  <YourRepCard
+                    key={`yr-${card.event.id}`}
+                    event={card.event}
+                    userDimensions={quizScores}
+                    router={router}
+                  />
+                );
+              }
+              if (card.type === "quiz_prompt") {
+                return <QuizPromptCard key="quiz-prompt" router={router} />;
+              }
+              return (
+                <CorruptionCard
+                  key={card.event.id || idx}
+                  event={card.event}
+                  userDimensions={quizScores}
+                  router={router}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── Bottom nav ──────────────────────────────────────────────────────── */}
+      <BottomNav router={router} />
     </>
   );
 }
