@@ -106,12 +106,22 @@ function CorruptionCard({ event, userDimensions, router, noLeftBorder, pacNameMa
     (event.donor_name && !event.donor_name.startsWith("C00") ? event.donor_name : null);
 
   // Filter out procedural / uninformative bill names
-  const billDisplay = (
-    event.bill_name &&
-    !event.bill_name.startsWith("On the Cloture") &&
-    !event.bill_name.startsWith("On the Nomination") &&
-    !event.bill_name.startsWith("On the Motion")
-  ) ? event.bill_name : null;
+  const SKIP_BILL_PREFIXES = [
+    "On the Cloture",
+    "On the Nomination",
+    "On the Motion",
+    "On the Amendment",
+    "On the Joint Resolution",
+    "On the Resolution",
+    "On the Conference",
+    "On the Bill",
+    "No short title",
+  ];
+
+  const billDisplay = (event.bill_name &&
+    !SKIP_BILL_PREFIXES.some(prefix => event.bill_name.startsWith(prefix)))
+    ? event.bill_name
+    : null;
 
   // Build headline from available fields
   const parts = [];
