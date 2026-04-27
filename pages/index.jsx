@@ -753,7 +753,7 @@ export default function FeedPage() {
         maxWidth: 600,
         margin: "0 auto",
         paddingTop: 68,
-        paddingBottom: "72px",
+        paddingBottom: "120px",
         paddingLeft: 16,
         paddingRight: 16,
       }}>
