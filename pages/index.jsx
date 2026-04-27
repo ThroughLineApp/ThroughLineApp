@@ -389,55 +389,59 @@ function SkeletonCard() {
   );
 }
 
-// ── BottomNav ─────────────────────────────────────────────────────────────────
+// ── BottomNav (shared) ────────────────────────────────────────────────────────
 function BottomNav({ router }) {
+  const path = router.pathname;
+  const activeId = path === "/" ? "feed" : path === "/quiz" ? "quiz" : path === "/profile" ? "profile" : "";
+
   const tabs = [
     {
       id: "feed", label: "Feed", route: "/",
-      icon: (active) => (
+      icon: (a) => (
         <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
           <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"
-            stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} fill="none" />
-          <path d="M9 21V12h6v9" stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} />
+            stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} fill="none" />
+          <path d="M9 21V12h6v9" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} />
         </svg>
       ),
     },
     {
-      id: "explore", label: "Explore", route: null,
-      icon: (active) => (
+      id: "explore", label: "Explore", route: "/",
+      icon: (a) => (
         <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-          <circle cx={12} cy={12} r={9} stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} />
+          <circle cx={12} cy={12} r={9} stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} />
           <path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"
-            stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.4} />
+            stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.4} />
         </svg>
       ),
     },
     {
       id: "quiz", label: "Quiz", route: "/quiz",
-      icon: (active) => (
+      icon: (a) => (
         <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-          <circle cx={12} cy={12} r={9} stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} />
-          <circle cx={12} cy={12} r={5} stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.3} />
-          <circle cx={12} cy={12} r={2} fill={active ? "#c9a84c" : "#a89d88"} />
+          <circle cx={12} cy={12} r={9} stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} />
+          <circle cx={12} cy={12} r={5} stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.3} />
+          <circle cx={12} cy={12} r={2} fill={a ? "#c9a84c" : "#a89d88"} />
         </svg>
       ),
     },
     {
       id: "profile", label: "Profile", route: "/profile",
-      icon: (active) => (
+      icon: (a) => (
         <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-          <circle cx={12} cy={8} r={3.5} stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} />
+          <circle cx={12} cy={8} r={3.5} stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} />
           <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"
-            stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} strokeLinecap="round" />
+            stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} strokeLinecap="round" />
         </svg>
       ),
     },
     {
-      id: "call", label: "Call", route: null,
-      icon: (active) => (
+      id: "issues", label: "Issues", route: "/",
+      icon: (a) => (
         <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-          <path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"
-            stroke={active ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} fill="none" />
+          <line x1={3} y1={6} x2={21} y2={6} stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} strokeLinecap="round" />
+          <line x1={3} y1={12} x2={16} y2={12} stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} strokeLinecap="round" />
+          <line x1={3} y1={18} x2={11} y2={18} stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} strokeLinecap="round" />
         </svg>
       ),
     },
@@ -450,20 +454,21 @@ function BottomNav({ router }) {
       background: "#0a0b0d",
       borderTop: "1px solid rgba(201,168,76,0.10)",
       display: "flex", alignItems: "center",
-      zIndex: 90,
+      justifyContent: "space-around",
+      zIndex: 200,
     }}>
       {tabs.map((tab) => {
-        const active = tab.id === "feed";
+        const active = tab.id === activeId;
         return (
           <button
             key={tab.id}
-            onClick={() => tab.route && router.push(tab.route)}
+            onClick={() => router.push(tab.route)}
             style={{
               flex: 1,
               height: "100%",
               background: "none",
               border: "none",
-              cursor: tab.route ? "pointer" : "default",
+              cursor: "pointer",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -589,8 +594,19 @@ export default function FeedPage() {
           }
         }
 
+        // ── Deduplicate: keep only the highest-DAS event per politician ──
+        const seenPoliticians = new Set();
+        const dedupedEvents = [];
+        for (const event of (events || [])) {
+          const politicianId = event.politicians?.id;
+          if (politicianId && !seenPoliticians.has(politicianId)) {
+            seenPoliticians.add(politicianId);
+            dedupedEvents.push(event);
+          }
+        }
+
         // ── Ideology weighting (if quiz taken) ────────────────────────────
-        let sorted = events || [];
+        let sorted = dedupedEvents;
         if (hasQuiz && quizScores) {
           sorted = sorted
             .map((e) => {
@@ -714,7 +730,7 @@ export default function FeedPage() {
         maxWidth: 600,
         margin: "0 auto",
         paddingTop: 68,
-        paddingBottom: 80,
+        paddingBottom: "72px",
         paddingLeft: 16,
         paddingRight: 16,
       }}>

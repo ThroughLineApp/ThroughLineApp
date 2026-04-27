@@ -112,6 +112,32 @@ function SectionLabel({ text }) {
   );
 }
 
+function BottomNavBar({router}){
+  const path=router.pathname;
+  const activeId=path==="/"?"feed":path==="/quiz"?"quiz":path==="/profile"?"profile":"";
+  const tabs=[
+    {id:"feed",label:"Feed",route:"/",icon:(a)=>(<svg width={22} height={22} viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6} fill="none"/><path d="M9 21V12h6v9" stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6}/></svg>)},
+    {id:"explore",label:"Explore",route:"/",icon:(a)=>(<svg width={22} height={22} viewBox="0 0 24 24" fill="none"><circle cx={12} cy={12} r={9} stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6}/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.4}/></svg>)},
+    {id:"quiz",label:"Quiz",route:"/quiz",icon:(a)=>(<svg width={22} height={22} viewBox="0 0 24 24" fill="none"><circle cx={12} cy={12} r={9} stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6}/><circle cx={12} cy={12} r={5} stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.3}/><circle cx={12} cy={12} r={2} fill={a?"#c9a84c":"#a89d88"}/></svg>)},
+    {id:"profile",label:"Profile",route:"/profile",icon:(a)=>(<svg width={22} height={22} viewBox="0 0 24 24" fill="none"><circle cx={12} cy={8} r={3.5} stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6}/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6} strokeLinecap="round"/></svg>)},
+    {id:"issues",label:"Issues",route:"/",icon:(a)=>(<svg width={22} height={22} viewBox="0 0 24 24" fill="none"><line x1={3} y1={6} x2={21} y2={6} stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6} strokeLinecap="round"/><line x1={3} y1={12} x2={16} y2={12} stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6} strokeLinecap="round"/><line x1={3} y1={18} x2={11} y2={18} stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6} strokeLinecap="round"/></svg>)},
+  ];
+  return(
+    <div style={{position:"fixed",bottom:0,left:0,right:0,height:56,background:"#0a0b0d",borderTop:"1px solid rgba(201,168,76,0.10)",display:"flex",alignItems:"center",justifyContent:"space-around",zIndex:200}}>
+      {tabs.map((tab)=>{
+        const active=tab.id===activeId;
+        return(
+          <button key={tab.id} onClick={()=>router.push(tab.route)}
+            style={{flex:1,height:"100%",background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,padding:0}}>
+            {tab.icon(active)}
+            <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.08em",color:active?"#c9a84c":"#a89d88",textTransform:"uppercase"}}>{tab.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const { user, profile, unfollowPolitician, unfollowIssue, loading } = useAuth();
@@ -408,6 +434,7 @@ export default function ProfilePage() {
 
         </div>
       </div>
+      <BottomNavBar router={router}/>
     </>
   );
 }
