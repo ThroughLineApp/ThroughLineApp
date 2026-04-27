@@ -101,22 +101,29 @@ function CorruptionCard({ event, userDimensions, router, noLeftBorder }) {
   const pColor = partyColor(pol.party);
   const das = pol.donor_alignment_score;
 
-  // Build headline from available fields
-  const namePart = pol.name || null;
-  const votedPart = event.how_voted ? `voted ${event.how_voted}` : null;
-  const billPart = event.bill_name ? `on ${event.bill_name}` : null;
-  const daysPart = event.days_between != null ? `${event.days_between} days` : null;
-  const amountPart = event.donation_amount ? formatCurrency(event.donation_amount) : null;
-  const donorPart = event.donor_name || null;
+  // Resolved donor display name — prefer joined pac_name, fall back to donor_name
+  const rawDonor = event.pac_donors?.pac_name || event.donor_name || null;
+  const donorDisplay = (rawDonor && !rawDonor.startsWith("C00")) ? rawDonor : null;
 
-  let headline = [namePart, votedPart, billPart].filter(Boolean).join(" ");
-  if (daysPart && amountPart && donorPart) {
-    headline += ` — ${daysPart} after a ${amountPart} donation from ${donorPart}.`;
-  } else if (amountPart && donorPart) {
-    headline += ` — after a ${amountPart} donation from ${donorPart}.`;
-  } else if (donorPart) {
-    headline += ` — after a donation from ${donorPart}.`;
+  // Filter out procedural / uninformative bill names
+  const billDisplay = (
+    event.bill_name &&
+    !event.bill_name.startsWith("On the Cloture") &&
+    !event.bill_name.startsWith("On the Nomination") &&
+    !event.bill_name.startsWith("On the Motion")
+  ) ? event.bill_name : null;
+
+  // Build headline from available fields
+  const parts = [];
+  if (pol.name) parts.push(pol.name);
+  if (event.how_voted) parts.push(`voted ${event.how_voted}`);
+  if (billDisplay) parts.push(`on ${billDisplay}`);
+  if (event.days_between && donorDisplay) {
+    parts.push(`— ${event.days_between} days after a ${formatCurrency(event.donation_amount)} donation from ${donorDisplay}`);
+  } else if (event.days_between && event.donation_amount) {
+    parts.push(`— ${event.days_between} days after a ${formatCurrency(event.donation_amount)} donation`);
   }
+  const headline = parts.length > 0 ? parts.join(" ") + "." : "";
 
   const dimColor = DIMENSION_COLORS[event.dimension] || C.gold;
   const dimLabel = DIMENSION_LABELS[event.dimension] || event.dimension;
@@ -461,6 +468,7 @@ function BottomNav({ router }) {
         const active = tab.id === activeId;
         return (
           <button
+            type="button"
             key={tab.id}
             onClick={() => router.push(tab.route)}
             style={{
@@ -549,6 +557,9 @@ export default function FeedPage() {
               slug,
               bioguide_id,
               donor_alignment_score
+            ),
+            pac_donors (
+              pac_name
             )
           `)
           .not("corruption_contribution", "is", null)
@@ -576,6 +587,9 @@ export default function FeedPage() {
                 throughline_summary,
                 politicians (
                   id, name, party, state, chamber, slug, bioguide_id, donor_alignment_score
+                ),
+                pac_donors (
+                  pac_name
                 )
               `)
               .not("corruption_contribution", "is", null)
@@ -598,7 +612,7 @@ export default function FeedPage() {
         const seenPoliticians = new Set();
         const dedupedEvents = [];
         for (const event of (events || [])) {
-          const politicianId = event.politicians?.id;
+          const politicianId = event.politicians?.slug || event.politicians?.name;
           if (politicianId && !seenPoliticians.has(politicianId)) {
             seenPoliticians.add(politicianId);
             dedupedEvents.push(event);
