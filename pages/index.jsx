@@ -674,7 +674,11 @@ export default function FeedPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <>
+    <div style={{
+      transform: "none",
+      overflowX: "visible",
+      overflowY: "visible",
+    }}>
       <Head>
         <title>Throughline — Every vote has a price. We show you the receipt.</title>
         <meta
@@ -839,6 +843,6 @@ export default function FeedPage() {
 
       {/* ── Bottom nav ──────────────────────────────────────────────────────── */}
       <BottomNav router={router} />
-    </>
+    </div>
   );
 }
