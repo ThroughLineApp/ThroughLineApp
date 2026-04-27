@@ -93,7 +93,7 @@ function bioguidePhotoUrl(bioguide_id) {
 }
 
 // ── CorruptionCard ────────────────────────────────────────────────────────────
-function CorruptionCard({ event, userDimensions, router, noLeftBorder }) {
+function CorruptionCard({ event, userDimensions, router, noLeftBorder, pacNameMap }) {
   const [imgError, setImgError] = useState(false);
   const [hovered, setHovered] = useState(false);
   const pol = event.politicians || {};
@@ -101,9 +101,9 @@ function CorruptionCard({ event, userDimensions, router, noLeftBorder }) {
   const pColor = partyColor(pol.party);
   const das = pol.donor_alignment_score;
 
-  // Resolved donor display name — prefer joined pac_name, fall back to donor_name
-  const rawDonor = event.pac_donors?.pac_name || event.donor_name || null;
-  const donorDisplay = (rawDonor && !rawDonor.startsWith("C00")) ? rawDonor : null;
+  // Resolved donor display name — look up PAC name from map, fall back to donor_name
+  const donorDisplay = pacNameMap?.[event.donor_name] ||
+    (event.donor_name && !event.donor_name.startsWith("C00") ? event.donor_name : null);
 
   // Filter out procedural / uninformative bill names
   const billDisplay = (
@@ -280,7 +280,7 @@ function CorruptionCard({ event, userDimensions, router, noLeftBorder }) {
 }
 
 // ── YourRepCard ───────────────────────────────────────────────────────────────
-function YourRepCard({ event, userDimensions, router }) {
+function YourRepCard({ event, userDimensions, router, pacNameMap }) {
   return (
     <div style={{
       borderRadius: 8,
@@ -304,6 +304,7 @@ function YourRepCard({ event, userDimensions, router }) {
         userDimensions={userDimensions}
         router={router}
         noLeftBorder={true}
+        pacNameMap={pacNameMap}
       />
     </div>
   );
@@ -506,6 +507,8 @@ export default function FeedPage() {
   const { user, profile, loading: authLoading, setShowAuthModal } = useAuth();
   const [cards, setCards] = useState([]);
   const [feedLoading, setFeedLoading] = useState(true);
+  const [feedError, setFeedError] = useState(null);
+  const [pacNameMap, setPacNameMap] = useState({});
 
   // Build quiz scores object from profile columns (0–100 scale)
   const quizScores =
@@ -557,9 +560,6 @@ export default function FeedPage() {
               slug,
               bioguide_id,
               donor_alignment_score
-            ),
-            pac_donors (
-              pac_name
             )
           `)
           .not("corruption_contribution", "is", null)
@@ -587,9 +587,6 @@ export default function FeedPage() {
                 throughline_summary,
                 politicians (
                   id, name, party, state, chamber, slug, bioguide_id, donor_alignment_score
-                ),
-                pac_donors (
-                  pac_name
                 )
               `)
               .not("corruption_contribution", "is", null)
@@ -607,6 +604,25 @@ export default function FeedPage() {
             console.log("Rep event fetch silently failed:", e.message);
           }
         }
+
+        // ── PAC name lookup (separate query, won't block feed) ───────────
+        const allEvents = [...(events || []), ...(repEvent ? [repEvent] : [])];
+        const pacIds = [...new Set(allEvents.map(e => e.donor_name).filter(Boolean))];
+        const resolvedPacNameMap = {};
+        if (pacIds.length > 0) {
+          try {
+            const { data: pacRows } = await supabase
+              .from("pac_donors")
+              .select("pac_id, pac_name")
+              .in("pac_id", pacIds.slice(0, 100));
+            if (pacRows) {
+              pacRows.forEach(row => { if (row.pac_name) resolvedPacNameMap[row.pac_id] = row.pac_name; });
+            }
+          } catch (e) {
+            console.log("PAC name lookup silently failed:", e.message);
+          }
+        }
+        setPacNameMap(resolvedPacNameMap);
 
         // ── Deduplicate: keep only the highest-DAS event per politician ──
         const seenPoliticians = new Set();
@@ -647,7 +663,7 @@ export default function FeedPage() {
         setCards(feedCards);
       } catch (e) {
         console.error("Feed load error:", e.message);
-        setCards([]);
+        setFeedError("Something went wrong loading the feed.");
       } finally {
         setFeedLoading(false);
       }
@@ -753,6 +769,24 @@ export default function FeedPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[0, 1, 2, 3].map((i) => <SkeletonCard key={i} />)}
           </div>
+        ) : feedError ? (
+          // Error state
+          <div style={{
+            textAlign: "center",
+            padding: "60px 24px",
+            fontFamily: "'Figtree', sans-serif",
+            fontSize: 14,
+            color: "#a89d88",
+            lineHeight: 1.6,
+          }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
+            <div style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 16, fontWeight: 700,
+              color: "#e8dfc8", marginBottom: 8,
+            }}>Something went wrong</div>
+            {feedError}
+          </div>
         ) : cards.length === 0 ? (
           // Empty state
           <div style={{
@@ -782,6 +816,7 @@ export default function FeedPage() {
                     event={card.event}
                     userDimensions={quizScores}
                     router={router}
+                    pacNameMap={pacNameMap}
                   />
                 );
               }
@@ -794,6 +829,7 @@ export default function FeedPage() {
                   event={card.event}
                   userDimensions={quizScores}
                   router={router}
+                  pacNameMap={pacNameMap}
                 />
               );
             })}
