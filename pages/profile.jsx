@@ -374,7 +374,14 @@ export default function ProfilePage() {
 
   /* ─────────────────────────────────────────── RENDER ──── */
   return (
-    <div style={{ transform: "none", overflowX: "visible", overflowY: "visible" }}>
+    <div style={{
+      position: "relative",
+      overflowX: "hidden",
+      WebkitOverflowScrolling: "touch",
+      touchAction: "pan-y",
+      userSelect: "none",
+      WebkitUserSelect: "none",
+    }}>
       <Head>
         <title>My Profile · Throughline</title>
         <meta name="description" content="Your political thumbprint and followed politicians on Throughline." />
