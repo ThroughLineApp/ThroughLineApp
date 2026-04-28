@@ -34,12 +34,13 @@ const C = {
 
 /* ─── ThumbprintPolygon ──────────────────────────────────────────────────────── */
 // scores: { economic: 0-100, healthcare: 0-100, ... }
-function ThumbprintPolygon({ scores, size = 160 }) {
+function ThumbprintPolygon({ scores, size = 120 }) {
   const cx = size / 2, cy = size / 2, r = size * 0.38;
   const pts = DIMS.map((dim, i) => {
     const angle = (Math.PI * 2 * i) / DIMS.length - Math.PI / 2;
     const val = scores[dim] ?? 50;
-    const rr = (val / 100) * r;
+    const normalized = Math.max(0.1, Math.min(1, (val + 20) / 40));
+    const rr = normalized * r;
     return `${(cx + rr * Math.cos(angle)).toFixed(2)},${(cy + rr * Math.sin(angle)).toFixed(2)}`;
   }).join(" ");
   return (
@@ -170,48 +171,57 @@ export default function PersonalDrawer({ isOpen, onClose, user, profile, router 
   const [repsKey,       setRepsKey]       = useState(null);
   const [followedKey,   setFollowedKey]   = useState(null);
 
-  /* Fetch reps + followed politicians once when drawer opens */
+  /* Fetch reps when drawer opens — try slug match first, fall back to id */
   useEffect(() => {
     if (!isOpen) return;
+    if (!profile?.my_reps?.length) return;
+    const myRepsKey = profile.my_reps.join(",");
+    if (myRepsKey === repsKey) return;
 
-    const myRepsKey = (profile?.my_reps || []).join(",");
-    if (profile?.my_reps?.length && myRepsKey !== repsKey) {
-      supabase
+    console.log("my_reps:", profile.my_reps);
+
+    (async () => {
+      let { data } = await supabase
         .from("politicians")
         .select("id, name, party, state, chamber, slug, bioguide_id")
-        .in("slug", profile.my_reps)
-        .then(({ data }) => {
-          setRepsData(data || []);
-          setRepsKey(myRepsKey);
-        });
-    }
+        .in("slug", profile.my_reps);
 
-    const followedKey = (profile?.followed_politicians || []).join(",");
-    if (profile?.followed_politicians?.length && followedKey !== followedKey) {
-      supabase
-        .from("politicians")
-        .select("id, name, party, state, chamber, slug, bioguide_id, donor_alignment_score")
-        .in("slug", profile.followed_politicians)
-        .then(({ data }) => {
-          setFollowedData(data || []);
-          setFollowedKey(followedKey);
-        });
-    }
-  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+      if (!data?.length) {
+        // my_reps may be stored as UUIDs — try id column
+        ({ data } = await supabase
+          .from("politicians")
+          .select("id, name, party, state, chamber, slug, bioguide_id")
+          .in("id", profile.my_reps));
+      }
 
-  /* Also fetch followed if not yet loaded */
+      console.log("repsData:", data);
+      setRepsData(data || []);
+      setRepsKey(myRepsKey);
+    })();
+  }, [isOpen, profile?.my_reps]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* Fetch followed politicians — try slug first, fall back to id */
   useEffect(() => {
     if (!isOpen || !profile?.followed_politicians?.length) return;
     const key = profile.followed_politicians.join(",");
     if (key === followedKey) return;
-    supabase
-      .from("politicians")
-      .select("id, name, party, state, chamber, slug, bioguide_id, donor_alignment_score")
-      .in("slug", profile.followed_politicians)
-      .then(({ data }) => {
-        setFollowedData(data || []);
-        setFollowedKey(key);
-      });
+
+    (async () => {
+      let { data } = await supabase
+        .from("politicians")
+        .select("id, name, party, state, chamber, slug, bioguide_id, donor_alignment_score")
+        .in("slug", profile.followed_politicians);
+
+      if (!data?.length) {
+        ({ data } = await supabase
+          .from("politicians")
+          .select("id, name, party, state, chamber, slug, bioguide_id, donor_alignment_score")
+          .in("id", profile.followed_politicians));
+      }
+
+      setFollowedData(data || []);
+      setFollowedKey(key);
+    })();
   }, [isOpen, profile?.followed_politicians]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Derive scores and profile type */
@@ -235,8 +245,9 @@ export default function PersonalDrawer({ isOpen, onClose, user, profile, router 
         onClick={onClose}
         style={{
           display: isOpen ? "block" : "none",
-          position: "fixed", inset: 0,
-          background: "rgba(0,0,0,0.7)",
+          position: "fixed",
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.75)",
           zIndex: 10000,
         }}
       />
@@ -284,7 +295,7 @@ export default function PersonalDrawer({ isOpen, onClose, user, profile, router 
           {hasScores ? (
             <>
               <div style={{ display: "flex", justifyContent: "center" }}>
-                <ThumbprintPolygon scores={scores} size={160} />
+                <ThumbprintPolygon scores={scores} size={120} />
               </div>
               <div style={{
                 fontFamily: "'Barlow Condensed', sans-serif",
