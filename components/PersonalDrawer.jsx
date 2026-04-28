@@ -39,7 +39,7 @@ function ThumbprintPolygon({ scores, size = 120 }) {
   const pts = DIMS.map((dim, i) => {
     const angle = (Math.PI * 2 * i) / DIMS.length - Math.PI / 2;
     const val = scores[dim] ?? 50;
-    const normalized = Math.max(0.1, Math.min(1, (val + 20) / 40));
+    const normalized = Math.max(0.1, Math.min(1, val / 100));
     const rr = normalized * r;
     return `${(cx + rr * Math.cos(angle)).toFixed(2)},${(cy + rr * Math.sin(angle)).toFixed(2)}`;
   }).join(" ");
@@ -173,28 +173,41 @@ export default function PersonalDrawer({ isOpen, onClose, user, profile, router 
 
   /* Fetch reps when drawer opens — try slug match first, fall back to id */
   useEffect(() => {
+    console.log("REPS DEBUG - isOpen:", isOpen);
+    console.log("REPS DEBUG - my_reps raw:", profile?.my_reps);
+    console.log("REPS DEBUG - my_reps type:", typeof profile?.my_reps);
+    console.log("REPS DEBUG - my_reps length:", profile?.my_reps?.length);
+
     if (!isOpen) return;
-    if (!profile?.my_reps?.length) return;
-    const myRepsKey = profile.my_reps.join(",");
+
+    // Handle case where my_reps is stored as a JSON string
+    let repsIds = profile?.my_reps;
+    if (typeof repsIds === "string") {
+      try { repsIds = JSON.parse(repsIds); } catch (e) { repsIds = []; }
+    }
+    if (!Array.isArray(repsIds) || repsIds.length === 0) return;
+
+    const myRepsKey = repsIds.join(",");
     if (myRepsKey === repsKey) return;
 
-    console.log("my_reps:", profile.my_reps);
-
     (async () => {
-      let { data } = await supabase
+      let { data, error } = await supabase
         .from("politicians")
         .select("id, name, party, state, chamber, slug, bioguide_id")
-        .in("slug", profile.my_reps);
+        .in("slug", repsIds);
+
+      console.log("REPS RESULT slug query:", data, error);
 
       if (!data?.length) {
         // my_reps may be stored as UUIDs — try id column
-        ({ data } = await supabase
+        ({ data, error } = await supabase
           .from("politicians")
           .select("id, name, party, state, chamber, slug, bioguide_id")
-          .in("id", profile.my_reps));
+          .in("id", repsIds));
+
+        console.log("REPS RESULT id query:", data, error);
       }
 
-      console.log("repsData:", data);
       setRepsData(data || []);
       setRepsKey(myRepsKey);
     })();
