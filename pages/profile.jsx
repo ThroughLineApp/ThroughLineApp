@@ -262,10 +262,16 @@ export default function ProfilePage() {
   const [zipValue,       setZipValue]       = useState("");
   const [zipSaving,      setZipSaving]      = useState(false);
 
-  /* Redirect if not logged in */
+  /* Redirect if not logged in — 500ms grace for auth hydration */
   useEffect(() => {
-    if (!loading && !user) router.replace("/");
-  }, [user, loading]);
+    if (loading) return
+    if (!user) {
+      const timer = setTimeout(() => {
+        if (!user) router.replace("/")
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [loading, user, router])
 
   /* Init zip from profile */
   useEffect(() => {
