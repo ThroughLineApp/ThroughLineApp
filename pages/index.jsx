@@ -424,7 +424,7 @@ function BottomNav({ router }) {
       ),
     },
     {
-      id: "explore", label: "Explore", route: null,
+      id: "explore", label: "Explore", route: "/explore",
       icon: (a) => (
         <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
           <circle cx={12} cy={12} r={9} stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} />
