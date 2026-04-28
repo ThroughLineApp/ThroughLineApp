@@ -287,9 +287,13 @@ function PoliticianCard({ politician, quizScores, donationData, isMyRep, isFollo
 
         {/* DAS */}
         <div style={{ flex:1, background:C.bg, borderRadius:8, padding:"10px 14px", textAlign:"center" }}>
-          <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:24, fontWeight:700, color:dasColor(das), lineHeight:1 }}>
-            {das != null ? das : "—"}
-          </div>
+          {das != null ? (
+            <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:24, fontWeight:700, color:dasColor(das), lineHeight:1 }}>
+              {das}
+            </div>
+          ) : (
+            <div style={{ fontSize:11, color:C.parchmentDim, fontFamily:"'Figtree',sans-serif", paddingTop:4 }}>No data</div>
+          )}
           <div style={{ fontSize:10, color:C.parchmentDim, marginTop:3, fontFamily:"'Figtree',sans-serif" }}>DAS</div>
         </div>
 
@@ -313,9 +317,14 @@ function PoliticianCard({ politician, quizScores, donationData, isMyRep, isFollo
         <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:10, color:C.parchmentDim, letterSpacing:"0.15em", marginBottom:6, textTransform:"uppercase" }}>
           Donation Sources
         </div>
-        <div style={{ width:"100%", height:12, borderRadius:6, overflow:"hidden", background:C.bg, display:"flex" }}>
+        <div style={{ width:"100%", height:12, borderRadius:6, overflow:"hidden", background:C.bg, display:"flex", position:"relative", alignItems:"center", justifyContent:"center" }}>
           {donLoading ? (
-            <div style={{ flex:1, background:"#1a1d26", animation:"shimmer 1.5s infinite", backgroundSize:"800px 100%" }} />
+            <div style={{ flex:1, background:"#1a1d26", animation:"shimmer 1.5s infinite", backgroundSize:"800px 100%", height:"100%" }} />
+          ) : (smallPct === 0 && pacPct === 0) ? (
+            <>
+              <div style={{ position:"absolute", inset:0, background:"#1a1d26" }} />
+              <span style={{ position:"relative", zIndex:1, fontSize:10, color:C.parchmentDim, fontFamily:"'Figtree',sans-serif" }}>Donation data loading</span>
+            </>
           ) : (
             <>
               <div style={{ width:`${smallPct}%`, background:C.green, height:"100%", transition:"width 0.5s ease" }} />
@@ -355,7 +364,7 @@ function PoliticianCard({ politician, quizScores, donationData, isMyRep, isFollo
             );
           })}
         </div>
-      ) : politician.top_donor_industry ? (
+      ) : (politician.top_donor_industry && politician.top_donor_industry.toLowerCase() !== "unknown") ? (
         <div style={{ marginTop:14 }}>
           <span style={{ fontSize:11, color:C.parchmentDim, fontFamily:"'Figtree',sans-serif" }}>
             Top donor: {politician.top_donor_industry}
@@ -581,8 +590,9 @@ export default function ExplorePage() {
           style={{ width:"100%", background:"#11131a", border:`1px solid ${C.border}`, borderRadius:8, padding:"10px 14px", color:C.parchment, fontFamily:"'Figtree',sans-serif", fontSize:14, outline:"none" }}
         />
 
-        {/* Filter pills + sort */}
-        <div style={{ display:"flex", gap:8, marginTop:8, overflowX:"auto", paddingBottom:2, alignItems:"center" }}>
+        {/* Filter pills + sort — scrollable with right-fade hint */}
+        <div style={{ position:"relative", marginTop:8 }}>
+          <div style={{ display:"flex", gap:8, overflowX:"auto", paddingBottom:2, alignItems:"center", WebkitOverflowScrolling:"touch", scrollbarWidth:"none", msOverflowStyle:"none" }}>
           {/* Party */}
           {["All","D","R","I"].map(v => (
             <Pill key={v} label={v === "All" ? "All Parties" : v} active={partyFilter === v} onClick={() => setPartyFilter(v)} />
@@ -611,6 +621,9 @@ export default function ExplorePage() {
           <Pill label="Prominence" active={sortBy === "prominence"} onClick={() => setSortBy("prominence")} />
           <Pill label="Match %" active={sortBy === "match"} onClick={() => hasQuiz && setSortBy("match")} disabled={!hasQuiz} />
           <Pill label="DAS" active={sortBy === "das"} onClick={() => setSortBy("das")} />
+          </div>
+          {/* Right-edge scroll fade */}
+          <div style={{ position:"absolute", right:0, top:0, bottom:0, width:40, background:"linear-gradient(to right, transparent, #0a0b0d)", pointerEvents:"none", zIndex:2 }} />
         </div>
       </div>
 
