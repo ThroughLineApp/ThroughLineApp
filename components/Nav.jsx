@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { useAuth } from "../lib/auth";
 import AuthModal from "./AuthModal";
+import PersonalDrawer from "./PersonalDrawer";
 
 // ── Thumbprint avatar helpers ──────────────────────────────────────────────────
 const THUMB_DIMS = [
@@ -39,6 +40,7 @@ export default function Nav() {
   const { user, profile, signOut, setShowAuthModal } = useAuth();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [pdOpen,     setPdOpen]     = useState(false);
   const [isMobile,   setIsMobile]   = useState(false);
   const [showAuth,   setShowAuth]   = useState(false);
 
@@ -87,7 +89,7 @@ export default function Nav() {
   // ── THUMBPRINT AVATAR BUTTON ────────────────────────────────────────────────
   const avatarBtn = (
     <button
-      onClick={() => router.push("/profile")}
+      onClick={() => setPdOpen(true)}
       style={{
         width: 32, height: 32, borderRadius: "50%",
         border: "1.5px solid rgba(201,168,76,0.4)",
@@ -333,6 +335,14 @@ export default function Nav() {
       {showAuth && (
         <AuthModal onDismiss={() => setShowAuth(false)} />
       )}
+
+      <PersonalDrawer
+        isOpen={pdOpen}
+        onClose={() => setPdOpen(false)}
+        user={user}
+        profile={profile}
+        router={router}
+      />
     </>
   );
 }
