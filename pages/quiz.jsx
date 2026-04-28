@@ -437,25 +437,76 @@ function ResultsScreen({scores,matches,matchesLoading,onStartL2,onRetake,onConti
   );
 }
 
-function BottomNavBar({router}){
-  const path=router.pathname;
-  const activeId=path==="/"?"feed":path==="/quiz"?"quiz":path==="/profile"?"profile":"";
-  const tabs=[
-    {id:"feed",label:"Feed",route:"/",icon:(a)=>(<svg width={22} height={22} viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6} fill="none"/><path d="M9 21V12h6v9" stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6}/></svg>)},
-    {id:"explore",label:"Explore",route:"/",icon:(a)=>(<svg width={22} height={22} viewBox="0 0 24 24" fill="none"><circle cx={12} cy={12} r={9} stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6}/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.4}/></svg>)},
-    {id:"quiz",label:"Quiz",route:"/quiz",icon:(a)=>(<svg width={22} height={22} viewBox="0 0 24 24" fill="none"><circle cx={12} cy={12} r={9} stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6}/><circle cx={12} cy={12} r={5} stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.3}/><circle cx={12} cy={12} r={2} fill={a?"#c9a84c":"#a89d88"}/></svg>)},
-    {id:"profile",label:"Profile",route:"/profile",icon:(a)=>(<svg width={22} height={22} viewBox="0 0 24 24" fill="none"><circle cx={12} cy={8} r={3.5} stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6}/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6} strokeLinecap="round"/></svg>)},
-    {id:"issues",label:"Issues",route:"/",icon:(a)=>(<svg width={22} height={22} viewBox="0 0 24 24" fill="none"><line x1={3} y1={6} x2={21} y2={6} stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6} strokeLinecap="round"/><line x1={3} y1={12} x2={16} y2={12} stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6} strokeLinecap="round"/><line x1={3} y1={18} x2={11} y2={18} stroke={a?"#c9a84c":"#a89d88"} strokeWidth={1.6} strokeLinecap="round"/></svg>)},
+function BottomNavBar({ activeTab }) {
+  const router = useRouter();
+  const tabs = [
+    {
+      id: "feed", label: "Feed",
+      onClick: () => router.push("/"),
+      icon: (a) => (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+          <polyline points="9,22 9,12 15,12 15,22" />
+        </svg>
+      ),
+    },
+    {
+      id: "explore", label: "Explore",
+      onClick: () => router.push("/explore"),
+      icon: (a) => (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
+          <circle cx="12" cy="12" r="10" />
+          <polygon points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88" />
+        </svg>
+      ),
+    },
+    {
+      id: "alerts", label: "Alerts",
+      onClick: () => alert("Alerts coming soon"),
+      icon: (a) => (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
+          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 01-3.46 0" />
+        </svg>
+      ),
+    },
+    {
+      id: "news", label: "News",
+      onClick: () => alert("News coming soon"),
+      icon: (a) => (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
+          <path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a4 4 0 01-4-4V6" />
+          <line x1="10" y1="7" x2="18" y2="7" />
+          <line x1="10" y1="11" x2="18" y2="11" />
+          <line x1="10" y1="15" x2="16" y2="15" />
+        </svg>
+      ),
+    },
   ];
-  return(
-    <div style={{position:"fixed",bottom:0,left:0,right:0,height:56,background:"#0a0b0d",borderTop:"1px solid rgba(201,168,76,0.10)",display:"flex",alignItems:"center",justifyContent:"space-around",zIndex:200}}>
-      {tabs.map((tab)=>{
-        const active=tab.id===activeId;
-        return(
-          <button key={tab.id} onClick={()=>router.push(tab.route)}
-            style={{flex:1,height:"100%",background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,padding:0}}>
+  return (
+    <div style={{
+      position: "fixed", bottom: 0, left: 0, right: 0,
+      background: "#0a0b0d",
+      borderTop: "1px solid rgba(201,168,76,0.15)",
+      zIndex: 9999,
+      display: "flex",
+      paddingBottom: "env(safe-area-inset-bottom, 0px)",
+    }}>
+      {tabs.map(tab => {
+        const active = tab.id === activeTab;
+        return (
+          <button key={tab.id} type="button" onClick={tab.onClick}
+            style={{
+              flex: 1, height: "56px", display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center",
+              cursor: "pointer", border: "none", background: "transparent",
+            }}>
             {tab.icon(active)}
-            <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.08em",color:active?"#c9a84c":"#a89d88",textTransform:"uppercase"}}>{tab.label}</span>
+            <span style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 10, letterSpacing: "0.08em", marginTop: 3,
+              color: active ? "#c9a84c" : "#a89d88", textTransform: "uppercase",
+            }}>{tab.label}</span>
           </button>
         );
       })}
@@ -849,7 +900,7 @@ export default function QuizPage(){
           <div style={{fontFamily:"'Figtree',sans-serif",fontSize:12,color:C.parchmentDim,opacity:0.65}}>~5 minutes · No account required · Skip any question</div>
         </div>
       </div>
-      <BottomNavBar router={router}/>
+      <BottomNavBar activeTab="" />
     </>
   );
 
@@ -866,8 +917,8 @@ export default function QuizPage(){
   if(phase==="l1_badges")return(<><Head><title>Badge Earned · Throughline</title></Head><style>{GLOBAL_STYLES}</style><BadgeScreen earnedBadges={earnedBadges.length>0?earnedBadges:[BADGES[0]]} onContinue={()=>setPhase("l1_results")} continueLabel="See My Results →"/></>);
   if(phase==="l2_badges")return(<><Head><title>Badge Earned · Throughline</title></Head><style>{GLOBAL_STYLES}</style><BadgeScreen earnedBadges={earnedBadges.length>0?earnedBadges:[BADGES[1]]} onContinue={()=>setPhase("l2_results")} continueLabel="See My Refined Results →"/></>);
 
-  if(phase==="l1_results")return(<><Head><title>Your Political Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l1Scores} matches={matches} matchesLoading={matchesLoading} onStartL2={startL2} onRetake={handleRetake} onContinueToL2={startL2} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={1} isL1={true} followedPoliticians={followedPoliticians} onFollowToggle={handleFollowToggle} isReturningUser={isReturningUser}/><BottomNavBar router={router}/></>);
-  if(phase==="l2_results")return(<><Head><title>Your Refined Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l2Scores} matches={matches} matchesLoading={matchesLoading} onStartL2={null} onRetake={handleRetake} onContinueToL2={null} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={2} isL1={false} followedPoliticians={followedPoliticians} onFollowToggle={handleFollowToggle} isReturningUser={isReturningUser}/><BottomNavBar router={router}/></>);
+  if(phase==="l1_results")return(<><Head><title>Your Political Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l1Scores} matches={matches} matchesLoading={matchesLoading} onStartL2={startL2} onRetake={handleRetake} onContinueToL2={startL2} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={1} isL1={true} followedPoliticians={followedPoliticians} onFollowToggle={handleFollowToggle} isReturningUser={isReturningUser}/><BottomNavBar activeTab="" /></>);
+  if(phase==="l2_results")return(<><Head><title>Your Refined Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l2Scores} matches={matches} matchesLoading={matchesLoading} onStartL2={null} onRetake={handleRetake} onContinueToL2={null} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={2} isL1={false} followedPoliticians={followedPoliticians} onFollowToggle={handleFollowToggle} isReturningUser={isReturningUser}/><BottomNavBar activeTab="" /></>);
 
   if(phase==="l1_question"){const q=shuffledL1[l1QIdx];return(<><Head><title>Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100vh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment,display:"flex",flexDirection:"column"}}><QuestionScreen key={l1QIdx} q={q} qIndex={l1QIdx} total={shuffledL1.length} level={1} onAnswer={handleL1Answer} onBack={handleL1Back} onSkip={handleL1Skip} skippedCount={l1Skipped} previousAnswer={l1AnswerIndices[shuffledL1[l1QIdx]?.dimension]??null}/></div></>);}
   if(phase==="l2_question"){const q=l2Questions[l2QIdx];return(<><Head><title>Level 2 Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100vh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment,display:"flex",flexDirection:"column"}}><QuestionScreen key={`l2-${l2QIdx}`} q={q} qIndex={l2QIdx} total={l2Questions.length} level={2} onAnswer={handleL2Answer} onBack={handleL2Back} onSkip={handleL2Skip} skippedCount={l2Skipped} previousAnswer={l2AnswerIndices[l2Questions[l2QIdx]?.dimension]??null}/></div></>);}

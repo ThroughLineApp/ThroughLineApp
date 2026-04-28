@@ -4,6 +4,27 @@ import Link from "next/link";
 import { useAuth } from "../lib/auth";
 import AuthModal from "./AuthModal";
 
+// ── Thumbprint avatar helpers ──────────────────────────────────────────────────
+const THUMB_DIMS = [
+  "economic","healthcare","climate","criminal","immigration","foreign",
+  "education","freedom","guns","housing","tech","voting",
+];
+
+function TinyThumbprint({ profile }) {
+  const cx = 14, cy = 14, r = 11;
+  const pts = THUMB_DIMS.map((dim, i) => {
+    const angle = (Math.PI * 2 * i) / THUMB_DIMS.length - Math.PI / 2;
+    const val = profile?.[`score_${dim}`] ?? 50;
+    const rr = (val / 100) * r;
+    return `${(cx + rr * Math.cos(angle)).toFixed(2)},${(cy + rr * Math.sin(angle)).toFixed(2)}`;
+  }).join(" ");
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28">
+      <polygon points={pts} fill="rgba(201,168,76,0.2)" stroke="#c9a84c" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 const NAV_LINKS = [
   { label: "Feed",         href: "/feed" },
   { label: "Quiz",         href: "/quiz" },
@@ -61,6 +82,31 @@ export default function Nav() {
   };
 
   const username = profile?.username || user?.user_metadata?.username || null;
+  const hasThumbprint = user && THUMB_DIMS.some(d => profile?.[`score_${d}`] != null);
+
+  // ── THUMBPRINT AVATAR BUTTON ────────────────────────────────────────────────
+  const avatarBtn = (
+    <button
+      onClick={() => router.push("/profile")}
+      style={{
+        width: 32, height: 32, borderRadius: "50%",
+        border: "1.5px solid rgba(201,168,76,0.4)",
+        background: "#11131a",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        cursor: "pointer", padding: 0, flexShrink: 0,
+        touchAction: "manipulation",
+      }}
+    >
+      {hasThumbprint ? (
+        <TinyThumbprint profile={profile} />
+      ) : (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a89d88" strokeWidth="1.5" strokeLinecap="round">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" />
+        </svg>
+      )}
+    </button>
+  );
 
   // ── DESKTOP NAV ────────────────────────────────────────────────────────────
   const DesktopNav = (
@@ -90,26 +136,14 @@ export default function Nav() {
         ))}
       </div>
 
-      {/* Right — auth */}
+      {/* Right — avatar + auth */}
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        {avatarBtn}
         {user ? (
-          <>
-            {username && (
-              <span style={{
-                fontFamily: "Arial", fontSize: 13, color: "#9A9488",
-              }}>{username}</span>
-            )}
-            <button onClick={() => router.push("/profile")} style={{
-              fontFamily: "Arial Black", fontSize: 12, color: "#0A0B0D",
-              background: "#C9A84C", border: "none", borderRadius: 4,
-              padding: "8px 18px", cursor: "pointer", letterSpacing: "0.06em",
-              touchAction: "manipulation",
-            }}>MY PROFILE</button>
-            <button onClick={handleSignOut} style={{
-              fontFamily: "Arial", fontSize: 12, color: "#9A9488",
-              background: "none", border: "none", cursor: "pointer",
-            }}>Sign Out</button>
-          </>
+          <button onClick={handleSignOut} style={{
+            fontFamily: "Arial", fontSize: 12, color: "#9A9488",
+            background: "none", border: "none", cursor: "pointer",
+          }}>Sign Out</button>
         ) : (
           <button onClick={openAuth} style={{
             fontFamily: "Arial Black", fontSize: 12, color: "#0A0B0D",
@@ -136,22 +170,25 @@ export default function Nav() {
         color: "#C9A84C", background: "none", border: "none", cursor: "pointer",
       }}>THROUGHLINE</button>
 
-      {/* Hamburger */}
-      <button
-        onClick={() => setDrawerOpen(true)}
-        aria-label="Open menu"
-        style={{
-          display: "flex", flexDirection: "column", justifyContent: "center",
-          alignItems: "center", gap: 5,
-          width: 44, height: 44,
-          background: "none", border: "none", cursor: "pointer",
-          touchAction: "manipulation", color: "#C9A84C",
-        }}
-      >
-        <span style={{ display: "block", width: 22, height: 2, background: "#C9A84C", borderRadius: 1 }} />
-        <span style={{ display: "block", width: 22, height: 2, background: "#C9A84C", borderRadius: 1 }} />
-        <span style={{ display: "block", width: 22, height: 2, background: "#C9A84C", borderRadius: 1 }} />
-      </button>
+      {/* Right: avatar + hamburger */}
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        {avatarBtn}
+        <button
+          onClick={() => setDrawerOpen(true)}
+          aria-label="Open menu"
+          style={{
+            display: "flex", flexDirection: "column", justifyContent: "center",
+            alignItems: "center", gap: 5,
+            width: 44, height: 44,
+            background: "none", border: "none", cursor: "pointer",
+            touchAction: "manipulation",
+          }}
+        >
+          <span style={{ display: "block", width: 22, height: 2, background: "#C9A84C", borderRadius: 1 }} />
+          <span style={{ display: "block", width: 22, height: 2, background: "#C9A84C", borderRadius: 1 }} />
+          <span style={{ display: "block", width: 22, height: 2, background: "#C9A84C", borderRadius: 1 }} />
+        </button>
+      </div>
     </nav>
   );
 

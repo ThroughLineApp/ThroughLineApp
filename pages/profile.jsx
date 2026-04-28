@@ -152,94 +152,77 @@ function SectionLabel({ text }) {
   );
 }
 
-/* ─── BottomNavBar (exact explore.jsx pattern) ──────────────── */
-function BottomNavBar({ router }) {
-  const path = router.pathname;
-  const activeId =
-    path === "/" ? "feed" :
-    path === "/explore" ? "explore" :
-    path === "/quiz" ? "quiz" :
-    path === "/profile" ? "profile" : "";
-
+/* ─── BottomNavBar (4-tab: Feed, Explore, Alerts, News) ─────── */
+function BottomNavBar({ activeTab }) {
+  const router = useRouter();
   const tabs = [
     {
-      id: "feed", label: "Feed", route: "/",
+      id: "feed", label: "Feed",
+      onClick: () => router.push("/"),
       icon: (a) => (
-        <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} fill="none"/>
-          <path d="M9 21V12h6v9" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6}/>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+          <polyline points="9,22 9,12 15,12 15,22" />
         </svg>
       ),
     },
     {
-      id: "explore", label: "Explore", route: "/explore",
+      id: "explore", label: "Explore",
+      onClick: () => router.push("/explore"),
       icon: (a) => (
-        <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-          <circle cx={12} cy={12} r={9} stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6}/>
-          <path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.4}/>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
+          <circle cx="12" cy="12" r="10" />
+          <polygon points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88" />
         </svg>
       ),
     },
     {
-      id: "quiz", label: "Quiz", route: "/quiz",
+      id: "alerts", label: "Alerts",
+      onClick: () => alert("Alerts coming soon"),
       icon: (a) => (
-        <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-          <circle cx={12} cy={12} r={9} stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6}/>
-          <circle cx={12} cy={12} r={5} stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.3}/>
-          <circle cx={12} cy={12} r={2} fill={a ? "#c9a84c" : "#a89d88"}/>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
+          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 01-3.46 0" />
         </svg>
       ),
     },
     {
-      id: "profile", label: "Profile", route: "/profile",
+      id: "news", label: "News",
+      onClick: () => alert("News coming soon"),
       icon: (a) => (
-        <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-          <circle cx={12} cy={8} r={3.5} stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6}/>
-          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} strokeLinecap="round"/>
-        </svg>
-      ),
-    },
-    {
-      id: "issues", label: "Issues", route: null,
-      icon: (a) => (
-        <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-          <line x1={3} y1={6} x2={21} y2={6} stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} strokeLinecap="round"/>
-          <line x1={3} y1={12} x2={16} y2={12} stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} strokeLinecap="round"/>
-          <line x1={3} y1={18} x2={11} y2={18} stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth={1.6} strokeLinecap="round"/>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
+          <path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a4 4 0 01-4-4V6" />
+          <line x1="10" y1="7" x2="18" y2="7" />
+          <line x1="10" y1="11" x2="18" y2="11" />
+          <line x1="10" y1="15" x2="16" y2="15" />
         </svg>
       ),
     },
   ];
-
   return (
     <div style={{
-      position: "fixed",
-      bottom: 0,
-      left: 0,
-      right: 0,
-      width: "100%",
-      zIndex: 9999,
+      position: "fixed", bottom: 0, left: 0, right: 0,
       background: "#0a0b0d",
-      borderTop: "1px solid rgba(201,168,76,0.10)",
-      height: "56px",
+      borderTop: "1px solid rgba(201,168,76,0.15)",
+      zIndex: 9999,
       display: "flex",
-      alignItems: "center",
-      justifyContent: "space-around",
       paddingBottom: "env(safe-area-inset-bottom, 0px)",
     }}>
-      {tabs.map((tab) => {
-        const active = tab.id === activeId;
+      {tabs.map(tab => {
+        const active = tab.id === activeTab;
         return (
-          <button
-            key={tab.id}
-            onClick={() => {
-              if (tab.route === null) { alert("Issues — coming soon"); return; }
-              router.push(tab.route);
-            }}
-            style={{ flex: 1, height: "100%", background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, padding: 0 }}
-          >
+          <button key={tab.id} type="button" onClick={tab.onClick}
+            style={{
+              flex: 1, height: "56px", display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center",
+              cursor: "pointer", border: "none", background: "transparent",
+            }}>
             {tab.icon(active)}
-            <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", color: active ? "#c9a84c" : "#a89d88", textTransform: "uppercase" }}>{tab.label}</span>
+            <span style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 10, letterSpacing: "0.08em", marginTop: 3,
+              color: active ? "#c9a84c" : "#a89d88", textTransform: "uppercase",
+            }}>{tab.label}</span>
           </button>
         );
       })}
@@ -618,7 +601,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <BottomNavBar router={router}/>
+      <BottomNavBar activeTab="" />
     </div>
   );
 }
