@@ -171,13 +171,8 @@ export default function PersonalDrawer({ isOpen, onClose, user, profile, router 
   const [repsKey,       setRepsKey]       = useState(null);
   const [followedKey,   setFollowedKey]   = useState(null);
 
-  /* Fetch reps when drawer opens — try slug match first, fall back to id */
+  /* Fetch reps when drawer opens — my_reps stores bioguide_ids */
   useEffect(() => {
-    console.log("REPS DEBUG - isOpen:", isOpen);
-    console.log("REPS DEBUG - my_reps raw:", profile?.my_reps);
-    console.log("REPS DEBUG - my_reps type:", typeof profile?.my_reps);
-    console.log("REPS DEBUG - my_reps length:", profile?.my_reps?.length);
-
     if (!isOpen) return;
 
     // Handle case where my_reps is stored as a JSON string
@@ -190,51 +185,30 @@ export default function PersonalDrawer({ isOpen, onClose, user, profile, router 
     const myRepsKey = repsIds.join(",");
     if (myRepsKey === repsKey) return;
 
-    (async () => {
-      let { data, error } = await supabase
-        .from("politicians")
-        .select("id, name, party, state, chamber, slug, bioguide_id")
-        .in("slug", repsIds);
-
-      console.log("REPS RESULT slug query:", data, error);
-
-      if (!data?.length) {
-        // my_reps may be stored as UUIDs — try id column
-        ({ data, error } = await supabase
-          .from("politicians")
-          .select("id, name, party, state, chamber, slug, bioguide_id")
-          .in("id", repsIds));
-
-        console.log("REPS RESULT id query:", data, error);
-      }
-
-      setRepsData(data || []);
-      setRepsKey(myRepsKey);
-    })();
+    supabase
+      .from("politicians")
+      .select("id, name, party, state, chamber, slug, bioguide_id")
+      .in("bioguide_id", repsIds)
+      .then(({ data }) => {
+        setRepsData(data || []);
+        setRepsKey(myRepsKey);
+      });
   }, [isOpen, profile?.my_reps]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* Fetch followed politicians — try slug first, fall back to id */
+  /* Fetch followed politicians — followed_politicians also stores bioguide_ids */
   useEffect(() => {
     if (!isOpen || !profile?.followed_politicians?.length) return;
     const key = profile.followed_politicians.join(",");
     if (key === followedKey) return;
 
-    (async () => {
-      let { data } = await supabase
-        .from("politicians")
-        .select("id, name, party, state, chamber, slug, bioguide_id, donor_alignment_score")
-        .in("slug", profile.followed_politicians);
-
-      if (!data?.length) {
-        ({ data } = await supabase
-          .from("politicians")
-          .select("id, name, party, state, chamber, slug, bioguide_id, donor_alignment_score")
-          .in("id", profile.followed_politicians));
-      }
-
-      setFollowedData(data || []);
-      setFollowedKey(key);
-    })();
+    supabase
+      .from("politicians")
+      .select("id, name, party, state, chamber, slug, bioguide_id, donor_alignment_score")
+      .in("bioguide_id", profile.followed_politicians)
+      .then(({ data }) => {
+        setFollowedData(data || []);
+        setFollowedKey(key);
+      });
   }, [isOpen, profile?.followed_politicians]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Derive scores and profile type */
@@ -375,9 +349,6 @@ export default function PersonalDrawer({ isOpen, onClose, user, profile, router 
 
         {/* ── SECTION 2: YOUR REPRESENTATIVES ── */}
         <SectionHeader label="YOUR REPRESENTATIVES" />
-        <div style={{ padding: "8px 20px", fontSize: 11, color: "#c9a84c", fontFamily: "monospace" }}>
-          DEBUG: my_reps = {JSON.stringify(profile?.my_reps)}
-        </div>
         {!profile?.my_reps?.length ? (
           <div style={{ padding: "0 20px" }}>
             <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.parchmentDim, marginBottom: 8 }}>
