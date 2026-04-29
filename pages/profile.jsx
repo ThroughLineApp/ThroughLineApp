@@ -261,25 +261,25 @@ export default function ProfilePage() {
     if (profile?.zip_code) setZipValue(profile.zip_code);
   }, [profile?.zip_code]);
 
-  /* Load followed politician details */
+  /* Load followed politician details — followed_politicians stores UUIDs */
   useEffect(() => {
     if (!profile?.followed_politicians?.length) { setFollowedPols([]); return; }
     setLoadingPols(true);
     supabase
       .from("politicians")
       .select("name, slug, party, state, chamber, bioguide_id, donor_alignment_score")
-      .in("slug", profile.followed_politicians)
+      .in("id", profile.followed_politicians)
       .then(({ data }) => { setFollowedPols(data || []); setLoadingPols(false); });
   }, [JSON.stringify(profile?.followed_politicians)]);
 
-  /* Load "your reps" */
+  /* Load "your reps" — my_reps stores bioguide_ids */
   useEffect(() => {
     if (!profile?.my_reps?.length) { setMyReps([]); return; }
     setLoadingReps(true);
     supabase
       .from("politicians")
       .select("name, slug, party, state, chamber, bioguide_id, donor_alignment_score")
-      .in("slug", profile.my_reps)
+      .in("bioguide_id", profile.my_reps)
       .then(({ data }) => { setMyReps(data || []); setLoadingReps(false); });
   }, [JSON.stringify(profile?.my_reps)]);
 

@@ -221,9 +221,8 @@ export default function PersonalDrawer({ isOpen, onClose, user, profile, router 
   /* Navigation helper — close then push */
   const go = (path) => { onClose(); router.push(path); };
 
-  const followed      = profile?.followed_politicians || [];
+  const followed       = profile?.followed_politicians || [];
   const followedIssues = profile?.followed_issues || [];
-  const extraFollowed  = followed.length > 4 ? followed.length - 4 : 0;
 
   return (
     <>
@@ -362,7 +361,7 @@ export default function PersonalDrawer({ isOpen, onClose, user, profile, router 
           </div>
         ) : (
           <div style={{ padding: "0 20px" }}>
-            {repsData.map(rep => (
+            {repsData.slice(0, 3).map(rep => (
               <PersonRow
                 key={rep.slug}
                 pol={rep}
@@ -372,6 +371,12 @@ export default function PersonalDrawer({ isOpen, onClose, user, profile, router 
                 onAction={() => go(`/politician/${rep.slug}`)}
               />
             ))}
+            <button onClick={() => go("/profile")} style={{
+              fontFamily: "'Barlow Condensed', sans-serif", fontSize: 11,
+              letterSpacing: "0.1em", color: C.gold,
+              background: "none", border: "none", cursor: "pointer",
+              padding: "8px 0 0", display: "block",
+            }}>See all on profile →</button>
           </div>
         )}
 
@@ -390,7 +395,7 @@ export default function PersonalDrawer({ isOpen, onClose, user, profile, router 
           </div>
         ) : (
           <div style={{ padding: "0 20px" }}>
-            {followedData.slice(0, 4).map(pol => (
+            {followedData.slice(0, 3).map(pol => (
               <PersonRow
                 key={pol.slug}
                 pol={pol}
@@ -398,14 +403,12 @@ export default function PersonalDrawer({ isOpen, onClose, user, profile, router 
                 showDas={true}
               />
             ))}
-            {extraFollowed > 0 && (
-              <button onClick={() => go("/profile")} style={{
-                fontFamily: "'Barlow Condensed', sans-serif", fontSize: 11,
-                letterSpacing: "0.1em", color: C.gold,
-                background: "none", border: "none", cursor: "pointer",
-                padding: "8px 0 0", display: "block",
-              }}>+ {extraFollowed} more →</button>
-            )}
+            <button onClick={() => go("/profile")} style={{
+              fontFamily: "'Barlow Condensed', sans-serif", fontSize: 11,
+              letterSpacing: "0.1em", color: C.gold,
+              background: "none", border: "none", cursor: "pointer",
+              padding: "8px 0 0", display: "block",
+            }}>See all on profile →</button>
           </div>
         )}
 
