@@ -879,9 +879,9 @@ export default function PoliticianPage({ politician }) {
   const initials   = name.split(" ").map(w => w[0]).slice(0, 2).join("");
   const photoUrl   = bioguide_id ? `https://bioguide.congress.gov/bioguide/photo/${bioguide_id[0]}/${bioguide_id}.jpg` : null;
   const das        = donor_alignment_score;
-  const following  = isFollowingPolitician(slug);
+  const following  = isFollowingPolitician(politician.id);
 
-  const handleFollow = async () => { if (following) await unfollowPolitician(slug); else await followPolitician(slug); };
+  const handleFollow = async () => { if (following) await unfollowPolitician(politician.id); else await followPolitician(politician.id); };
 
   const followButton = following
     ? <button style={btnFollowing} onClick={handleFollow}>✓ FOLLOWING</button>

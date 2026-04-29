@@ -512,7 +512,7 @@ export default function ExplorePage() {
   useEffect(() => {
     if (!profile?.followed_politicians) return;
     const map = {};
-    profile.followed_politicians.forEach(slug => { map[slug] = true; });
+    profile.followed_politicians.forEach(id => { map[id] = true; });
     setFollowingMap(map);
   }, [profile?.followed_politicians]);
 
@@ -558,13 +558,13 @@ export default function ExplorePage() {
     if (!user) { alert("Sign in to follow politicians"); return; }
 
     const currentFollowed = profile?.followed_politicians || [];
-    const isNowFollowing = followingMap[politician.slug];
+    const isNowFollowing = followingMap[politician.id];
     const newFollowed = isNowFollowing
-      ? currentFollowed.filter(s => s !== politician.slug)
-      : [...currentFollowed, politician.slug];
+      ? currentFollowed.filter(s => s !== politician.id)
+      : [...currentFollowed, politician.id];
 
     // Optimistic update
-    setFollowingMap(prev => ({ ...prev, [politician.slug]: !isNowFollowing }));
+    setFollowingMap(prev => ({ ...prev, [politician.id]: !isNowFollowing }));
 
     try {
       await supabase
@@ -573,7 +573,7 @@ export default function ExplorePage() {
         .eq("id", user.id);
     } catch (e) {
       // Revert on failure
-      setFollowingMap(prev => ({ ...prev, [politician.slug]: isNowFollowing }));
+      setFollowingMap(prev => ({ ...prev, [politician.id]: isNowFollowing }));
       console.error("Follow toggle failed:", e.message);
     }
   };
@@ -734,7 +734,7 @@ export default function ExplorePage() {
                   quizScores={hasQuiz ? quizScores : null}
                   donationData={donationMap[politician.id] ?? null}
                   isMyRep={politician._isMyRep}
-                  isFollowing={!!followingMap[politician.slug]}
+                  isFollowing={!!followingMap[politician.id]}
                   onFollowToggle={handleFollowToggle}
                   router={router}
                 />
