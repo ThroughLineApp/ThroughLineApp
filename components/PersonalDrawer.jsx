@@ -187,7 +187,7 @@ export default function PersonalDrawer({ isOpen, onClose, user, profile, router 
 
     supabase
       .from("politicians")
-      .select("id, name, party, state, chamber, slug, bioguide_id")
+      .select("id, name, party, state, chamber, slug, bioguide_id, donor_alignment_score")
       .in("bioguide_id", repsIds)
       .then(({ data }) => {
         setRepsData(data || []);
@@ -195,7 +195,7 @@ export default function PersonalDrawer({ isOpen, onClose, user, profile, router 
       });
   }, [isOpen, profile?.my_reps]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* Fetch followed politicians — followed_politicians also stores bioguide_ids */
+  /* Fetch followed politicians — followed_politicians stores UUIDs */
   useEffect(() => {
     if (!isOpen || !profile?.followed_politicians?.length) return;
     const key = profile.followed_politicians.join(",");
@@ -204,7 +204,7 @@ export default function PersonalDrawer({ isOpen, onClose, user, profile, router 
     supabase
       .from("politicians")
       .select("id, name, party, state, chamber, slug, bioguide_id, donor_alignment_score")
-      .in("bioguide_id", profile.followed_politicians)
+      .in("id", profile.followed_politicians)
       .then(({ data }) => {
         setFollowedData(data || []);
         setFollowedKey(key);
@@ -367,6 +367,7 @@ export default function PersonalDrawer({ isOpen, onClose, user, profile, router 
                 key={rep.slug}
                 pol={rep}
                 onClick={() => go(`/politician/${rep.slug}`)}
+                showDas={true}
                 actionLabel="VIEW →"
                 onAction={() => go(`/politician/${rep.slug}`)}
               />
