@@ -375,6 +375,9 @@ export default function PersonalDrawer({ isOpen, onClose, user, profile, router 
 
         {/* ── SECTION 2: YOUR REPRESENTATIVES ── */}
         <SectionHeader label="YOUR REPRESENTATIVES" />
+        <div style={{ padding: "8px 20px", fontSize: 11, color: "#c9a84c", fontFamily: "monospace" }}>
+          DEBUG: my_reps = {JSON.stringify(profile?.my_reps)}
+        </div>
         {!profile?.my_reps?.length ? (
           <div style={{ padding: "0 20px" }}>
             <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.parchmentDim, marginBottom: 8 }}>

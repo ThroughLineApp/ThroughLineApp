@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useAuth } from "../lib/auth";
 import AuthModal from "./AuthModal";
 import PersonalDrawer from "./PersonalDrawer";
+import supabase from "../lib/supabase";
 
 // ── Thumbprint avatar helpers ──────────────────────────────────────────────────
 const THUMB_DIMS = [
@@ -37,7 +38,7 @@ const NAV_LINKS = [
 
 export default function Nav() {
   const router  = useRouter();
-  const { user, profile, signOut, setShowAuthModal } = useAuth();
+  const { user, profile } = useAuth();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [pdOpen,     setPdOpen]     = useState(false);
@@ -74,7 +75,7 @@ export default function Nav() {
 
   const handleSignOut = async () => {
     setDrawerOpen(false);
-    await signOut();
+    await supabase.auth.signOut();
     router.push("/");
   };
 
