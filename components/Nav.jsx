@@ -16,6 +16,13 @@ const NAV_LINKS = [
   { label: "Call Your Rep",href: "/call",   gold: true },
 ];
 
+// Hamburger drawer — navigation overflow only (not in bottom nav)
+const DRAWER_LINKS = [
+  { label: "Quiz",         href: "/quiz" },
+  { label: "News",         href: "/news" },
+  { label: "Call Your Rep",href: "/call", gold: true },
+];
+
 // Mobile bottom nav items
 const BOTTOM_NAV = [
   { label: "Feed",    href: "/" },
@@ -246,14 +253,7 @@ export default function Nav() {
         {/* Divider */}
         <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", margin: "16px 24px" }} />
 
-        {/* EXPLORE section */}
-        <div style={{
-          fontFamily: "Arial", fontSize: 10, color: "#9A9488",
-          letterSpacing: "0.15em", textTransform: "uppercase",
-          padding: "0 24px", marginBottom: 8,
-        }}>EXPLORE</div>
-
-        {NAV_LINKS.map(({ label, href, gold }) => (
+        {DRAWER_LINKS.map(({ label, href, gold }) => (
           <button
             key={label}
             onClick={() => navigate(href)}
