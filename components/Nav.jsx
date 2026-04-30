@@ -3,29 +3,8 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { useAuth } from "../lib/auth";
 import AuthModal from "./AuthModal";
-import PersonalDrawer from "./PersonalDrawer";
 import supabase from "../lib/supabase";
 
-// ── Thumbprint avatar helpers ──────────────────────────────────────────────────
-const THUMB_DIMS = [
-  "economic","healthcare","climate","criminal","immigration","foreign",
-  "education","freedom","guns","housing","tech","voting",
-];
-
-function TinyThumbprint({ profile }) {
-  const cx = 14, cy = 14, r = 11;
-  const pts = THUMB_DIMS.map((dim, i) => {
-    const angle = (Math.PI * 2 * i) / THUMB_DIMS.length - Math.PI / 2;
-    const val = profile?.[`score_${dim}`] ?? 50;
-    const rr = (val / 100) * r;
-    return `${(cx + rr * Math.cos(angle)).toFixed(2)},${(cy + rr * Math.sin(angle)).toFixed(2)}`;
-  }).join(" ");
-  return (
-    <svg width="28" height="28" viewBox="0 0 28 28">
-      <polygon points={pts} fill="rgba(201,168,76,0.2)" stroke="#c9a84c" strokeWidth="1.5" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 const NAV_LINKS = [
   { label: "Feed",         href: "/feed" },
@@ -39,10 +18,10 @@ const NAV_LINKS = [
 
 // Mobile bottom nav items
 const BOTTOM_NAV = [
-  { label: "Feed",    href: "/feed" },
+  { label: "Feed",    href: "/" },
   { label: "Explore", href: "/explore" },
   { label: "Alerts",  href: "/alerts", bell: true },
-  { label: "Profile", href: "/profile" },
+  { label: "News",    href: "/news" },
 ];
 
 export default function Nav() {
@@ -50,7 +29,6 @@ export default function Nav() {
   const { user, profile } = useAuth();
 
   const [drawerOpen,   setDrawerOpen]   = useState(false);
-  const [pdOpen,       setPdOpen]       = useState(false);
   const [isMobile,     setIsMobile]     = useState(false);
   const [showAuth,     setShowAuth]     = useState(false);
   const [alertsBadge,  setAlertsBadge]  = useState(0);
@@ -118,31 +96,6 @@ export default function Nav() {
   };
 
   const username = profile?.username || user?.user_metadata?.username || null;
-  const hasThumbprint = user && THUMB_DIMS.some(d => profile?.[`score_${d}`] != null);
-
-  // ── THUMBPRINT AVATAR BUTTON ────────────────────────────────────────────────
-  const avatarBtn = (
-    <button
-      onClick={() => setPdOpen(true)}
-      style={{
-        width: 32, height: 32, borderRadius: "50%",
-        border: "1.5px solid rgba(201,168,76,0.4)",
-        background: "#11131a",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        cursor: "pointer", padding: 0, flexShrink: 0,
-        touchAction: "manipulation",
-      }}
-    >
-      {hasThumbprint ? (
-        <TinyThumbprint profile={profile} />
-      ) : (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a89d88" strokeWidth="1.5" strokeLinecap="round">
-          <circle cx="12" cy="8" r="4" />
-          <path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" />
-        </svg>
-      )}
-    </button>
-  );
 
   // ── DESKTOP NAV ────────────────────────────────────────────────────────────
   const DesktopNav = (
@@ -186,9 +139,8 @@ export default function Nav() {
         ))}
       </div>
 
-      {/* Right — avatar + auth */}
+      {/* Right — auth */}
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        {avatarBtn}
         {user ? (
           <button onClick={handleSignOut} style={{
             fontFamily: "Arial", fontSize: 12, color: "#9A9488",
@@ -220,9 +172,8 @@ export default function Nav() {
         color: "#C9A84C", background: "none", border: "none", cursor: "pointer",
       }}>THROUGHLINE</button>
 
-      {/* Right: avatar + hamburger */}
+      {/* Right: hamburger */}
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        {avatarBtn}
         <button
           onClick={() => setDrawerOpen(true)}
           aria-label="Open menu"
@@ -320,57 +271,6 @@ export default function Nav() {
           >{label}</button>
         ))}
 
-        {/* Divider */}
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", margin: "12px 24px" }} />
-
-        {/* ACCOUNT section */}
-        <div style={{
-          fontFamily: "Arial", fontSize: 10, color: "#9A9488",
-          letterSpacing: "0.15em", textTransform: "uppercase",
-          padding: "0 24px", marginBottom: 8,
-        }}>ACCOUNT</div>
-
-        {user ? (
-          <>
-            {username && (
-              <div style={{
-                fontFamily: "Arial", fontSize: 15, color: "#F0ECE4",
-                padding: "14px 24px",
-              }}>{username}</div>
-            )}
-            <button onClick={() => navigate("/profile")} style={{
-              display: "block", width: "100%",
-              padding: "14px 24px",
-              fontFamily: "Arial", fontSize: 15,
-              color: isActive("/profile") ? "#C9A84C" : "#F0ECE4",
-              background: "none", border: "none",
-              borderLeft: isActive("/profile") ? "3px solid #C9A84C" : "3px solid transparent",
-              textAlign: "left", cursor: "pointer",
-              touchAction: "manipulation",
-            }}>My Profile</button>
-            <button onClick={handleSignOut} style={{
-              display: "block", width: "100%",
-              padding: "14px 24px",
-              fontFamily: "Arial", fontSize: 14, color: "#9A9488",
-              background: "none", border: "none", borderLeft: "3px solid transparent",
-              textAlign: "left", cursor: "pointer",
-              touchAction: "manipulation",
-            }}>Sign Out</button>
-          </>
-        ) : (
-          <div style={{ padding: "0 24px", marginTop: 4 }}>
-            <button onClick={openAuth} style={{
-              display: "block", width: "100%",
-              padding: "14px 0",
-              fontFamily: "Arial Black", fontSize: 13,
-              color: "#0A0B0D", background: "#C9A84C",
-              border: "none", borderRadius: 8,
-              cursor: "pointer", letterSpacing: "0.04em",
-              touchAction: "manipulation",
-              textAlign: "center",
-            }}>SIGN IN</button>
-          </div>
-        )}
       </div>
     </>
   );
@@ -435,6 +335,15 @@ export default function Nav() {
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
+            ) : label === "News" ? (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                stroke={active ? "#C9A84C" : "#a89d88"} strokeWidth="1.8"
+                strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a4 4 0 01-4-4V6" />
+                <line x1="10" y1="7"  x2="18" y2="7" />
+                <line x1="10" y1="11" x2="18" y2="11" />
+                <line x1="10" y1="15" x2="16" y2="15" />
+              </svg>
             ) : (
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
                 stroke={active ? "#C9A84C" : "#a89d88"} strokeWidth="1.8"
@@ -466,14 +375,6 @@ export default function Nav() {
       {showAuth && (
         <AuthModal onDismiss={() => setShowAuth(false)} />
       )}
-
-      <PersonalDrawer
-        isOpen={pdOpen}
-        onClose={() => setPdOpen(false)}
-        user={user}
-        profile={profile}
-        router={router}
-      />
     </>
   );
 }
