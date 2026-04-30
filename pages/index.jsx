@@ -433,7 +433,7 @@ function BottomNavBar({ activeTab }) {
     },
     {
       id: "alerts", label: "Alerts",
-      onClick: () => alert("Alerts coming soon"),
+      onClick: () => router.push("/alerts"),
       icon: (a) => (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
           <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -520,6 +520,25 @@ export default function FeedPage() {
 
     async function loadFeed() {
       try {
+        // ── Logged-out path: show 20 recent global events directly ──────────
+        if (!user) {
+          const { data: globalEvents, error: globalError } = await supabase
+            .from("throughline_events")
+            .select("*, politicians!inner(id, name, party, state, chamber, slug, bioguide_id, donor_alignment_score)")
+            .not("dimension", "is", null)
+            .order("vote_date", { ascending: false })
+            .limit(20);
+
+          if (globalError) throw globalError;
+
+          const feedCards = (globalEvents || []).map(e => ({ type: "corruption", event: e }));
+          // Splice in quiz prompt at index 2 for logged-out users
+          feedCards.splice(2, 0, { type: "quiz_prompt" });
+          setCards(feedCards);
+          setFeedLoading(false);
+          return;
+        }
+
         // ── Query 1: one best event per politician via RPC ──────────────────
         const { data: events, error: eventsError } = await supabase
           .rpc("get_feed_events");
