@@ -375,31 +375,48 @@ export default function AlertsPage() {
     setAlertsLastSeen(lastSeen);
 
     try {
-      let query = supabase
+      // ── Query 1: fetch events (no join — avoids PostgREST FK issues) ───────
+      let eventsQuery = supabase
         .from("throughline_events")
-        .select("*, politicians!inner(name, party, chamber, state, bioguide_id, slug)")
+        .select("id, politician_id, donor_name, donor_industry, donation_amount, donation_date, bill_name, bill_id, bill_link, vote_date, days_between, how_voted, dimension, corruption_contribution")
         .order("vote_date", { ascending: false });
 
       if (user && hasFollowedPols) {
-        query = query.in("politician_id", followedPols).limit(50);
+        eventsQuery = eventsQuery.in("politician_id", followedPols).limit(50);
       } else {
-        query = query.limit(20);
+        eventsQuery = eventsQuery.limit(20);
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
+      const { data: eventsData, error: eventsError } = await eventsQuery;
+      if (eventsError) throw eventsError;
 
-      // Flatten nested politicians join
-      const flat = (data || []).map(e => ({
-        ...e,
-        name:        e.politicians?.name,
-        party:       e.politicians?.party,
-        chamber:     e.politicians?.chamber,
-        state:       e.politicians?.state,
-        bioguide_id: e.politicians?.bioguide_id,
-        slug:        e.politicians?.slug,
-        politicians: undefined,
-      }));
+      const rows = eventsData || [];
+
+      // ── Query 2: fetch politicians for those event rows ───────────────────
+      const polIds = [...new Set(rows.map(e => e.politician_id).filter(Boolean))];
+      const polMap = {};
+      if (polIds.length > 0) {
+        const { data: polRows, error: polError } = await supabase
+          .from("politicians")
+          .select("id, name, party, chamber, state, bioguide_id, slug")
+          .in("id", polIds);
+        if (polError) throw polError;
+        (polRows || []).forEach(p => { polMap[p.id] = p; });
+      }
+
+      // ── Merge ─────────────────────────────────────────────────────────────
+      const flat = rows.map(e => {
+        const pol = polMap[e.politician_id] || {};
+        return {
+          ...e,
+          name:        pol.name        || null,
+          party:       pol.party       || null,
+          chamber:     pol.chamber     || null,
+          state:       pol.state       || null,
+          bioguide_id: pol.bioguide_id || null,
+          slug:        pol.slug        || null,
+        };
+      });
 
       setEvents(flat);
     } catch (err) {

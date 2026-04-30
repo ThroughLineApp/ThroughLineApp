@@ -443,7 +443,7 @@ function BottomNavBar({ activeTab }) {
     },
     {
       id: "news", label: "News",
-      onClick: () => alert("News coming soon"),
+      onClick: () => router.push("/news"),
       icon: (a) => (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
           <path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a4 4 0 01-4-4V6" />

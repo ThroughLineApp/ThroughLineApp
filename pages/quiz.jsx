@@ -462,7 +462,7 @@ function BottomNavBar({ activeTab }) {
     },
     {
       id: "alerts", label: "Alerts",
-      onClick: () => alert("Alerts coming soon"),
+      onClick: () => router.push("/alerts"),
       icon: (a) => (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
           <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -472,7 +472,7 @@ function BottomNavBar({ activeTab }) {
     },
     {
       id: "news", label: "News",
-      onClick: () => alert("News coming soon"),
+      onClick: () => router.push("/news"),
       icon: (a) => (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
           <path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a4 4 0 01-4-4V6" />
@@ -516,7 +516,7 @@ function BottomNavBar({ activeTab }) {
 
 export default function QuizPage(){
   const router=useRouter();
-  const{user,profile}=useAuth();
+  const{user,profile,requireAuth}=useAuth();
   const[phase,setPhase]=useState("intro");
   const[l1QIdx,setL1QIdx]=useState(0);
   const[l1Answers,setL1Answers]=useState({});
@@ -854,7 +854,7 @@ export default function QuizPage(){
   };
 
   const handleFollowToggle=async(politician)=>{
-    if(!user){alert('Sign in to follow politicians');return;}
+    if(!user){requireAuth('Sign in to follow politicians and get alerts.');return;}
     const isFollowed=followedPoliticians.includes(politician.id);
     if(isFollowed){setFollowedPoliticians(prev=>prev.filter(id=>id!==politician.id));}
     else{setFollowedPoliticians(prev=>[...prev,politician.id]);}
