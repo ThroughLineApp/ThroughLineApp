@@ -29,21 +29,31 @@ function TinyThumbprint({ profile }) {
 
 const NAV_LINKS = [
   { label: "Feed",         href: "/feed" },
+  { label: "Alerts",       href: "/alerts", bell: true },
   { label: "Quiz",         href: "/quiz" },
-  { label: "Politicians",  href: "/feed" },
+  { label: "Explore",      href: "/explore" },
   { label: "Events",       href: "/events" },
   { label: "Calendar",     href: "/calendar" },
   { label: "Call Your Rep",href: "/call",   gold: true },
+];
+
+// Mobile bottom nav items
+const BOTTOM_NAV = [
+  { label: "Feed",    href: "/feed" },
+  { label: "Explore", href: "/explore" },
+  { label: "Alerts",  href: "/alerts", bell: true },
+  { label: "Profile", href: "/profile" },
 ];
 
 export default function Nav() {
   const router  = useRouter();
   const { user, profile } = useAuth();
 
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [pdOpen,     setPdOpen]     = useState(false);
-  const [isMobile,   setIsMobile]   = useState(false);
-  const [showAuth,   setShowAuth]   = useState(false);
+  const [drawerOpen,   setDrawerOpen]   = useState(false);
+  const [pdOpen,       setPdOpen]       = useState(false);
+  const [isMobile,     setIsMobile]     = useState(false);
+  const [showAuth,     setShowAuth]     = useState(false);
+  const [alertsBadge,  setAlertsBadge]  = useState(0);
 
   // ── Mobile detection ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -65,6 +75,29 @@ export default function Nav() {
     router.events.on("routeChangeStart", handleRouteChange);
     return () => router.events.off("routeChangeStart", handleRouteChange);
   }, [router.events]);
+
+  // ── Alerts badge: count unread events for followed politicians ─────────────
+  useEffect(() => {
+    if (!user || !profile) { setAlertsBadge(0); return; }
+    const followedPols = profile.followed_politicians || [];
+    if (followedPols.length === 0) { setAlertsBadge(0); return; }
+
+    const lastSeen = profile.alerts_last_seen_at || null;
+    let query = supabase
+      .from("throughline_events")
+      .select("*", { count: "exact", head: true })
+      .in("politician_id", followedPols);
+    if (lastSeen) query = query.gt("vote_date", lastSeen);
+
+    query.then(({ count, error }) => {
+      if (!error && count !== null) setAlertsBadge(count);
+    });
+  }, [user?.id, profile?.alerts_last_seen_at, (profile?.followed_politicians || []).join(",")]);
+
+  // ── Clear badge when user visits /alerts ──────────────────────────────────
+  useEffect(() => {
+    if (router.pathname === "/alerts") setAlertsBadge(0);
+  }, [router.pathname]);
 
   const isActive = (href) => router.pathname === href;
 
@@ -127,15 +160,29 @@ export default function Nav() {
 
       {/* Center links */}
       <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
-        {NAV_LINKS.map(({ label, href, gold }) => (
+        {NAV_LINKS.map(({ label, href, gold, bell }) => (
           <button key={label} onClick={() => router.push(href)} style={{
             fontFamily: "Arial", fontSize: 14,
             color: isActive(href) ? "#C9A84C" : (gold ? "#C9A84C" : "#F0ECE4"),
             background: "none", border: "none", cursor: "pointer",
             fontWeight: gold ? "bold" : "normal",
             borderBottom: isActive(href) ? "1.5px solid #C9A84C" : "1.5px solid transparent",
-            paddingBottom: 2,
-          }}>{label}</button>
+            paddingBottom: 2, position: "relative",
+          }}>
+            {label}
+            {bell && alertsBadge > 0 && (
+              <span style={{
+                position: "absolute", top: -6, right: -10,
+                background: "#c9a84c", color: "#0a0b0d",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: 9, lineHeight: 1,
+                borderRadius: 8, padding: "2px 4px",
+                minWidth: 14, textAlign: "center",
+              }}>
+                {alertsBadge > 99 ? "99+" : alertsBadge}
+              </span>
+            )}
+          </button>
         ))}
       </div>
 
@@ -328,10 +375,93 @@ export default function Nav() {
     </>
   );
 
+  // ── MOBILE BOTTOM NAV ──────────────────────────────────────────────────────
+  const MobileBottomNav = (
+    <nav style={{
+      position: "fixed", bottom: 0, left: 0, right: 0,
+      height: 56, zIndex: 190,
+      background: "#0a0b0d",
+      borderTop: "0.5px solid rgba(201,168,76,0.15)",
+      display: "flex", alignItems: "stretch",
+    }}>
+      {BOTTOM_NAV.map(({ label, href, bell }) => {
+        const active = router.pathname === href;
+        const showBadge = bell && alertsBadge > 0;
+        return (
+          <button
+            key={href}
+            onClick={() => navigate(href)}
+            style={{
+              flex: 1, display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center", gap: 3,
+              background: "none", border: "none", cursor: "pointer",
+              position: "relative",
+              touchAction: "manipulation",
+            }}
+          >
+            {/* Icon */}
+            {bell ? (
+              <div style={{ position: "relative", width: 22, height: 22 }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                  stroke={active ? "#C9A84C" : "#a89d88"} strokeWidth="1.8"
+                  strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                {showBadge && (
+                  <span style={{
+                    position: "absolute", top: -4, right: -6,
+                    background: "#c9a84c", color: "#0a0b0d",
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: 9, lineHeight: 1,
+                    borderRadius: 8, padding: "2px 4px",
+                    minWidth: 14, textAlign: "center",
+                  }}>
+                    {alertsBadge > 99 ? "99+" : alertsBadge}
+                  </span>
+                )}
+              </div>
+            ) : label === "Feed" ? (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                stroke={active ? "#C9A84C" : "#a89d88"} strokeWidth="1.8"
+                strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+            ) : label === "Explore" ? (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                stroke={active ? "#C9A84C" : "#a89d88"} strokeWidth="1.8"
+                strokeLinecap="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            ) : (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                stroke={active ? "#C9A84C" : "#a89d88"} strokeWidth="1.8"
+                strokeLinecap="round">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" />
+              </svg>
+            )}
+            {/* Label */}
+            <span style={{
+              fontFamily: "Figtree, sans-serif",
+              fontSize: 10,
+              color: active ? "#C9A84C" : "#a89d88",
+              letterSpacing: "0.02em",
+            }}>{label}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+
   return (
     <>
       {isMobile ? MobileBar : DesktopNav}
       {isMobile && Drawer}
+
+      {isMobile && MobileBottomNav}
 
       {showAuth && (
         <AuthModal onDismiss={() => setShowAuth(false)} />
