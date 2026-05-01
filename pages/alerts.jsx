@@ -500,7 +500,7 @@ export default function AlertsPage() {
             overflowX: "auto", paddingBottom: 12,
             scrollbarWidth: "none", msOverflowStyle: "none",
           }}>
-            {["all", "following", ...issuePills].map(pill => {
+            {["all", ...(hasFollowedPols ? ["following"] : []), ...issuePills].map(pill => {
               const isActive = activeFilter === pill;
               const label = pill === "all"       ? "All"
                 : pill === "following" ? "Following"
@@ -544,25 +544,6 @@ export default function AlertsPage() {
             </div>
           )}
 
-          {/* Follow banner */}
-          {user && !hasFollowedPols && !authLoading && (
-            <div style={{
-              background: "#13151f",
-              border: "1px solid rgba(201,168,76,0.2)",
-              borderRadius: 4, padding: "14px 16px", marginBottom: 16,
-              fontFamily: "Figtree, sans-serif", fontSize: 13, color: "#e8dfc8",
-              lineHeight: 1.5,
-            }}>
-              Follow politicians on Explore to personalize this feed.{" "}
-              <button
-                onClick={() => navigate("/explore")}
-                style={{
-                  color: "#c9a84c", background: "none", border: "none",
-                  cursor: "pointer", fontSize: 13, fontFamily: "Figtree, sans-serif", padding: 0,
-                }}
-              >Go to Explore →</button>
-            </div>
-          )}
 
           {/* Loading */}
           {(loading || authLoading) && (
@@ -607,29 +588,10 @@ export default function AlertsPage() {
                 </div>
               </div>
             ) : !hasFollowedPols ? (
-              <div style={{ textAlign: "center", padding: "80px 16px" }}>
-                <div style={{ fontSize: 40, marginBottom: 16 }}>🔕</div>
-                <div style={{
-                  fontFamily: "'Playfair Display', serif", fontStyle: "italic",
-                  fontSize: 18, color: "#e8dfc8", marginBottom: 10,
-                }}>You&apos;re not following anyone yet.</div>
-                <div style={{
-                  fontFamily: "Figtree, sans-serif",
-                  fontSize: 13, color: "#a89d88", marginBottom: 20,
-                }}>
-                  Follow politicians on the Explore page to see their activity here.
-                </div>
-                <button
-                  onClick={() => navigate("/explore")}
-                  style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: 14, letterSpacing: "0.1em",
-                    background: "#c9a84c", color: "#0a0b0d",
-                    border: "none", borderRadius: 4,
-                    padding: "10px 24px", cursor: "pointer",
-                  }}
-                >GO TO EXPLORE</button>
-              </div>
+              <div style={{
+                textAlign: "center", padding: "60px 0",
+                fontFamily: "Figtree, sans-serif", fontSize: 13, color: "#a89d88",
+              }}>No recent activity found.</div>
             ) : (
               <div style={{
                 textAlign: "center", padding: "60px 0",
