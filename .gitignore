@@ -44,3 +44,6 @@ next-env.d.ts
 pipeline_fec.js
 fetch_l3_bills.js
 backfill_vote_impact.js
+pipeline_votes.js
+check_db.js
+pipeline_votes_progress.json
