@@ -124,84 +124,6 @@ function getAlignment(userScore, polScore) {
   return                             { label: "Mixed",    color: C.gold,  barW: "50%"  };
 }
 
-// ── BottomNavBar (4-tab: Feed, Explore, Alerts, News) ────────────────────────
-function BottomNavBar({ activeTab }) {
-  const router = useRouter();
-  const tabs = [
-    {
-      id: "feed", label: "Feed",
-      onClick: () => router.push("/"),
-      icon: (a) => (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
-          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-          <polyline points="9,22 9,12 15,12 15,22" />
-        </svg>
-      ),
-    },
-    {
-      id: "explore", label: "Explore",
-      onClick: () => router.push("/explore"),
-      icon: (a) => (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
-          <circle cx="12" cy="12" r="10" />
-          <polygon points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88" />
-        </svg>
-      ),
-    },
-    {
-      id: "alerts", label: "Alerts",
-      onClick: () => router.push("/alerts"),
-      icon: (a) => (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
-          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 01-3.46 0" />
-        </svg>
-      ),
-    },
-    {
-      id: "news", label: "News",
-      onClick: () => router.push("/news"),
-      icon: (a) => (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
-          <path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a4 4 0 01-4-4V6" />
-          <line x1="10" y1="7" x2="18" y2="7" />
-          <line x1="10" y1="11" x2="18" y2="11" />
-          <line x1="10" y1="15" x2="16" y2="15" />
-        </svg>
-      ),
-    },
-  ];
-  return (
-    <div style={{
-      position: "fixed", bottom: 0, left: 0, right: 0,
-      background: "#0a0b0d",
-      borderTop: "1px solid rgba(201,168,76,0.15)",
-      zIndex: 9999,
-      display: "flex",
-      paddingBottom: "env(safe-area-inset-bottom, 0px)",
-    }}>
-      {tabs.map(tab => {
-        const active = tab.id === activeTab;
-        return (
-          <button key={tab.id} type="button" onClick={tab.onClick}
-            style={{
-              flex: 1, height: "56px", display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center",
-              cursor: "pointer", border: "none", background: "transparent",
-            }}>
-            {tab.icon(active)}
-            <span style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 10, letterSpacing: "0.08em", marginTop: 3,
-              color: active ? "#c9a84c" : "#a89d88", textTransform: "uppercase",
-            }}>{tab.label}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 // ── SkeletonCard ──────────────────────────────────────────────────────────────
 function SkeletonCard() {
   const shimmerStyle = {
@@ -234,7 +156,7 @@ function SkeletonCard() {
 }
 
 // ── PoliticianCard ────────────────────────────────────────────────────────────
-function PoliticianCard({ politician, quizScores, donationData, isMyRep, isFollowing, onFollowToggle, router }) {
+function PoliticianCard({ politician, quizScores, donationData, isMyRep, isFollowing, onFollowToggle, router, authLoading }) {
   const [imgError, setImgError] = useState(false);
   const photoUrl = bioguidePhotoUrl(politician.bioguide_id);
   const pColor   = partyColor(politician.party);
@@ -320,7 +242,9 @@ function PoliticianCard({ politician, quizScores, donationData, isMyRep, isFollo
       <div style={{ display:"flex", gap:10, marginTop:14 }}>
         {/* Match % */}
         <div style={{ flex:1, background:C.bg, borderRadius:8, padding:"10px 14px", textAlign:"center" }}>
-          {quizScores && matchPct != null ? (
+          {authLoading ? (
+            <div style={{ height:34 }} />
+          ) : quizScores && matchPct != null ? (
             <>
               <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:24, fontWeight:700, color:matchColor(matchPct), lineHeight:1 }}>
                 {matchPct}<span style={{ fontSize:14 }}>%</span>
@@ -467,7 +391,7 @@ function Pill({ label, active, onClick, disabled }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function ExplorePage() {
   const router = useRouter();
-  const { user, profile, requireAuth } = useAuth();
+  const { user, profile, loading: authLoading, requireAuth } = useAuth();
 
   const [politicians,  setPoliticians]  = useState([]);
   const [donationMap,  setDonationMap]  = useState({});
@@ -483,8 +407,9 @@ export default function ExplorePage() {
   const [stateFilter,   setStateFilter]   = useState("All States");
   const [sortBy,        setSortBy]        = useState("prominence");
 
-  // Build quiz scores from profile columns (same pattern as index.jsx)
-  const quizScores = (profile && profile.quiz_level >= 1) ? {
+  // Build quiz scores from profile columns — check score_ columns directly
+  const hasQuiz = DIMS.some(d => profile?.[`score_${d}`] != null);
+  const quizScores = hasQuiz ? {
     economic:    profile.score_economic,
     healthcare:  profile.score_healthcare,
     climate:     profile.score_climate,
@@ -498,7 +423,6 @@ export default function ExplorePage() {
     tech:        profile.score_tech,
     voting:      profile.score_voting,
   } : null;
-  const hasQuiz = quizScores != null && Object.values(quizScores).some(v => v != null);
 
   // Mobile detection
   useEffect(() => {
@@ -737,6 +661,7 @@ export default function ExplorePage() {
                   isFollowing={!!followingMap[politician.id]}
                   onFollowToggle={handleFollowToggle}
                   router={router}
+                  authLoading={authLoading}
                 />
               </div>
             ))}
@@ -744,8 +669,6 @@ export default function ExplorePage() {
         )}
       </div>
 
-      {/* ── Bottom nav ──────────────────────────────────────────────────────── */}
-      <BottomNavBar activeTab="explore" />
     </div>
   );
 }
