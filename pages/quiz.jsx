@@ -203,7 +203,7 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
           {sel===null?"✏️ Write my own response":"✏️ Add nuance to my answer"}
         </button>
         <div style={{display:"flex",gap:10,alignItems:"center"}}>
-          <button onClick={handleNext} disabled={!canProceed} style={{flex:1,fontFamily:"Arial",fontWeight:800,fontSize:15,color:canProceed?"#0A0B0D":"#9A9488",background:canProceed?"#C9A84C":"rgba(201,168,76,0.08)",border:"none",borderRadius:4,padding:15,cursor:canProceed?"pointer":"default",transition:"all 0.2s ease",touchAction:"manipulation"}}>Submit Answer →</button>
+          <button onClick={handleNext} disabled={!canProceed} style={{flex:1,fontFamily:"Arial",fontWeight:800,fontSize:15,color:canProceed?"#0A0B0D":"#9A9488",background:canProceed?"#C9A84C":"rgba(201,168,76,0.08)",border:"none",borderRadius:4,padding:15,cursor:canProceed?"pointer":"not-allowed",opacity:canProceed?1:0.35,transition:"all 0.2s ease",touchAction:"manipulation"}}>Submit Answer →</button>
           {!skipWarn&&skippedCount<MAX_SKIPS&&<button onClick={handleSkip} style={{fontFamily:"Arial",fontWeight:600,fontSize:12,color:"#9A9488",background:"transparent",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,padding:"13px 14px",cursor:"pointer",flexShrink:0,touchAction:"manipulation"}}>Skip</button>}
         </div>
       </div>
@@ -461,24 +461,22 @@ function BottomNavBar({ activeTab }) {
       ),
     },
     {
-      id: "alerts", label: "Alerts",
-      onClick: () => router.push("/alerts"),
+      id: "local", label: "Local",
+      onClick: () => router.push("/local"),
       icon: (a) => (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
-          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 01-3.46 0" />
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+          <circle cx="12" cy="10" r="3" />
         </svg>
       ),
     },
     {
-      id: "news", label: "News",
-      onClick: () => router.push("/news"),
+      id: "profile", label: "Profile",
+      onClick: () => router.push("/profile"),
       icon: (a) => (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? "#c9a84c" : "#a89d88"} strokeWidth="1.5" strokeLinecap="round">
-          <path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a4 4 0 01-4-4V6" />
-          <line x1="10" y1="7" x2="18" y2="7" />
-          <line x1="10" y1="11" x2="18" y2="11" />
-          <line x1="10" y1="15" x2="16" y2="15" />
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" />
         </svg>
       ),
     },
@@ -718,6 +716,7 @@ export default function QuizPage(){
               .update({
                 quiz_result_id: saved.id,
                 quiz_level: 1,
+                quiz_completed: true,
                 score_economic: full.economic,
                 score_healthcare: full.healthcare,
                 score_climate: full.climate,
@@ -816,6 +815,7 @@ export default function QuizPage(){
         if (saved && user?.id) await supabase.from("profiles").update({
           quiz_result_id: saved.id,
           quiz_level: 2,
+          quiz_completed: true,
           score_economic: refined.economic ?? 50,
           score_healthcare: refined.healthcare ?? 50,
           score_climate: refined.climate ?? 50,
@@ -886,7 +886,8 @@ export default function QuizPage(){
     <>
       <Head><title>Your Political Thumbprint · Throughline</title></Head>
       <style>{GLOBAL_STYLES}</style>
-      <div style={{height:"100vh",overflow:"hidden",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 24px",textAlign:"center"}}>
+      <div style={{position:"relative",height:"100vh",overflow:"hidden",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 24px",textAlign:"center"}}>
+        <button onClick={()=>router.back()} style={{position:"absolute",top:20,left:24,fontFamily:"'Figtree',sans-serif",fontSize:13,color:"#a89d88",background:"none",border:"none",cursor:"pointer",padding:"4px 0",touchAction:"manipulation"}}>← Back</button>
         <div style={{position:"fixed",top:"28%",left:"50%",transform:"translateX(-50%)",width:600,height:400,background:"radial-gradient(ellipse,rgba(201,168,76,0.04) 0%,transparent 70%)",pointerEvents:"none"}}/>
         <div style={{maxWidth:520,animation:"fadeSlideIn 0.6s ease forwards"}}>
           <button onClick={()=>router.push("/")} style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:12,letterSpacing:"0.2em",color:C.gold,background:"none",border:"none",cursor:"pointer",marginBottom:44}}>← THROUGHLINE</button>
@@ -920,8 +921,8 @@ export default function QuizPage(){
   if(phase==="l1_results")return(<><Head><title>Your Political Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l1Scores} matches={matches} matchesLoading={matchesLoading} onStartL2={startL2} onRetake={handleRetake} onContinueToL2={startL2} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={1} isL1={true} followedPoliticians={followedPoliticians} onFollowToggle={handleFollowToggle} isReturningUser={isReturningUser}/><BottomNavBar activeTab="" /></>);
   if(phase==="l2_results")return(<><Head><title>Your Refined Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l2Scores} matches={matches} matchesLoading={matchesLoading} onStartL2={null} onRetake={handleRetake} onContinueToL2={null} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={2} isL1={false} followedPoliticians={followedPoliticians} onFollowToggle={handleFollowToggle} isReturningUser={isReturningUser}/><BottomNavBar activeTab="" /></>);
 
-  if(phase==="l1_question"){const q=shuffledL1[l1QIdx];return(<><Head><title>Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100vh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment,display:"flex",flexDirection:"column"}}><QuestionScreen key={l1QIdx} q={q} qIndex={l1QIdx} total={shuffledL1.length} level={1} onAnswer={handleL1Answer} onBack={handleL1Back} onSkip={handleL1Skip} skippedCount={l1Skipped} previousAnswer={l1AnswerIndices[shuffledL1[l1QIdx]?.dimension]??null}/></div></>);}
-  if(phase==="l2_question"){const q=l2Questions[l2QIdx];return(<><Head><title>Level 2 Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100vh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment,display:"flex",flexDirection:"column"}}><QuestionScreen key={`l2-${l2QIdx}`} q={q} qIndex={l2QIdx} total={l2Questions.length} level={2} onAnswer={handleL2Answer} onBack={handleL2Back} onSkip={handleL2Skip} skippedCount={l2Skipped} previousAnswer={l2AnswerIndices[l2Questions[l2QIdx]?.dimension]??null}/></div></>);}
+  if(phase==="l1_question"){const q=shuffledL1[l1QIdx];return(<><Head><title>Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100vh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment,display:"flex",flexDirection:"column"}}><button onClick={()=>router.back()} style={{position:"absolute",top:20,left:24,fontFamily:"'Figtree',sans-serif",fontSize:13,color:"#a89d88",background:"none",border:"none",cursor:"pointer",padding:"4px 0",touchAction:"manipulation",zIndex:10}}>← Back</button><QuestionScreen key={l1QIdx} q={q} qIndex={l1QIdx} total={shuffledL1.length} level={1} onAnswer={handleL1Answer} onBack={handleL1Back} onSkip={handleL1Skip} skippedCount={l1Skipped} previousAnswer={l1AnswerIndices[shuffledL1[l1QIdx]?.dimension]??null}/></div></>);}
+  if(phase==="l2_question"){const q=l2Questions[l2QIdx];return(<><Head><title>Level 2 Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100vh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment,display:"flex",flexDirection:"column"}}><button onClick={()=>router.back()} style={{position:"absolute",top:20,left:24,fontFamily:"'Figtree',sans-serif",fontSize:13,color:"#a89d88",background:"none",border:"none",cursor:"pointer",padding:"4px 0",touchAction:"manipulation",zIndex:10}}>← Back</button><QuestionScreen key={`l2-${l2QIdx}`} q={q} qIndex={l2QIdx} total={l2Questions.length} level={2} onAnswer={handleL2Answer} onBack={handleL2Back} onSkip={handleL2Skip} skippedCount={l2Skipped} previousAnswer={l2AnswerIndices[l2Questions[l2QIdx]?.dimension]??null}/></div></>);}
 
   return null;
 }
