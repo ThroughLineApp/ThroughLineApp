@@ -17,17 +17,22 @@ export default function BeliefQuestionCard({ userId }) {
   const [loading,          setLoading]          = useState(true);
   const [answered,         setAnswered]         = useState(false);
   const [selectedResponse, setSelectedResponse] = useState(null);
+  const [error,            setError]            = useState(null);
 
   useEffect(() => {
     if (!userId) { setLoading(false); return; }
 
     fetch(`/api/belief-question?user_id=${userId}`)
       .then((r) => r.json())
-      .then(({ question }) => {
-        setQuestion(question || null);
+      .then((data) => {
+        if (data.error) setError(data.error);
+        setQuestion(data.question || null);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
   }, [userId]);
 
   const handleAnswer = async (value) => {
@@ -48,7 +53,13 @@ export default function BeliefQuestionCard({ userId }) {
     }
   };
 
-  if (loading || !question) return null;
+  if (loading) return null;
+  if (error) return (
+    <div style={{ background: "#11131a", border: "1px solid #c94c4c", borderRadius: 8, padding: 20, marginBottom: 16, color: "#c94c4c", fontFamily: "monospace", fontSize: 12 }}>
+      Belief card error: {error}
+    </div>
+  );
+  if (!question) return null;
 
   return (
     <div style={{
