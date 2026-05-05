@@ -76,7 +76,7 @@ export default async function handler(req, res) {
       `)
       .not("donation_amount", "is", null)
       .not("vote_impact", "is", null)
-      .order("donation_amount", { ascending: false });
+      .order("vote_date", { ascending: false });
 
     if (follows) {
       const followList = follows.split(",").filter(Boolean);
@@ -119,12 +119,13 @@ export default async function handler(req, res) {
       e.vote_impact.length > 20
     );
 
-    // Deduplicate — one card per politician per page
-    const seenPoliticians = new Set();
+    // Deduplicate — one card per (politician, donation_date) combination
+    const seenEvents = new Set();
     const deduped = [];
     for (const e of events) {
-      if (!seenPoliticians.has(e.politician_id)) {
-        seenPoliticians.add(e.politician_id);
+      const key = `${e.politician_id}|${e.donation_date}`;
+      if (!seenEvents.has(key)) {
+        seenEvents.add(key);
         deduped.push(e);
       }
       if (deduped.length >= PAGE_SIZE) break;
