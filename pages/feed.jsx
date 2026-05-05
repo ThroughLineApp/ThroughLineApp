@@ -4,6 +4,7 @@ import supabase from "../lib/supabase";
 import Nav from "../components/Nav";
 import ReceiptCard from "../components/ReceiptCard";
 import QuizNudgeCard from "../components/QuizNudgeCard";
+import BeliefQuestionCard from "../components/BeliefQuestionCard";
 import { formatAmountFull, formatAmount, zipToState, partyColor, dasColor, DIMENSION_LABELS, DIMENSION_COLORS } from "../lib/feedUtils";
 import { useAuth } from "../lib/auth";
 
@@ -347,6 +348,9 @@ export default function FeedPage() {
     if (!user || !profile?.quiz_completed) {
       cards.splice(4, 0, { __type: "quiz_nudge", id: "quiz-nudge" });
     }
+    if (user && profile?.quiz_completed) {
+      cards.splice(0, 0, { __type: "belief_question", id: "belief-question" });
+    }
     return cards;
   };
 
@@ -401,6 +405,9 @@ export default function FeedPage() {
 
           {/* Cards */}
           {feedWithNudge().map((item) => {
+            if (item.__type === "belief_question") {
+              return <BeliefQuestionCard key={item.id} userId={user?.id} />;
+            }
             if (item.__type === "quiz_nudge") {
               return <QuizNudgeCard key={item.id} />;
             }
