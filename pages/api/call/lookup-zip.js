@@ -2,7 +2,7 @@
 // GET ?zip=XXXXX — returns up to 3 legislators for that ZIP (2 senators + 1 rep)
 
 const LEGISLATORS_URL =
-  "https://unitedstates.github.io/congress-legislators/legislators-current.json";
+  "https://raw.githubusercontent.com/unitedstates/congress-legislators/main/legislators-current.json";
 
 // ── In-memory cache: { data, fetchedAt } ──────────────────────────────────────
 let _cache = null;
@@ -129,11 +129,19 @@ export function zipToState(zip) {
 async function fetchLegislators() {
   const now = Date.now();
   if (_cache && now - _cache.fetchedAt < CACHE_TTL) return _cache.data;
-  const res = await fetch(LEGISLATORS_URL);
-  if (!res.ok) throw new Error(`Failed to fetch legislators: ${res.status}`);
-  const data = await res.json();
-  _cache = { data, fetchedAt: now };
-  return data;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 4000);
+
+  try {
+    const res = await fetch(LEGISLATORS_URL, { signal: controller.signal });
+    if (!res.ok) throw new Error(`Failed to fetch legislators: ${res.status}`);
+    const data = await res.json();
+    _cache = { data, fetchedAt: now };
+    return data;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export async function lookupRepsForZip(zip) {
