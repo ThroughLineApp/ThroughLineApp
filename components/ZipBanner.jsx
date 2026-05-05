@@ -52,7 +52,7 @@ export default function ZipBanner() {
       top:        0,
       left:       0,
       right:      0,
-      zIndex:     300,
+      zIndex:     200,
     }}>
       {/* Banner bar */}
       <div style={{

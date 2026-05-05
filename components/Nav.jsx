@@ -108,7 +108,7 @@ export default function Nav() {
       display: "flex", justifyContent: "space-between", alignItems: "center",
       padding: "16px 32px",
       borderBottom: "0.5px solid rgba(201,168,76,0.15)",
-      position: "sticky", top: 0, zIndex: 200, background: "#0a0b0d",
+      position: "sticky", top: 0, zIndex: 400, background: "#0a0b0d",
     }}>
       {/* Wordmark */}
       <button onClick={() => router.push("/")} style={{
@@ -169,7 +169,7 @@ export default function Nav() {
       display: "flex", justifyContent: "space-between", alignItems: "center",
       padding: "14px 20px",
       borderBottom: "0.5px solid rgba(201,168,76,0.15)",
-      position: "sticky", top: 0, zIndex: 200, background: "#0a0b0d",
+      position: "sticky", top: 0, zIndex: 400, background: "#0a0b0d",
     }}>
       {/* Wordmark */}
       <button onClick={() => router.push("/")} style={{
