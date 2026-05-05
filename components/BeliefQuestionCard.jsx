@@ -20,19 +20,26 @@ export default function BeliefQuestionCard({ userId }) {
   const [error,            setError]            = useState(null);
 
   useEffect(() => {
-    if (!userId) { setLoading(false); return; }
-
+    if (!userId) return;
+    let cancelled = false;
+    setLoading(true);
     fetch(`/api/belief-question?user_id=${userId}`)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((data) => {
+        if (cancelled) return;
         if (data.error) setError(data.error);
         setQuestion(data.question || null);
         setLoading(false);
       })
       .catch((err) => {
+        if (cancelled) return;
         setError(err.message);
         setLoading(false);
       });
+    return () => { cancelled = true; };
   }, [userId]);
 
   const handleAnswer = async (value) => {
@@ -53,7 +60,11 @@ export default function BeliefQuestionCard({ userId }) {
     }
   };
 
-  if (loading) return null;
+  if (loading) return (
+    <div style={{ background: "#11131a", border: "1px solid rgba(201,168,76,0.15)", borderRadius: 8, padding: 20, marginBottom: 16, color: "#a89d88", fontFamily: "monospace", fontSize: 12 }}>
+      Loading your daily question...
+    </div>
+  );
   if (error) return (
     <div style={{ background: "#11131a", border: "1px solid #c94c4c", borderRadius: 8, padding: 20, marginBottom: 16, color: "#c94c4c", fontFamily: "monospace", fontSize: 12 }}>
       Belief card error: {error}
