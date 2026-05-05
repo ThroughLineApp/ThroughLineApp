@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     const to = from + fetchSize - 1;
 
     let query = supabase
-      .from("throughline_events")
+      .from("feed_events_deduped")
       .select(`
         id,
         politician_id,
@@ -74,8 +74,6 @@ export default async function handler(req, res) {
           wikipedia_photo_url
         )
       `)
-      .not("donation_amount", "is", null)
-      .not("vote_impact", "is", null)
       .order("vote_date", { ascending: false });
 
     if (follows) {
@@ -113,10 +111,7 @@ export default async function handler(req, res) {
     // Filter — only remove truly bad data, keep everything else
     events = events.filter(e =>
       e.politician_name &&
-      e.bioguide_id &&
-      e.donation_amount > 0 &&
-      e.vote_impact &&
-      e.vote_impact.length > 20
+      e.bioguide_id
     );
 
     // Deduplicate — one card per (politician, donation_date) combination
