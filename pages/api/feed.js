@@ -83,7 +83,10 @@ export default async function handler(req, res) {
       }
     }
 
-    const { data, error } = await query.range(from, to);
+    const { data, error } = await Promise.race([
+      query.range(from, to),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Feed query timeout")), 5000))
+    ]);
     if (error) throw error;
 
     // Flatten join

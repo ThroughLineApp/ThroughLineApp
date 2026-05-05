@@ -60,16 +60,8 @@ export default function BeliefQuestionCard({ userId }) {
     }
   };
 
-  if (loading) return (
-    <div style={{ background: "#11131a", border: "1px solid rgba(201,168,76,0.15)", borderRadius: 8, padding: 20, marginBottom: 16, color: "#a89d88", fontFamily: "monospace", fontSize: 12 }}>
-      Loading your daily question...
-    </div>
-  );
-  if (error) return (
-    <div style={{ background: "#11131a", border: "1px solid #c94c4c", borderRadius: 8, padding: 20, marginBottom: 16, color: "#c94c4c", fontFamily: "monospace", fontSize: 12 }}>
-      Belief card error: {error}
-    </div>
-  );
+  if (loading) return null;
+  if (error) return null;
   if (!question) return null;
 
   return (
