@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const reps = await lookupRepsForZip(String(zip_code));
+    const reps = lookupRepsForZip(String(zip_code));
     const bioguide_ids = reps.map((r) => r.bioguide_id).filter(Boolean);
 
     // Only write to DB if we have a logged-in user

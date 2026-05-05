@@ -1,12 +1,7 @@
 // pages/api/call/lookup-zip.js
 // GET ?zip=XXXXX — returns up to 3 legislators for that ZIP (2 senators + 1 rep)
 
-const LEGISLATORS_URL =
-  "https://raw.githubusercontent.com/unitedstates/congress-legislators/main/legislators-current.json";
-
-// ── In-memory cache: { data, fetchedAt } ──────────────────────────────────────
-let _cache = null;
-const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+import legislators from "../../../public/legislators-current.json";
 
 // ── ZIP 3-digit prefix → state abbreviation ───────────────────────────────────
 // Covers all 50 states. Not every edge ZIP is listed — good enough for launch.
@@ -126,29 +121,9 @@ export function zipToState(zip) {
   return ZIP_PREFIX_TO_STATE[zip.slice(0, 3)] || null;
 }
 
-async function fetchLegislators() {
-  const now = Date.now();
-  if (_cache && now - _cache.fetchedAt < CACHE_TTL) return _cache.data;
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 4000);
-
-  try {
-    const res = await fetch(LEGISLATORS_URL, { signal: controller.signal });
-    if (!res.ok) throw new Error(`Failed to fetch legislators: ${res.status}`);
-    const data = await res.json();
-    _cache = { data, fetchedAt: now };
-    return data;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-export async function lookupRepsForZip(zip) {
+export function lookupRepsForZip(zip) {
   const state = zipToState(zip);
   if (!state) return [];
-
-  const legislators = await fetchLegislators();
 
   const getMostRecentTerm = (terms) => terms[terms.length - 1];
 
@@ -204,7 +179,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const reps = await lookupRepsForZip(zip);
+    const reps = lookupRepsForZip(zip);
     return res.status(200).json({ reps, state: zipToState(zip) });
   } catch (err) {
     console.error("[lookup-zip] error:", err.message);
