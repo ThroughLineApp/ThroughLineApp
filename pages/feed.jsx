@@ -341,15 +341,15 @@ export default function FeedPage() {
     setLandingDone(true);
   };
 
-  // ── Insert quiz nudge at position 5 ──────────────────────────────────────
+  // ── Insert belief question or quiz nudge ──────────────────────────────────
   const feedWithNudge = () => {
     if (!receipts.length) return [];
     const cards = [...receipts];
-    if (!user || !profile?.quiz_completed) {
-      cards.splice(4, 0, { __type: "quiz_nudge", id: "quiz-nudge" });
-    }
-    if (user && (profile?.quiz_completed || profile?.quiz_level >= 2)) {
+    const quizDone = profile?.quiz_completed || (profile?.quiz_level ?? 0) >= 2;
+    if (user && quizDone) {
       cards.splice(0, 0, { __type: "belief_question", id: "belief-question" });
+    } else {
+      cards.splice(4, 0, { __type: "quiz_nudge", id: "quiz-nudge" });
     }
     return cards;
   };
