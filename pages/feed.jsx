@@ -348,7 +348,7 @@ export default function FeedPage() {
     if (!user || !profile?.quiz_completed) {
       cards.splice(4, 0, { __type: "quiz_nudge", id: "quiz-nudge" });
     }
-    if (user && profile?.quiz_completed) {
+    if (user && (profile?.quiz_completed || profile?.quiz_level >= 2)) {
       cards.splice(0, 0, { __type: "belief_question", id: "belief-question" });
     }
     return cards;
