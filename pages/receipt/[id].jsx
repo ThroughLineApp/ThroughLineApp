@@ -4,6 +4,7 @@ import Head from "next/head";
 import supabase from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import AuthModal from "../../components/AuthModal";
+import Nav from "../../components/Nav";
 
 const C = {
   bg:            "#0a0b0d",
@@ -173,6 +174,7 @@ export default function ReceiptPage({ event, politician }) {
       </Head>
       <style>{GLOBAL_STYLES}</style>
 
+      <Nav />
       <div style={{ background: C.bg, minHeight: "100vh", color: C.text, fontFamily: "Arial" }}>
 
         {/* ── HEADER ───────────────────────────────────────────── */}

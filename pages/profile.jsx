@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import supabase from "../lib/supabase";
 import { useAuth } from "../lib/auth";
+import Nav from "../components/Nav";
 
 /* ─── Design tokens ─────────────────────────────────────────── */
 const C = {
@@ -166,6 +167,15 @@ export default function ProfilePage() {
   const [zipValue,       setZipValue]       = useState("");
   const [zipSaving,      setZipSaving]      = useState(false);
 
+  /* Friends */
+  const [friendInput,    setFriendInput]    = useState("");
+  const [friendAdding,   setFriendAdding]   = useState(false);
+  const [friendAddError, setFriendAddError] = useState(null);
+  const [friendAddMsg,   setFriendAddMsg]   = useState(null);
+  const [friends,        setFriends]        = useState([]);
+  const [friendsLoading, setFriendsLoading] = useState(false);
+  const [friendsVersion, setFriendsVersion] = useState(0);
+
 
   /* Init zip from profile */
   useEffect(() => {
@@ -195,6 +205,31 @@ export default function ProfilePage() {
   }, [JSON.stringify(profile?.my_reps)]);
 
 
+  /* Load friends */
+  useEffect(() => {
+    if (!user) { setFriends([]); return; }
+    setFriendsLoading(true);
+    supabase
+      .from("friendships")
+      .select("id, user_id, friend_id, status")
+      .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
+      .then(async ({ data: rows }) => {
+        if (!rows?.length) { setFriends([]); setFriendsLoading(false); return; }
+        const otherIds = rows.map(r => r.user_id === user.id ? r.friend_id : r.user_id);
+        const scoreSelect = DIMS.map(d => `score_${d}`).join(",");
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select(`id,username,${scoreSelect}`)
+          .in("id", otherIds);
+        const pm = Object.fromEntries((profs || []).map(p => [p.id, p]));
+        setFriends(rows.map(r => {
+          const otherId = r.user_id === user.id ? r.friend_id : r.user_id;
+          return { ...r, otherProfile: pm[otherId] || null, iSent: r.user_id === user.id };
+        }));
+        setFriendsLoading(false);
+      });
+  }, [user?.id, friendsVersion]);
+
   /* Scores from profile columns */
   const hasQuiz = DIMS.some(d => profile?.[`score_${d}`] != null);
   const scores = hasQuiz ? Object.fromEntries(DIMS.map(d => [d, profile[`score_${d}`] ?? 50])) : null;
@@ -205,6 +240,56 @@ export default function ProfilePage() {
 
   const handleUnfollowPol   = async (slug)  => { await unfollowPolitician(slug); };
   const handleUnfollowIssue = async (issue) => { await unfollowIssue(issue); };
+
+  const handleAddFriend = async () => {
+    const trimmed = friendInput.trim().toLowerCase();
+    if (!trimmed) return;
+    setFriendAdding(true);
+    setFriendAddError(null);
+    setFriendAddMsg(null);
+
+    const { data: target } = await supabase
+      .from("profiles").select("id,username").eq("username", trimmed).maybeSingle();
+
+    if (!target) {
+      setFriendAdding(false);
+      setFriendAddError(`No user found with username @${trimmed}`);
+      return;
+    }
+    if (target.id === user.id) {
+      setFriendAdding(false);
+      setFriendAddError("That's you!");
+      return;
+    }
+
+    const { data: existing } = await supabase
+      .from("friendships").select("id,status")
+      .or(`and(user_id.eq.${user.id},friend_id.eq.${target.id}),and(user_id.eq.${target.id},friend_id.eq.${user.id})`)
+      .maybeSingle();
+
+    if (existing) {
+      setFriendAdding(false);
+      setFriendAddError(existing.status === "accepted" ? "You're already friends!" : "Friend request already sent.");
+      return;
+    }
+
+    const { error: insertErr } = await supabase
+      .from("friendships").insert({ user_id: user.id, friend_id: target.id, status: "pending" });
+
+    setFriendAdding(false);
+    if (insertErr) {
+      setFriendAddError(insertErr.code === "23505" ? "Friend request already sent." : "Something went wrong. Try again.");
+      return;
+    }
+    setFriendInput("");
+    setFriendAddMsg(`Friend request sent to @${target.username}!`);
+    setFriendsVersion(v => v + 1);
+  };
+
+  const handleAcceptFriend = async (friendshipId) => {
+    await supabase.from("friendships").update({ status: "accepted" }).eq("id", friendshipId);
+    setFriendsVersion(v => v + 1);
+  };
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -325,10 +410,8 @@ export default function ProfilePage() {
       position: "relative",
       overflowX: "hidden",
       WebkitOverflowScrolling: "touch",
-      touchAction: "pan-y",
-      userSelect: "none",
-      WebkitUserSelect: "none",
     }}>
+      <Nav />
       <Head>
         <title>My Profile · Throughline</title>
         <meta name="description" content="Your political thumbprint and followed politicians on Throughline." />
@@ -486,7 +569,108 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* ── SECTION 7: Account ── */}
+          {/* ── SECTION 7: Friends ── */}
+          <div style={{ marginBottom: 44, animation: "fadeSlideIn 0.5s ease forwards 0.28s", opacity: 0 }}>
+            <SectionLabel text={`Friends · ${friends.filter(f => f.status === "accepted").length}`} />
+
+            {/* Add friend input */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  type="text"
+                  placeholder="Add by username…"
+                  value={friendInput}
+                  onChange={e => { setFriendInput(e.target.value); setFriendAddError(null); setFriendAddMsg(null); }}
+                  onKeyDown={e => e.key === "Enter" && handleAddFriend()}
+                  style={{
+                    flex: 1, background: C.bgDeep, border: `1px solid ${C.goldBorder}`,
+                    borderRadius: 4, padding: "10px 12px", fontSize: 13,
+                    color: C.parchment, outline: "none", fontFamily: "'Figtree',sans-serif",
+                  }}
+                />
+                <button
+                  onClick={handleAddFriend}
+                  disabled={friendAdding || !friendInput.trim()}
+                  style={{
+                    fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700,
+                    fontSize: 12, letterSpacing: "0.08em",
+                    color: C.bg, background: friendAdding || !friendInput.trim() ? "rgba(201,168,76,0.35)" : C.gold,
+                    border: "none", borderRadius: 4, padding: "10px 18px",
+                    cursor: friendAdding || !friendInput.trim() ? "default" : "pointer",
+                    whiteSpace: "nowrap", touchAction: "manipulation",
+                  }}
+                >{friendAdding ? "…" : "ADD"}</button>
+              </div>
+              {friendAddError && (
+                <div style={{ fontFamily: "'Figtree',sans-serif", fontSize: 12, color: C.red, marginTop: 6 }}>{friendAddError}</div>
+              )}
+              {friendAddMsg && (
+                <div style={{ fontFamily: "'Figtree',sans-serif", fontSize: 12, color: C.green, marginTop: 6 }}>{friendAddMsg}</div>
+              )}
+            </div>
+
+            {/* Friends list */}
+            {friendsLoading ? (
+              <div style={{ fontFamily: "'Figtree',sans-serif", fontSize: 13, color: C.parchmentDim, padding: "12px 0" }}>Loading…</div>
+            ) : friends.length === 0 ? (
+              <div style={{ fontFamily: "'Figtree',sans-serif", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7 }}>
+                No friends yet. Add someone by username above.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {friends.map(f => {
+                  const fp = f.otherProfile;
+                  const uname = fp?.username || "unknown";
+                  const isPending = f.status === "pending";
+                  const alignedDims = isPending ? [] : DIMS.filter(d => {
+                    const myS = profile?.[`score_${d}`] ?? 0;
+                    const theirS = fp?.[`score_${d}`] ?? 0;
+                    return myS > 5 && theirS > 5;
+                  });
+                  return (
+                    <div key={f.id} style={{
+                      background: C.bgCard, border: `1px solid ${C.goldBorderDim}`,
+                      borderRadius: 4, padding: "14px 16px",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: alignedDims.length ? 10 : 0 }}>
+                        <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 16, color: C.gold }}>
+                          @{uname}
+                        </div>
+                        {isPending ? (
+                          f.iSent ? (
+                            <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 10, letterSpacing: "0.15em", color: C.parchmentDim, border: `1px solid rgba(255,255,255,0.1)`, borderRadius: 3, padding: "3px 8px" }}>PENDING</span>
+                          ) : (
+                            <button
+                              onClick={() => handleAcceptFriend(f.id)}
+                              style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", color: C.bg, background: C.gold, border: "none", borderRadius: 3, padding: "5px 12px", cursor: "pointer", touchAction: "manipulation" }}
+                            >ACCEPT</button>
+                          )
+                        ) : null}
+                      </div>
+                      {alignedDims.length > 0 && (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                          {alignedDims.map(d => {
+                            const col = DIMENSION_COLORS[d];
+                            return (
+                              <span key={d} style={{
+                                fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700,
+                                fontSize: 10, letterSpacing: "0.1em",
+                                color: col, border: `1px solid ${col}50`,
+                                background: `${col}12`, borderRadius: 3,
+                                padding: "3px 7px",
+                              }}>{DIMENSION_ICONS[d]} {DIMENSION_LABELS[d].split(" ")[0].toUpperCase()}</span>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* ── SECTION 8: Account ── */}
           <div style={{ marginBottom: 24, animation: "fadeSlideIn 0.5s ease forwards 0.3s", opacity: 0 }}>
             <SectionLabel text="Account" />
             <div style={{ background: C.bgCard, border: `1px solid ${C.goldBorderDim}`, borderRadius: 4, padding: "20px 20px", display: "flex", flexDirection: "column", gap: 16 }}>

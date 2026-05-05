@@ -2,6 +2,7 @@ import Head from "next/head";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { createClient } from "@supabase/supabase-js";
+import Nav from "../components/Nav";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -52,6 +53,7 @@ export default function Custom404() {
       <Head>
         <title>Not Found | Throughline</title>
       </Head>
+      <Nav />
 
       <div style={{
         minHeight: "100vh",

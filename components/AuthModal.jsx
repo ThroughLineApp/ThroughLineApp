@@ -19,11 +19,13 @@ const C = {
 export default function AuthModal({ message, onDismiss }) {
   const router = useRouter();
   const [mode, setMode] = useState("signin");
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showSignInPw, setShowSignInPw] = useState(false);
+  const [showSignUpPw, setShowSignUpPw] = useState(false);
 
   const inputStyle = {
     width: "100%", background: C.bgDeep,
@@ -35,10 +37,28 @@ export default function AuthModal({ message, onDismiss }) {
 
   const handleSignIn = async () => {
     setError(null);
-    if (!email || !email.includes("@")) { setError("Enter a valid email."); return; }
+    const trimmedId = identifier.trim();
+    if (!trimmedId) { setError("Enter your email or username."); return; }
     if (!password || password.length < 6) { setError("Password must be 6+ characters."); return; }
     setLoading(true);
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+    let emailToUse = trimmedId;
+    if (!trimmedId.includes("@")) {
+      // Treat as username — look up the email
+      const { data: profileRow } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("username", trimmedId.toLowerCase())
+        .maybeSingle();
+      if (!profileRow?.email) {
+        setLoading(false);
+        setError("No account found with that username.");
+        return;
+      }
+      emailToUse = profileRow.email;
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email: emailToUse, password });
     if (signInError) { setLoading(false); setError(signInError.message); return; }
     const { data: { user: signedInUser } } = await supabase.auth.getUser();
     if (!signedInUser) {
@@ -72,13 +92,10 @@ export default function AuthModal({ message, onDismiss }) {
   const handleSignUp = async () => {
     setError(null);
     const trimmedUsername = username.trim().toLowerCase();
-    if (!trimmedUsername || trimmedUsername.length < 2) {
-      setError("Username must be at least 2 characters."); return;
+    if (!/^[a-z0-9_]{3,20}$/.test(trimmedUsername)) {
+      setError("Username must be 3–20 characters: letters, numbers, underscores only."); return;
     }
-    if (/[^a-zA-Z0-9_]/.test(trimmedUsername)) {
-      setError("Username can only contain letters, numbers, and underscores."); return;
-    }
-    if (!email || !email.includes("@")) { setError("Enter a valid email."); return; }
+    if (!identifier || !identifier.includes("@")) { setError("Enter a valid email."); return; }
     if (!password || password.length < 6) { setError("Password must be 6+ characters."); return; }
     setLoading(true);
 
@@ -87,14 +104,14 @@ export default function AuthModal({ message, onDismiss }) {
     if (existing) { setLoading(false); setError("That username is taken. Try another."); return; }
 
     const { data, error: signUpError } = await supabase.auth.signUp({
-      email, password,
+      email: identifier, password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/confirm`,
         data: { username: trimmedUsername },
       }
     });
-    setLoading(false);
     if (signUpError) {
+      setLoading(false);
       const msg = signUpError.message?.toLowerCase() || "";
       if (msg.includes("already registered") || msg.includes("already exists")) {
         setError("An account with this email already exists. Sign in instead.");
@@ -103,14 +120,31 @@ export default function AuthModal({ message, onDismiss }) {
       }
       return;
     }
+
+    // Save username to profiles immediately so it's reserved before email confirmation
+    if (data?.user) {
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert(
+          { id: data.user.id, username: trimmedUsername },
+          { onConflict: "id" }
+        );
+      if (profileError?.code === "23505") {
+        setLoading(false);
+        setError("That username is taken. Try another.");
+        return;
+      }
+    }
+
+    setLoading(false);
     setMode("signup_success");
   };
 
   const handleForgot = async () => {
     setError(null);
-    if (!email || !email.includes("@")) { setError("Enter your email address."); return; }
+    if (!identifier || !identifier.includes("@")) { setError("Enter your email address."); return; }
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await supabase.auth.resetPasswordForEmail(identifier, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setLoading(false);
@@ -144,12 +178,19 @@ export default function AuthModal({ message, onDismiss }) {
               Create one →
             </span>
           </p>
-          <input type="email" placeholder="Email address" value={email}
-            onChange={e => { setEmail(e.target.value); setError(null); }} style={inputStyle} />
-          <input type="password" placeholder="Password" value={password}
-            onChange={e => { setPassword(e.target.value); setError(null); }}
-            onKeyDown={e => e.key === "Enter" && handleSignIn()}
-            style={{ ...inputStyle, borderColor: error ? C.red : C.goldBorder }} />
+          <input type="text" placeholder="Email or username" value={identifier}
+            onChange={e => { setIdentifier(e.target.value); setError(null); }} style={inputStyle} />
+          <div style={{ position: "relative" }}>
+            <input type={showSignInPw ? "text" : "password"} placeholder="Password" value={password}
+              onChange={e => { setPassword(e.target.value); setError(null); }}
+              onKeyDown={e => e.key === "Enter" && handleSignIn()}
+              style={{ ...inputStyle, borderColor: error ? C.red : C.goldBorder, paddingRight: 52 }} />
+            <button onClick={() => setShowSignInPw(v => !v)} type="button" style={{
+              position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+              fontFamily: "Arial", fontSize: 11, color: C.parchmentDim,
+              background: "transparent", border: "none", cursor: "pointer", padding: 0,
+            }}>{showSignInPw ? "Hide" : "Show"}</button>
+          </div>
           {error && <div style={{ fontFamily: "Arial", fontSize: 11, color: C.red, marginBottom: 10 }}>{error}</div>}
           <button onClick={handleSignIn} disabled={loading} style={{
             fontFamily: "Arial Black", fontSize: 14, letterSpacing: "0.08em",
@@ -179,12 +220,19 @@ export default function AuthModal({ message, onDismiss }) {
           <input type="text" placeholder="Username (letters, numbers, underscores)"
             value={username}
             onChange={e => { setUsername(e.target.value); setError(null); }} style={inputStyle} />
-          <input type="email" placeholder="Email address" value={email}
-            onChange={e => { setEmail(e.target.value); setError(null); }} style={inputStyle} />
-          <input type="password" placeholder="Password (6+ characters)" value={password}
-            onChange={e => { setPassword(e.target.value); setError(null); }}
-            onKeyDown={e => e.key === "Enter" && handleSignUp()}
-            style={{ ...inputStyle, borderColor: error ? C.red : C.goldBorder }} />
+          <input type="email" placeholder="Email address" value={identifier}
+            onChange={e => { setIdentifier(e.target.value); setError(null); }} style={inputStyle} />
+          <div style={{ position: "relative" }}>
+            <input type={showSignUpPw ? "text" : "password"} placeholder="Password (6+ characters)" value={password}
+              onChange={e => { setPassword(e.target.value); setError(null); }}
+              onKeyDown={e => e.key === "Enter" && handleSignUp()}
+              style={{ ...inputStyle, borderColor: error ? C.red : C.goldBorder, paddingRight: 52 }} />
+            <button onClick={() => setShowSignUpPw(v => !v)} type="button" style={{
+              position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+              fontFamily: "Arial", fontSize: 11, color: C.parchmentDim,
+              background: "transparent", border: "none", cursor: "pointer", padding: 0,
+            }}>{showSignUpPw ? "Hide" : "Show"}</button>
+          </div>
           {error && <div style={{ fontFamily: "Arial", fontSize: 11, color: C.red, marginBottom: 10 }}>{error}</div>}
           <button onClick={handleSignUp} disabled={loading} style={{
             fontFamily: "Arial Black", fontSize: 14, letterSpacing: "0.08em",
@@ -206,7 +254,7 @@ export default function AuthModal({ message, onDismiss }) {
           </div>
           <div style={{ fontFamily: "Arial", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7, marginBottom: 12 }}>
             We sent a confirmation email to{" "}
-            <strong style={{ color: C.parchment }}>{email}</strong>.
+            <strong style={{ color: C.parchment }}>{identifier}</strong>.
             Click the link to activate your account, then come back and sign in.
           </div>
           <div style={{ fontFamily: "Arial", fontSize: 12, color: "#9A9488", lineHeight: 1.6, marginBottom: 24 }}>
@@ -231,8 +279,8 @@ export default function AuthModal({ message, onDismiss }) {
           <div style={{ fontFamily: "Arial Black", fontSize: 18, color: C.parchment, marginBottom: 20 }}>
             Reset your password
           </div>
-          <input type="email" placeholder="Your email address" value={email}
-            onChange={e => { setEmail(e.target.value); setError(null); }} style={inputStyle} />
+          <input type="email" placeholder="Your email address" value={identifier}
+            onChange={e => { setIdentifier(e.target.value); setError(null); }} style={inputStyle} />
           {error && <div style={{ fontFamily: "Arial", fontSize: 11, color: C.red, marginBottom: 10 }}>{error}</div>}
           <button onClick={handleForgot} disabled={loading} style={{
             fontFamily: "Arial Black", fontSize: 14, color: C.bg,
@@ -251,7 +299,7 @@ export default function AuthModal({ message, onDismiss }) {
           <div style={{ fontSize: 36, marginBottom: 16 }}>📬</div>
           <div style={{ fontFamily: "Arial", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7, marginBottom: 24 }}>
             We sent a reset link to{" "}
-            <strong style={{ color: C.parchment }}>{email}</strong>.
+            <strong style={{ color: C.parchment }}>{identifier}</strong>.
             Click it to set a new password.
           </div>
           <button onClick={onDismiss} style={{
