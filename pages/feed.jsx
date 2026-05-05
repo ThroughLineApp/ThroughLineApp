@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabase";
 import Nav from "../components/Nav";
@@ -342,7 +342,7 @@ export default function FeedPage() {
   };
 
   // ── Insert belief question or quiz nudge ──────────────────────────────────
-  const feedWithNudge = () => {
+  const nudgedFeed = useMemo(() => {
     if (!receipts.length) return [];
     const cards = [...receipts];
     if (user) {
@@ -351,7 +351,7 @@ export default function FeedPage() {
       cards.splice(4, 0, { __type: "quiz_nudge", id: "quiz-nudge" });
     }
     return cards;
-  };
+  }, [receipts, user, profile]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER
@@ -403,7 +403,7 @@ export default function FeedPage() {
           )}
 
           {/* Cards */}
-          {feedWithNudge().map((item) => {
+          {nudgedFeed.map((item) => {
             if (item.__type === "belief_question") {
               return <BeliefQuestionCard key={`belief-${user?.id}`} userId={user?.id} />;
             }
