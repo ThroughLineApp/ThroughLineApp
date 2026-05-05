@@ -351,7 +351,7 @@ export default function FeedPage() {
       cards.splice(4, 0, { __type: "quiz_nudge", id: "quiz-nudge" });
     }
     return cards;
-  }, [receipts, user, profile]);
+  }, [receipts, user?.id, profile?.quiz_completed, profile?.quiz_level]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER
