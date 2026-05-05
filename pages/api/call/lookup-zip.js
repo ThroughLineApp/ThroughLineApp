@@ -1,7 +1,14 @@
 // pages/api/call/lookup-zip.js
 // GET ?zip=XXXXX — returns up to 3 legislators for that ZIP (2 senators + 1 rep)
 
-import legislators from "../../../public/legislators-current.json";
+import fs from "fs";
+import path from "path";
+
+function getLegislators() {
+  const filePath = path.join(process.cwd(), "public", "legislators-current.json");
+  const raw = fs.readFileSync(filePath, "utf8");
+  return JSON.parse(raw);
+}
 
 // ── ZIP 3-digit prefix → state abbreviation ───────────────────────────────────
 // Covers all 50 states. Not every edge ZIP is listed — good enough for launch.
@@ -125,6 +132,8 @@ export function lookupRepsForZip(zip) {
   const state = zipToState(zip);
   if (!state) return [];
 
+  const legislators = getLegislators();
+
   const getMostRecentTerm = (terms) => terms[terms.length - 1];
 
   const formatLeg = (l, term) => {
@@ -174,6 +183,7 @@ export default async function handler(req, res) {
   }
 
   const { zip } = req.query;
+  console.log("[lookup-zip] zip received:", zip);
   if (!zip || zip.length < 5) {
     return res.status(400).json({ error: "A 5-digit ZIP code is required" });
   }
