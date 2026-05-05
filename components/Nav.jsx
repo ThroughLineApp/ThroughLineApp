@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { useAuth } from "../lib/auth";
-import AuthModal from "./AuthModal";
 import supabase from "../lib/supabase";
 
 
@@ -27,17 +26,16 @@ const DRAWER_LINKS = [
 const BOTTOM_NAV = [
   { label: "Feed",    href: "/" },
   { label: "Explore", href: "/explore" },
-  { label: "Alerts",  href: "/alerts", bell: true },
-  { label: "News",    href: "/news" },
+  { label: "Local",   href: "/local" },
+  { label: "Profile", href: "/profile" },
 ];
 
 export default function Nav() {
   const router  = useRouter();
-  const { user, profile } = useAuth();
+  const { user, profile, setShowAuthModal } = useAuth();
 
   const [drawerOpen,   setDrawerOpen]   = useState(false);
   const [isMobile,     setIsMobile]     = useState(false);
-  const [showAuth,     setShowAuth]     = useState(false);
   const [alertsBadge,  setAlertsBadge]  = useState(0);
 
   // ── Mobile detection ───────────────────────────────────────────────────────
@@ -72,7 +70,7 @@ export default function Nav() {
       .from("throughline_events")
       .select("*", { count: "exact", head: true })
       .in("politician_id", followedPols);
-    if (lastSeen) query = query.gt("vote_date", lastSeen);
+    if (lastSeen) query = query.gt("created_at", lastSeen);
 
     query.then(({ count, error }) => {
       if (!error && count !== null) setAlertsBadge(count);
@@ -99,7 +97,7 @@ export default function Nav() {
 
   const openAuth = () => {
     setDrawerOpen(false);
-    setShowAuth(true);
+    setShowAuthModal(true);
   };
 
   const username = profile?.username || user?.user_metadata?.username || null;
@@ -253,6 +251,50 @@ export default function Nav() {
         {/* Divider */}
         <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", margin: "16px 24px" }} />
 
+        {/* Auth section */}
+        {user ? (
+          <>
+            <div style={{
+              fontFamily: "Figtree, sans-serif", fontSize: 12,
+              fontStyle: "italic", color: "#9A9488",
+              padding: "0 24px 4px",
+            }}>
+              Signed in as {username ? `@${username}` : user.email}
+            </div>
+            <button
+              onClick={handleSignOut}
+              style={{
+                display: "block", width: "100%",
+                padding: "10px 24px",
+                fontFamily: "Arial", fontSize: 15,
+                color: "#9A9488",
+                background: "none", border: "none",
+                borderLeft: "3px solid transparent",
+                textAlign: "left", cursor: "pointer",
+                touchAction: "manipulation",
+              }}
+            >Sign Out</button>
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", margin: "8px 24px 8px" }} />
+          </>
+        ) : (
+          <>
+            <button
+              onClick={openAuth}
+              style={{
+                display: "block", width: "100%",
+                padding: "12px 24px",
+                fontFamily: "Arial Black", fontSize: 14,
+                color: "#0A0B0D", background: "#C9A84C",
+                border: "none", borderLeft: "3px solid transparent",
+                textAlign: "left", cursor: "pointer",
+                letterSpacing: "0.06em",
+                touchAction: "manipulation",
+              }}
+            >SIGN IN →</button>
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", margin: "8px 24px 8px" }} />
+          </>
+        )}
+
         {DRAWER_LINKS.map(({ label, href, gold }) => (
           <button
             key={label}
@@ -335,14 +377,12 @@ export default function Nav() {
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
-            ) : label === "News" ? (
+            ) : label === "Local" ? (
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
                 stroke={active ? "#C9A84C" : "#a89d88"} strokeWidth="1.8"
                 strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a4 4 0 01-4-4V6" />
-                <line x1="10" y1="7"  x2="18" y2="7" />
-                <line x1="10" y1="11" x2="18" y2="11" />
-                <line x1="10" y1="15" x2="16" y2="15" />
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
               </svg>
             ) : (
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
@@ -371,10 +411,6 @@ export default function Nav() {
       {isMobile && Drawer}
 
       {isMobile && MobileBottomNav}
-
-      {showAuth && (
-        <AuthModal onDismiss={() => setShowAuth(false)} />
-      )}
     </>
   );
 }
