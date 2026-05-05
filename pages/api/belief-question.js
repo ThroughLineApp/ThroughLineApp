@@ -12,6 +12,7 @@ const supabase = createClient(
 export default async function handler(req, res) {
   if (req.method === "GET") {
     const { user_id } = req.query;
+    console.log("SERVICE_ROLE_KEY present:", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
     if (!user_id) return res.status(400).json({ error: "Missing user_id" });
 
     // Fetch all question IDs the user has already answered
