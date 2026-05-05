@@ -345,8 +345,7 @@ export default function FeedPage() {
   const feedWithNudge = () => {
     if (!receipts.length) return [];
     const cards = [...receipts];
-    const quizDone = profile?.quiz_completed || (profile?.quiz_level ?? 0) >= 2;
-    if (user && quizDone) {
+    if (user) {
       cards.splice(0, 0, { __type: "belief_question", id: "belief-question" });
     } else {
       cards.splice(4, 0, { __type: "quiz_nudge", id: "quiz-nudge" });
