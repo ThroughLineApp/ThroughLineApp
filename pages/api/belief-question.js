@@ -12,21 +12,22 @@ const supabase = createClient(
 export default async function handler(req, res) {
   if (req.method === "GET") {
     const { user_id } = req.query;
-    console.log("SERVICE_ROLE_KEY present:", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
-    if (!user_id) return res.status(400).json({ error: "Missing user_id" });
 
-    // Fetch all question IDs the user has already answered
-    const { data: answered, error: answeredError } = await supabase
-      .from("user_question_responses")
-      .select("question_id")
-      .eq("user_id", user_id);
+    // Fetch all question IDs the user has already answered (skip if no user_id)
+    let answeredIds = [];
+    if (user_id) {
+      const { data: answered, error: answeredError } = await supabase
+        .from("user_question_responses")
+        .select("question_id")
+        .eq("user_id", user_id);
 
-    if (answeredError) {
-      console.error("belief-question GET error (answered):", answeredError.message);
-      return res.status(500).json({ error: answeredError.message });
+      if (answeredError) {
+        console.error("belief-question GET error (answered):", answeredError.message);
+        return res.status(500).json({ error: answeredError.message });
+      }
+
+      answeredIds = (answered || []).map((r) => r.question_id);
     }
-
-    const answeredIds = (answered || []).map((r) => r.question_id);
 
     // Fetch one unanswered question
     let query = supabase

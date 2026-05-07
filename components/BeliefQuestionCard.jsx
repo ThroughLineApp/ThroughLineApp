@@ -1,8 +1,10 @@
 // components/BeliefQuestionCard.jsx
 // Self-contained card that fetches one unanswered belief engine question,
 // lets the user answer inline, and saves the response to Supabase.
+// Logged-out users see the question but get a sign-in nudge on answer.
 
 import { useState, useEffect } from "react";
+import { useAuth } from "../lib/auth";
 
 const RESPONSES = [
   { label: "Strongly Agree",    value: "strongly_agree" },
@@ -12,18 +14,23 @@ const RESPONSES = [
   { label: "Strongly Disagree", value: "strongly_disagree" },
 ];
 
-export default function BeliefQuestionCard({ userId }) {
+export default function BeliefQuestionCard({ user }) {
+  const { setShowAuthModal } = useAuth();
   const [question,         setQuestion]         = useState(null);
   const [loading,          setLoading]          = useState(true);
   const [answered,         setAnswered]         = useState(false);
   const [selectedResponse, setSelectedResponse] = useState(null);
   const [error,            setError]            = useState(null);
+  const [showAuthNudge,    setShowAuthNudge]    = useState(false);
 
   useEffect(() => {
-    if (!userId) return;
     let cancelled = false;
     setLoading(true);
-    fetch(`/api/belief-question?user_id=${userId}`)
+    // user_id optional — logged-out users get an unfiltered question
+    const url = user?.id
+      ? `/api/belief-question?user_id=${user.id}`
+      : `/api/belief-question`;
+    fetch(url)
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -40,17 +47,23 @@ export default function BeliefQuestionCard({ userId }) {
         setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [userId]);
+  }, [user?.id]);
 
   const handleAnswer = async (value) => {
     if (answered || selectedResponse) return;
     setSelectedResponse(value);
 
+    if (!user?.id) {
+      // Logged-out: show sign-in nudge instead of saving
+      setShowAuthNudge(true);
+      return;
+    }
+
     try {
       const res = await fetch("/api/belief-question", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, question_id: question.id, response: value }),
+        body: JSON.stringify({ user_id: user.id, question_id: question.id, response: value }),
       });
       const data = await res.json();
       if (data.success) setAnswered(true);
@@ -109,7 +122,7 @@ export default function BeliefQuestionCard({ userId }) {
         {question.question_text}
       </div>
 
-      {/* Response buttons or answered state */}
+      {/* Response buttons, answered state, or auth nudge */}
       {answered ? (
         <div style={{
           marginTop: 20,
@@ -118,6 +131,52 @@ export default function BeliefQuestionCard({ userId }) {
           fontStyle: "italic",
         }}>
           Answer saved. Come back tomorrow for your next question.
+        </div>
+      ) : showAuthNudge ? (
+        <div style={{ marginTop: 20 }}>
+          <div style={{
+            fontFamily: "'DM Mono', monospace",
+            fontSize: 12, color: "#9A9488",
+            fontStyle: "italic",
+            marginBottom: 14,
+          }}>
+            Sign in to save your answers and track your political profile.
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              onClick={() => setShowAuthModal(true)}
+              style={{
+                background: "#c9a84c",
+                border: "none",
+                color: "#0a0b0d",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: 12,
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                padding: "8px 16px",
+                borderRadius: 4,
+                cursor: "pointer",
+              }}
+            >
+              SIGN IN
+            </button>
+            <button
+              onClick={() => setShowAuthModal(true)}
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(201,168,76,0.4)",
+                color: "#9A9488",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: 12,
+                letterSpacing: "0.08em",
+                padding: "8px 16px",
+                borderRadius: 4,
+                cursor: "pointer",
+              }}
+            >
+              CREATE ACCOUNT
+            </button>
+          </div>
         </div>
       ) : (
         <div style={{

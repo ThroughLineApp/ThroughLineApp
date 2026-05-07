@@ -405,7 +405,7 @@ export default function FeedPage() {
           {/* Cards */}
           {nudgedFeed.map((item) => {
             if (item.__type === "belief_question") {
-              return <BeliefQuestionCard key={`belief-${user?.id}`} userId={user?.id} />;
+              return <BeliefQuestionCard key={`belief-${user?.id}`} userId={user?.id} user={user} />;
             }
             if (item.__type === "quiz_nudge") {
               return <QuizNudgeCard key={item.id} />;
