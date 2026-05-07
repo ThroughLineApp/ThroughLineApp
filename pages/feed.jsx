@@ -290,7 +290,7 @@ export default function FeedPage() {
 
   useEffect(() => {
     if (landingDone) fetchReceipts(0);
-  }, [landingDone, savedZip]);
+  }, [landingDone, savedZip, user?.id]);
 
   // ── Infinite scroll ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -406,7 +406,11 @@ export default function FeedPage() {
           {/* Cards */}
           {nudgedFeed.map((item) => {
             if (item.__type === "belief_question") {
-              return <BeliefQuestionCard key={`belief-${user?.id}`} user={user} />;
+              return (
+                <div key={`belief-${user?.id}`} style={{ minHeight: 140, marginBottom: 16 }}>
+                  <BeliefQuestionCard user={user} />
+                </div>
+              );
             }
             if (item.__type === "quiz_nudge") {
               return <QuizNudgeCard key={item.id} />;
