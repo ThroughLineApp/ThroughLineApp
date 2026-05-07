@@ -15,9 +15,6 @@ const DIM_KEYS = [
   'immigration','foreign','education','freedom',
   'guns','housing','tech','voting',
 ];
-// Max Euclidean distance across 12 dimensions each 0-100
-const MAX_DIST = Math.sqrt(12) * 100;
-
 async function fetchPoliticianMatches(scores, myReps=[]) {
   const { data, error } = await supabase
     .from('politicians')
@@ -28,13 +25,20 @@ async function fetchPoliticianMatches(scores, myReps=[]) {
 
   return (data || [])
     .map(p => {
-      const sumSq = DIM_KEYS.reduce((acc, dim, i) => {
-        const polScore = p[SCORE_COLS[i]] ?? 50;
+      let sumSq = 0;
+      let activeDims = 0;
+      DIM_KEYS.forEach((dim, i) => {
+        const polScore = p[SCORE_COLS[i]];
+        // Skip dimensions with no real data (null, undefined, or 0)
+        if (!polScore || polScore <= 0) return;
         const userScore = scores[dim] ?? 50;
-        return acc + Math.pow(polScore - userScore, 2);
-      }, 0);
-      const dist = Math.sqrt(sumSq);
-      const match_pct = Math.max(0, Math.round((1 - dist / MAX_DIST) * 100));
+        sumSq += Math.pow(polScore - userScore, 2);
+        activeDims++;
+      });
+      if (activeDims === 0) return null;
+      // MAX_DIST is per-politician: only count dimensions with real data
+      const maxDist = Math.sqrt(activeDims) * 100;
+      const match_pct = Math.max(0, Math.round((1 - Math.sqrt(sumSq) / maxDist) * 100));
       return {
         ...p,
         match_pct,
@@ -44,6 +48,7 @@ async function fetchPoliticianMatches(scores, myReps=[]) {
           : null,
       };
     })
+    .filter(Boolean)
     .sort((a, b) => b.match_pct - a.match_pct)
     .slice(0, 3);
 }
