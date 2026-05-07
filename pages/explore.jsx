@@ -441,15 +441,21 @@ export default function ExplorePage() {
   }, [profile?.followed_politicians]);
 
   // Load politicians + donations
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (nameSearch = "") => {
     setLoading(true);
     setError(null);
     try {
-      const { data: pols, error: polsError } = await supabase
+      let query = supabase
         .from("politicians")
         .select("id, name, party, state, chamber, slug, bioguide_id, donor_alignment_score, score_economic, score_healthcare, score_climate, score_criminal, score_immigration, score_foreign, score_education, score_freedom, score_guns, score_housing, score_tech, score_voting, prominence_score, top_donor_industry")
         .order("prominence_score", { ascending: false })
         .limit(100);
+
+      if (nameSearch.length >= 2) {
+        query = query.ilike("name", `%${nameSearch}%`);
+      }
+
+      const { data: pols, error: polsError } = await query;
 
       if (polsError) throw polsError;
       setPoliticians(pols || []);
@@ -475,7 +481,11 @@ export default function ExplorePage() {
     }
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    const delay = searchTerm.length > 0 ? 300 : 0;
+    const timer = setTimeout(() => loadData(searchTerm), delay);
+    return () => clearTimeout(timer);
+  }, [searchTerm, loadData]);
 
   // Follow toggle
   const handleFollowToggle = async (politician) => {
@@ -512,7 +522,6 @@ export default function ExplorePage() {
   const myReps = profile?.my_reps || [];
   const processed = politicians
     .filter(p => {
-      if (searchTerm && !p.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
       if (partyFilter !== "All") {
         const pl = partyLabel(p.party);
         if (partyFilter === "D" && pl !== "DEM") return false;
