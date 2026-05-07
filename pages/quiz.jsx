@@ -5,29 +5,47 @@ import supabase from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import ZipPrompt from "../components/ZipPrompt";
 
+const SCORE_COLS = [
+  'score_economic','score_healthcare','score_climate','score_criminal',
+  'score_immigration','score_foreign','score_education','score_freedom',
+  'score_guns','score_housing','score_tech','score_voting',
+];
+const DIM_KEYS = [
+  'economic','healthcare','climate','criminal',
+  'immigration','foreign','education','freedom',
+  'guns','housing','tech','voting',
+];
+// Max Euclidean distance across 12 dimensions each 0-100
+const MAX_DIST = Math.sqrt(12) * 100;
+
 async function fetchPoliticianMatches(scores, myReps=[]) {
-  const {data, error} = await supabase.rpc('match_politicians_weighted', {
-    user_economic:    (scores.economic??0),
-    user_healthcare:  (scores.healthcare??0),
-    user_climate:     (scores.climate??0),
-    user_criminal:    (scores.criminal??0),
-    user_immigration: (scores.immigration??0),
-    user_foreign:     (scores.foreign??0),
-    user_education:   (scores.education??0),
-    user_freedom:     (scores.freedom??0),
-    user_guns:        (scores.guns??0),
-    user_housing:     (scores.housing??0),
-    user_tech:        (scores.tech??0),
-    user_voting:      (scores.voting??0),
-  });
-  if(error){console.error('Match fetch error:',error);return[];}
-  return (data||[]).map(p=>({
-    ...p,
-    isYourRep: Array.isArray(myReps) && myReps.includes(p.bioguide_id),
-    photoUrl: p.bioguide_id
-      ?`https://bioguide.congress.gov/bioguide/photo/${p.bioguide_id[0]}/${p.bioguide_id}.jpg`
-      :null,
-  }));
+  const { data, error } = await supabase
+    .from('politicians')
+    .select(`id, name, party, slug, bioguide_id, state, chamber, ${SCORE_COLS.join(', ')}`)
+    .not('score_economic', 'is', null);
+
+  if (error) { console.error('Match fetch error:', error); return []; }
+
+  return (data || [])
+    .map(p => {
+      const sumSq = DIM_KEYS.reduce((acc, dim, i) => {
+        const polScore = p[SCORE_COLS[i]] ?? 50;
+        const userScore = scores[dim] ?? 50;
+        return acc + Math.pow(polScore - userScore, 2);
+      }, 0);
+      const dist = Math.sqrt(sumSq);
+      const match_pct = Math.max(0, Math.round((1 - dist / MAX_DIST) * 100));
+      return {
+        ...p,
+        match_pct,
+        isYourRep: Array.isArray(myReps) && myReps.includes(p.bioguide_id),
+        photoUrl: p.bioguide_id
+          ? `https://bioguide.congress.gov/bioguide/photo/${p.bioguide_id[0]}/${p.bioguide_id}.jpg`
+          : null,
+      };
+    })
+    .sort((a, b) => b.match_pct - a.match_pct)
+    .slice(0, 3);
 }
 
 const C={bg:"#0a0b0d",bgCard:"#11131a",bgDeep:"#0d0f14",gold:"#c9a84c",goldBorder:"rgba(201,168,76,0.35)",goldBorderDim:"rgba(201,168,76,0.12)",parchment:"#e8dfc8",parchmentDim:"#a89d88",green:"#4ca87c",red:"#c94c4c",blue:"#4c78c9",purple:"#8e4cc9"};
@@ -310,7 +328,8 @@ function PoliticianMatchCard({politician,isFollowed,onFollowToggle}){
   );
 }
 
-function MatchesSection({matches,matchesLoading,isL1,followedPoliticians,onFollowToggle}){
+function MatchesSection({matches,matchesLoading,isL1,followedPoliticians,onFollowToggle,user}){
+  const router=useRouter();
   const hasYourRep=matches.some(m=>m.isYourRep);
   return(
     <div style={{width:"100%",maxWidth:480,marginBottom:32}}>
@@ -336,6 +355,13 @@ function MatchesSection({matches,matchesLoading,isL1,followedPoliticians,onFollo
       {!matchesLoading&&matches.map(politician=>(
         <PoliticianMatchCard key={politician.id} politician={politician} isFollowed={followedPoliticians.includes(politician.id)} onFollowToggle={onFollowToggle}/>
       ))}
+      {!user&&!matchesLoading&&matches.length>0&&(
+        <div style={{marginTop:8,padding:"16px 20px",background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.2)",borderRadius:4,textAlign:"center"}}>
+          <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,fontWeight:700,letterSpacing:"0.15em",color:"#c9a84c",marginBottom:6}}>FOLLOW YOUR MATCHES</div>
+          <div style={{fontFamily:"'Figtree',sans-serif",fontSize:12,color:"#a89d88",lineHeight:1.6,marginBottom:14}}>Sign up free to follow these politicians and get alerts when they vote on issues you care about.</div>
+          <button onClick={()=>router.push("/?signup=true")} style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:14,letterSpacing:"0.1em",color:"#0a0b0d",background:"#c9a84c",border:"none",borderRadius:4,padding:"10px 28px",cursor:"pointer"}}>SIGN UP FREE →</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -399,7 +425,7 @@ function ResultsScreen({scores,matches,matchesLoading,onStartL2,onRetake,onConti
           </div>
         )}
         <div style={{animation:"fadeSlideIn 0.6s ease forwards 0.6s",opacity:0}}>
-          <MatchesSection matches={matches||[]} matchesLoading={matchesLoading} isL1={isL1} followedPoliticians={followedPoliticians||[]} onFollowToggle={onFollowToggle}/>
+          <MatchesSection matches={matches||[]} matchesLoading={matchesLoading} isL1={isL1} followedPoliticians={followedPoliticians||[]} onFollowToggle={onFollowToggle} user={user}/>
           {isL1&&onContinueToL2&&(
             <button onClick={onContinueToL2}
               style={{width:"100%",maxWidth:480,fontFamily:"'Barlow Condensed',sans-serif",fontSize:18,fontWeight:700,letterSpacing:"0.2em",color:"#0a0b0d",background:"#c9a84c",border:"none",borderRadius:2,padding:"16px",cursor:"pointer",marginBottom:16,display:"block"}}>
