@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "../lib/auth";
+import supabase from "../lib/supabase";
 
 const RESPONSES = [
   { label: "Strongly Agree",    value: "strongly_agree" },
@@ -22,6 +23,7 @@ export default function BeliefQuestionCard({ user }) {
   const [selectedResponse, setSelectedResponse] = useState(null);
   const [error,            setError]            = useState(null);
   const [showAuthNudge,    setShowAuthNudge]    = useState(false);
+  const [showThumbprint,   setShowThumbprint]   = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,7 +68,18 @@ export default function BeliefQuestionCard({ user }) {
         body: JSON.stringify({ user_id: user.id, question_id: question.id, response: value }),
       });
       const data = await res.json();
-      if (data.success) setAnswered(true);
+      if (data.success) {
+        setAnswered(true);
+        // On every 3rd total response, show the thumbprint-evolving message
+        const { count } = await supabase
+          .from("user_question_responses")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id);
+        if (count && count % 3 === 0) {
+          setShowThumbprint(true);
+          setTimeout(() => setShowThumbprint(false), 2500);
+        }
+      }
     } catch (_) {
       // fire-and-forget — UI already shows selected state
       setAnswered(true);
@@ -124,13 +137,34 @@ export default function BeliefQuestionCard({ user }) {
 
       {/* Response buttons, answered state, or auth nudge */}
       {answered ? (
-        <div style={{
-          marginTop: 20,
-          fontFamily: "'DM Mono', monospace",
-          fontSize: 12, color: "#9A9488",
-          fontStyle: "italic",
-        }}>
-          Answer saved. Come back tomorrow for your next question.
+        <div style={{ marginTop: 20 }}>
+          <div style={{
+            fontFamily: "'DM Mono', monospace",
+            fontSize: 12, color: "#9A9488",
+            fontStyle: "italic",
+          }}>
+            Answer saved. Come back tomorrow for your next question.
+          </div>
+          {showThumbprint && (
+            <div style={{
+              marginTop: 12,
+              fontFamily: "'Playfair Display', serif",
+              fontStyle: "italic",
+              fontSize: 14,
+              color: "#c9a84c",
+              textAlign: "center",
+              animation: "beliefFadeOut 2.5s ease forwards",
+            }}>
+              Your thumbprint is evolving.
+              <style>{`
+                @keyframes beliefFadeOut {
+                  0%   { opacity: 1; }
+                  70%  { opacity: 1; }
+                  100% { opacity: 0; }
+                }
+              `}</style>
+            </div>
+          )}
         </div>
       ) : showAuthNudge ? (
         <div style={{ marginTop: 20 }}>

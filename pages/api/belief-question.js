@@ -13,13 +13,15 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     const { user_id } = req.query;
 
-    // Fetch all question IDs the user has already answered (skip if no user_id)
+    // Fetch all responses the user has already submitted (skip if no user_id)
     let answeredIds = [];
+    let lastAnsweredQuestionId = null;
     if (user_id) {
       const { data: answered, error: answeredError } = await supabase
         .from("user_question_responses")
-        .select("question_id")
-        .eq("user_id", user_id);
+        .select("question_id, answered_at")
+        .eq("user_id", user_id)
+        .order("answered_at", { ascending: false });
 
       if (answeredError) {
         console.error("belief-question GET error (answered):", answeredError.message);
@@ -27,13 +29,36 @@ export default async function handler(req, res) {
       }
 
       answeredIds = (answered || []).map((r) => r.question_id);
+      lastAnsweredQuestionId = answered?.[0]?.question_id ?? null;
     }
 
-    // Fetch one unanswered question
+    // If the user's last answer was to a basic question, check for a pending follow-up
+    if (lastAnsweredQuestionId) {
+      const { data: lastQ } = await supabase
+        .from("questions")
+        .select("id, difficulty")
+        .eq("id", lastAnsweredQuestionId)
+        .single();
+
+      if (lastQ?.difficulty === "basic") {
+        const { data: followUps } = await supabase
+          .from("questions")
+          .select("id, question_text, category, sub_issue, dimension, difficulty")
+          .eq("follow_up_to", lastAnsweredQuestionId)
+          .limit(1);
+
+        const followUp = followUps?.[0] ?? null;
+        if (followUp && !answeredIds.includes(followUp.id)) {
+          return res.status(200).json({ question: followUp });
+        }
+      }
+    }
+
+    // Fall back to next unanswered basic question
     let query = supabase
       .from("questions")
       .select("id, question_text, category, sub_issue, dimension, difficulty")
-      .order("difficulty", { ascending: true })
+      .eq("difficulty", "basic")
       .order("dimension", { ascending: true })
       .limit(1);
 
