@@ -109,37 +109,17 @@ function formatAmount(n) {
 
 // ── ZIP → reps resolver ───────────────────────────────────────────────────────
 async function resolveReps(zip) {
-  // 1. Validate ZIP and get state
-  const geoRes = await fetch(`https://api.zippopotam.us/us/${zip}`);
-  if (!geoRes.ok) throw new Error("Invalid ZIP code.");
-  const geoData = await geoRes.json();
-  const state = geoData.places?.[0]?.["state abbreviation"];
-  if (!state) throw new Error("Could not determine state from ZIP.");
+  const res = await fetch(`/api/call/lookup-zip?zip=${zip}`);
+  if (!res.ok) throw new Error("Could not look up representatives for that ZIP.");
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
 
-  // 2. Fetch current legislators
-  const legRes = await fetch(
-    "https://unitedstates.github.io/congress-legislators/legislators-current.json"
-  );
-  if (!legRes.ok) throw new Error("Could not load legislator data.");
-  const legislators = await legRes.json();
+  const bioguideIds = [
+    ...(data.senators || []).map((s) => s.bioguide_id),
+    ...(data.rep ? [data.rep.bioguide_id] : []),
+  ].filter(Boolean);
 
-  const today = new Date().toISOString().slice(0, 10);
-
-  // 3. Filter to current reps for this state
-  // For each legislator: find terms that are active (end >= today) and match the state
-  const matched = legislators.filter((leg) => {
-    if (!leg.terms?.length) return false;
-    return leg.terms.some(
-      (t) => t.state === state && t.end >= today
-    );
-  });
-
-  // 4. Extract bioguide_ids
-  const bioguideIds = matched
-    .map((leg) => leg.id?.bioguide)
-    .filter(Boolean);
-
-  return { bioguideIds, state };
+  return { bioguideIds, state: data.state };
 }
 
 // ── ZIP Modal ─────────────────────────────────────────────────────────────────

@@ -226,6 +226,25 @@ export function lookupRepsForZip(zip) {
   return { senators, rep, districtFallback };
 }
 
+// ── Shared format helper (used by both primary and fallback paths) ────────────
+
+function _fmt(l) {
+  const t = l.terms[l.terms.length - 1];
+  const n = l.name;
+  const fullName = `${n.first}${n.middle ? " " + n.middle : ""} ${n.last}${n.suffix ? " " + n.suffix : ""}`.trim();
+  return {
+    bioguide_id:  l.id.bioguide,
+    name:         fullName,
+    party:        t.party === "Democrat" ? "D" : t.party === "Republican" ? "R" : "I",
+    chamber:      t.type === "sen" ? "Senate" : "House",
+    state:        t.state,
+    district:     t.district ?? null,
+    phone:        t.phone || null,
+    contact_form: t.contact_form || null,
+    url:          t.url || null,
+  };
+}
+
 // ── API handler ───────────────────────────────────────────────────────────────
 
 export default async function handler(req, res) {
@@ -239,6 +258,56 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "A 5-digit ZIP code is required" });
   }
 
+  // Primary: unitedstates.io for district-level precision
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 3000);
+    const distRes = await fetch(
+      `https://unitedstates.io/districts/zips/current/${zip}.json`,
+      { signal: controller.signal }
+    );
+    clearTimeout(tid);
+
+    if (distRes.ok) {
+      const distData = await distRes.json();
+      // Response is an array of district strings: ["IA-1"] or ["IA-0"] for at-large
+      const raw = Array.isArray(distData) ? distData[0] : null;
+      let state, districtNum;
+
+      if (typeof raw === "string" && raw.includes("-")) {
+        const [s, d] = raw.split("-");
+        state = s;
+        districtNum = parseInt(d, 10);
+      } else if (raw && typeof raw === "object") {
+        // Alternate shape: { state: "IA", district: "1" } or { district: "IA-1" }
+        if (raw.state && raw.district !== undefined) {
+          state = raw.state;
+          districtNum = parseInt(raw.district, 10);
+        } else if (typeof raw.district === "string" && raw.district.includes("-")) {
+          const [s, d] = raw.district.split("-");
+          state = s;
+          districtNum = parseInt(d, 10);
+        }
+      }
+
+      if (state && !isNaN(districtNum)) {
+        const legislators = getLegislators();
+        const senators = legislators
+          .filter(l => { const t = l.terms[l.terms.length - 1]; return t.type === "sen" && t.state === state; })
+          .slice(0, 2)
+          .map(_fmt);
+        const repMatch = legislators.find(l => {
+          const t = l.terms[l.terms.length - 1];
+          return t.type === "rep" && t.state === state && t.district === districtNum;
+        });
+        return res.status(200).json({ senators, rep: repMatch ? _fmt(repMatch) : null, state, districtFallback: false });
+      }
+    }
+  } catch (_) {
+    // fall through to CSV/prefix fallback
+  }
+
+  // Fallback: local CSV + ZIP prefix table
   try {
     const { senators, rep, districtFallback } = lookupRepsForZip(zip);
     return res.status(200).json({
