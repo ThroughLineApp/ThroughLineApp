@@ -209,7 +209,7 @@ function getMockReceipts(page = 0) {
 // ── Main Feed Page ─────────────────────────────────────────────────────────────
 export default function FeedPage() {
   const router = useRouter();
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
 
   const [landingDone, setLandingDone] = useState(false);
   const [receipts, setReceipts] = useState([]);
@@ -344,6 +344,7 @@ export default function FeedPage() {
   // ── Insert belief question or quiz nudge ──────────────────────────────────
   const nudgedFeed = useMemo(() => {
     if (!receipts.length) return [];
+    if (authLoading) return receipts;
     const cards = [...receipts];
     if (user) {
       cards.splice(0, 0, { __type: "belief_question", id: "belief-question" });
@@ -351,7 +352,7 @@ export default function FeedPage() {
       cards.splice(4, 0, { __type: "quiz_nudge", id: "quiz-nudge" });
     }
     return cards;
-  }, [receipts, user?.id, profile?.quiz_completed, profile?.quiz_level]);
+  }, [receipts, user?.id, authLoading, profile?.quiz_completed, profile?.quiz_level]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER
@@ -405,7 +406,7 @@ export default function FeedPage() {
           {/* Cards */}
           {nudgedFeed.map((item) => {
             if (item.__type === "belief_question") {
-              return <BeliefQuestionCard key={`belief-${user?.id}`} userId={user?.id} user={user} />;
+              return <BeliefQuestionCard key={`belief-${user?.id}`} user={user} />;
             }
             if (item.__type === "quiz_nudge") {
               return <QuizNudgeCard key={item.id} />;

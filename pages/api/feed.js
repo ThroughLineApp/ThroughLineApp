@@ -129,8 +129,19 @@ export default async function handler(req, res) {
       if (deduped.length >= PAGE_SIZE) break;
     }
 
+    // One card per politician per page
+    const seenPoliticians = new Set();
+    const finalEvents = [];
+    for (const e of deduped) {
+      if (!seenPoliticians.has(e.politician_id)) {
+        seenPoliticians.add(e.politician_id);
+        finalEvents.push(e);
+      }
+      if (finalEvents.length >= PAGE_SIZE) break;
+    }
+
     // Sort user's state reps to top
-    let sorted = deduped;
+    let sorted = finalEvents;
     if (state && !follows) {
       sorted = [
         ...deduped.filter(e => e.state === state),
