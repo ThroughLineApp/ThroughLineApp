@@ -5,53 +5,6 @@ import supabase from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import ZipPrompt from "../components/ZipPrompt";
 
-const SCORE_COLS = [
-  'score_economic','score_healthcare','score_climate','score_criminal',
-  'score_immigration','score_foreign','score_education','score_freedom',
-  'score_guns','score_housing','score_tech','score_voting',
-];
-const DIM_KEYS = [
-  'economic','healthcare','climate','criminal',
-  'immigration','foreign','education','freedom',
-  'guns','housing','tech','voting',
-];
-async function fetchPoliticianMatches(scores, myReps=[]) {
-  const { data, error } = await supabase
-    .from('politicians')
-    .select(`id, name, party, slug, bioguide_id, state, chamber, ${SCORE_COLS.join(', ')}`)
-    .not('score_economic', 'is', null);
-
-  if (error) { console.error('Match fetch error:', error); return []; }
-
-  return (data || [])
-    .map(p => {
-      let sumSq = 0;
-      let activeDims = 0;
-      DIM_KEYS.forEach((dim, i) => {
-        const polScore = p[SCORE_COLS[i]];
-        // Skip dimensions with no real data (null, undefined, or 0)
-        if (!polScore || polScore <= 0) return;
-        const userScore = scores[dim] ?? 50;
-        sumSq += Math.pow(polScore - userScore, 2);
-        activeDims++;
-      });
-      if (activeDims === 0) return null;
-      // MAX_DIST is per-politician: only count dimensions with real data
-      const maxDist = Math.sqrt(activeDims) * 100;
-      const match_pct = Math.max(0, Math.round((1 - Math.sqrt(sumSq) / maxDist) * 100));
-      return {
-        ...p,
-        match_pct,
-        isYourRep: Array.isArray(myReps) && myReps.includes(p.bioguide_id),
-        photoUrl: p.bioguide_id
-          ? `https://bioguide.congress.gov/bioguide/photo/${p.bioguide_id[0]}/${p.bioguide_id}.jpg`
-          : null,
-      };
-    })
-    .filter(Boolean)
-    .sort((a, b) => b.match_pct - a.match_pct)
-    .slice(0, 3);
-}
 
 const C={bg:"#0a0b0d",bgCard:"#11131a",bgDeep:"#0d0f14",gold:"#c9a84c",goldBorder:"rgba(201,168,76,0.35)",goldBorderDim:"rgba(201,168,76,0.12)",parchment:"#e8dfc8",parchmentDim:"#a89d88",green:"#4ca87c",red:"#c94c4c",blue:"#4c78c9",purple:"#8e4cc9"};
 
@@ -290,88 +243,22 @@ function BadgeScreen({earnedBadges,onContinue,continueLabel}){
   );
 }
 
-function PoliticianMatchCard({politician,isFollowed,onFollowToggle}){
-  const partyColor=politician.party==="D"?"#4c78c9":politician.party==="R"?"#c94c4c":"#8e4cc9";
-  const[imgError,setImgError]=useState(false);
-  const chamberLabel=politician.chamber==="senate"?"Sen.":"Rep.";
-  return(
-    <div style={{background:politician.isYourRep?"#161922":"#11131a",border:"1px solid rgba(201,168,76,0.15)",borderLeft:`3px solid ${partyColor}`,borderRadius:2,padding:"14px 16px",marginBottom:10,position:"relative"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12}}>
-        <div style={{position:"relative",flexShrink:0}}>
-          {politician.photoUrl&&!imgError?(
-            <img src={politician.photoUrl} alt={politician.name} onError={()=>setImgError(true)}
-              style={{width:44,height:44,borderRadius:"50%",objectFit:"cover",border:`2px solid ${partyColor}`}}/>
-          ):(
-            <div style={{width:44,height:44,borderRadius:"50%",background:partyColor,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Barlow Condensed',sans-serif",fontSize:18,fontWeight:700,color:"#e8dfc8"}}>
-              {politician.name?.charAt(0)}
-            </div>
-          )}
-          {politician.isYourRep&&(
-            <div style={{position:"absolute",bottom:-3,right:-3,background:"#c9a84c",borderRadius:2,fontFamily:"'Barlow Condensed',sans-serif",fontSize:8,fontWeight:700,color:"#0a0b0d",padding:"1px 4px",letterSpacing:"0.05em"}}>REP</div>
-          )}
-        </div>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:16,fontWeight:700,color:"#e8dfc8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{politician.name}</div>
-          <div style={{fontFamily:"'Figtree',sans-serif",fontSize:11,color:"#a89d88",marginTop:2}}>
-            <span style={{color:partyColor}}>{politician.party==="D"?"Democrat":politician.party==="R"?"Republican":"Independent"}</span>
-            {" · "}{politician.state}{" · "}{chamberLabel}
-          </div>
-        </div>
-        <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:28,fontWeight:700,color:"#c9a84c",flexShrink:0}}>{politician.match_pct}%</div>
-      </div>
-      <div style={{display:"flex",gap:8,marginTop:12}}>
-        <button onClick={()=>onFollowToggle(politician)}
-          style={{flex:1,fontFamily:"'Barlow Condensed',sans-serif",fontSize:13,fontWeight:700,letterSpacing:"0.1em",color:isFollowed?"#4ca87c":"#c9a84c",background:"transparent",border:`1px solid ${isFollowed?"#4ca87c":"#c9a84c"}`,borderRadius:2,padding:"8px",cursor:"pointer"}}>
-          {isFollowed?"✓ FOLLOWING":"+ FOLLOW"}
-        </button>
-        <button onClick={()=>window.location.href=`/politician/${politician.slug}`}
-          style={{flex:1,fontFamily:"'Barlow Condensed',sans-serif",fontSize:13,fontWeight:700,letterSpacing:"0.1em",color:"#0a0b0d",background:"#c9a84c",border:"none",borderRadius:2,padding:"8px",cursor:"pointer"}}>
-          VIEW PROFILE →
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function MatchesSection({matches,matchesLoading,isL1,followedPoliticians,onFollowToggle,user}){
-  const router=useRouter();
-  const hasYourRep=matches.some(m=>m.isYourRep);
+function MatchesSection(){
   return(
     <div style={{width:"100%",maxWidth:480,marginBottom:32}}>
-      <div style={{marginBottom:16}}>
-        <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:13,fontWeight:700,letterSpacing:"0.2em",color:"#c9a84c",textTransform:"uppercase",marginBottom:4}}>
-          {isL1?"YOUR PRELIMINARY MATCHES":"YOUR POLITICAL MATCHES"}
+      <div style={{background:"#11131a",border:"1px solid rgba(201,168,76,0.35)",borderRadius:8,padding:"28px 24px"}}>
+        <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:13,fontWeight:700,letterSpacing:"0.2em",color:"#c9a84c",textTransform:"uppercase",marginBottom:16}}>
+          POLITICIAN MATCHES
         </div>
-        {isL1&&(
-          <div style={{fontFamily:"'Figtree',sans-serif",fontSize:11,color:"#a89d88",fontStyle:"italic"}}>Complete Level 2 to sharpen these results</div>
-        )}
-      </div>
-      <div style={{display:"flex",gap:16,marginBottom:14,flexWrap:"wrap"}}>
-        {[{color:"#4c78c9",label:"Democrat"},{color:"#c94c4c",label:"Republican"},{color:"#8e4cc9",label:"Independent"},{color:"#c9a84c",label:"Your Rep"}].map(item=>(
-          <div key={item.label} style={{display:"flex",alignItems:"center",gap:5}}>
-            <div style={{width:7,height:7,borderRadius:"50%",background:item.color}}/>
-            <span style={{fontFamily:"'Figtree',sans-serif",fontSize:9,color:"#a89d88",letterSpacing:"0.05em"}}>{item.label}</span>
-          </div>
-        ))}
-      </div>
-      {hasYourRep&&<div style={{fontFamily:"'Figtree',sans-serif",fontSize:11,color:"#a89d88",fontStyle:"italic",marginBottom:10}}>Your representative made your top matches</div>}
-      {matchesLoading&&<div style={{fontFamily:"'Figtree',sans-serif",fontSize:12,color:"#a89d88",textAlign:"center",padding:"24px 0"}}>Finding your matches...</div>}
-      {!matchesLoading&&matches.length===0&&<div style={{fontFamily:"'Figtree',sans-serif",fontSize:12,color:"#a89d88",textAlign:"center",padding:"24px 0"}}>Match data is being processed. Check back soon.</div>}
-      {!matchesLoading&&matches.map(politician=>(
-        <PoliticianMatchCard key={politician.id} politician={politician} isFollowed={followedPoliticians.includes(politician.id)} onFollowToggle={onFollowToggle}/>
-      ))}
-      {!user&&!matchesLoading&&matches.length>0&&(
-        <div style={{marginTop:8,padding:"16px 20px",background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.2)",borderRadius:4,textAlign:"center"}}>
-          <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,fontWeight:700,letterSpacing:"0.15em",color:"#c9a84c",marginBottom:6}}>FOLLOW YOUR MATCHES</div>
-          <div style={{fontFamily:"'Figtree',sans-serif",fontSize:12,color:"#a89d88",lineHeight:1.6,marginBottom:14}}>Sign up free to follow these politicians and get alerts when they vote on issues you care about.</div>
-          <button onClick={()=>router.push("/?signup=true")} style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:14,letterSpacing:"0.1em",color:"#0a0b0d",background:"#c9a84c",border:"none",borderRadius:4,padding:"10px 28px",cursor:"pointer"}}>SIGN UP FREE →</button>
+        <div style={{fontFamily:"'Playfair Display',serif",fontStyle:"italic",fontSize:16,color:"#e8dfc8",lineHeight:1.6}}>
+          We're building the ideology scoring pipeline. Real matches based on actual voting records are coming soon.
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
-function ResultsScreen({scores,matches,matchesLoading,onStartL2,onRetake,onContinueToL2,onExplore,user,showSavePrompt,onSignUp,level,isL1,followedPoliticians,onFollowToggle,isReturningUser}){
+function ResultsScreen({scores,onStartL2,onRetake,onContinueToL2,onExplore,user,showSavePrompt,onSignUp,level,isL1,isReturningUser}){
   const router=useRouter();
   const { needsZip, refreshProfile } = useAuth();
   const [zipDismissed, setZipDismissed] = useState(false);
@@ -430,7 +317,7 @@ function ResultsScreen({scores,matches,matchesLoading,onStartL2,onRetake,onConti
           </div>
         )}
         <div style={{animation:"fadeSlideIn 0.6s ease forwards 0.6s",opacity:0}}>
-          <MatchesSection matches={matches||[]} matchesLoading={matchesLoading} isL1={isL1} followedPoliticians={followedPoliticians||[]} onFollowToggle={onFollowToggle} user={user}/>
+          <MatchesSection />
           {isL1&&onContinueToL2&&(
             <button onClick={onContinueToL2}
               style={{width:"100%",maxWidth:480,fontFamily:"'Barlow Condensed',sans-serif",fontSize:18,fontWeight:700,letterSpacing:"0.2em",color:"#0a0b0d",background:"#c9a84c",border:"none",borderRadius:2,padding:"16px",cursor:"pointer",marginBottom:16,display:"block"}}>
@@ -551,10 +438,6 @@ export default function QuizPage(){
   const[l1Answers,setL1Answers]=useState({});
   const[l1Written,setL1Written]=useState({});
   const[l1Scores,setL1Scores]=useState(null);
-  const[l1Matches,setL1Matches]=useState([]);
-  const[matches,setMatches]=useState([]);
-  const[matchesLoading,setMatchesLoading]=useState(false);
-  const[followedPoliticians,setFollowedPoliticians]=useState([]);
   const[l2Questions,setL2Questions]=useState([]);
   const[l2QIdx,setL2QIdx]=useState(0);
   const[l2Answers,setL2Answers]=useState({});
@@ -570,19 +453,6 @@ export default function QuizPage(){
   const[checkingExisting,setCheckingExisting]=useState(true);
   const[isReturningUser,setIsReturningUser]=useState(false);
 
-  useEffect(()=>{
-    if(phase!=="l1_results"&&phase!=="l2_results")return;
-    const activeScores=phase==="l2_results"?l2Scores:l1Scores;
-    if(!activeScores)return;
-    setMatchesLoading(true);
-    setMatches([]);
-    const myReps=user?.user_metadata?.my_reps||profile?.my_reps||[];
-    fetchPoliticianMatches(activeScores,myReps).then(results=>{
-      setMatches(results);
-      setL1Matches(results);
-      setMatchesLoading(false);
-    });
-  },[phase]);
 
   useEffect(()=>{
     async function checkExistingResults(){
@@ -715,8 +585,6 @@ export default function QuizPage(){
       const full = {};
       DIMS.forEach(d => { full[d] = refined[d] ?? numeric[d] ?? 50; });
       setL1Scores(full);
-
-      setL1Matches([]);
 
       try {
         const ps = profileLabel(full);
@@ -884,19 +752,8 @@ export default function QuizPage(){
     }
   };
 
-  const handleFollowToggle=async(politician)=>{
-    if(!user){requireAuth('Sign in to follow politicians and get alerts.');return;}
-    const isFollowed=followedPoliticians.includes(politician.id);
-    if(isFollowed){setFollowedPoliticians(prev=>prev.filter(id=>id!==politician.id));}
-    else{setFollowedPoliticians(prev=>[...prev,politician.id]);}
-    const{data:profileData}=await supabase.from('profiles').select('followed_politicians').eq('id',user.id).single();
-    const current=profileData?.followed_politicians||[];
-    const updated=isFollowed?current.filter(id=>id!==politician.id):[...current,politician.id];
-    await supabase.from('profiles').update({followed_politicians:updated}).eq('id',user.id);
-  };
-
   const handleRetake=()=>{
-    setL1QIdx(0);setL1Answers({});setL1Written({});setL1Scores(null);setL1Matches([]);
+    setL1QIdx(0);setL1Answers({});setL1Written({});setL1Scores(null);
     setL2QIdx(0);setL2Answers({});setL2Written({});setL2Scores(null);setL2Questions([]);
     setShowSave(false);setEarnedBadges([]);setLvl(1);
     setL1AnswerIndices({});setL2AnswerIndices({});
@@ -949,8 +806,8 @@ export default function QuizPage(){
   if(phase==="l1_badges")return(<><Head><title>Badge Earned · Throughline</title></Head><style>{GLOBAL_STYLES}</style><BadgeScreen earnedBadges={earnedBadges.length>0?earnedBadges:[BADGES[0]]} onContinue={()=>setPhase("l1_results")} continueLabel="See My Results →"/></>);
   if(phase==="l2_badges")return(<><Head><title>Badge Earned · Throughline</title></Head><style>{GLOBAL_STYLES}</style><BadgeScreen earnedBadges={earnedBadges.length>0?earnedBadges:[BADGES[1]]} onContinue={()=>setPhase("l2_results")} continueLabel="See My Refined Results →"/></>);
 
-  if(phase==="l1_results")return(<><Head><title>Your Political Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l1Scores} matches={matches} matchesLoading={matchesLoading} onStartL2={startL2} onRetake={handleRetake} onContinueToL2={startL2} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={1} isL1={true} followedPoliticians={followedPoliticians} onFollowToggle={handleFollowToggle} isReturningUser={isReturningUser}/><BottomNavBar activeTab="" /></>);
-  if(phase==="l2_results")return(<><Head><title>Your Refined Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l2Scores} matches={matches} matchesLoading={matchesLoading} onStartL2={null} onRetake={handleRetake} onContinueToL2={null} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={2} isL1={false} followedPoliticians={followedPoliticians} onFollowToggle={handleFollowToggle} isReturningUser={isReturningUser}/><BottomNavBar activeTab="" /></>);
+  if(phase==="l1_results")return(<><Head><title>Your Political Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l1Scores} onStartL2={startL2} onRetake={handleRetake} onContinueToL2={startL2} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={1} isL1={true} isReturningUser={isReturningUser}/><BottomNavBar activeTab="" /></>);
+  if(phase==="l2_results")return(<><Head><title>Your Refined Thumbprint · Throughline</title></Head><style>{GLOBAL_STYLES}</style><ResultsScreen scores={l2Scores} onStartL2={null} onRetake={handleRetake} onContinueToL2={null} onExplore={()=>router.push("/")} user={user} showSavePrompt={showSave} onSignUp={()=>router.push("/?signup=true")} level={2} isL1={false} isReturningUser={isReturningUser}/><BottomNavBar activeTab="" /></>);
 
   if(phase==="l1_question"){const q=shuffledL1[l1QIdx];return(<><Head><title>Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100dvh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment,display:"flex",flexDirection:"column"}}><button onClick={()=>router.back()} style={{position:"absolute",top:20,left:24,fontFamily:"'Figtree',sans-serif",fontSize:13,color:"#a89d88",background:"none",border:"none",cursor:"pointer",padding:"4px 0",touchAction:"manipulation",zIndex:10}}>← Back</button><QuestionScreen key={l1QIdx} q={q} qIndex={l1QIdx} total={shuffledL1.length} level={1} onAnswer={handleL1Answer} onBack={handleL1Back} onSkip={handleL1Skip} skippedCount={l1Skipped} previousAnswer={l1AnswerIndices[shuffledL1[l1QIdx]?.dimension]??null}/></div></>);}
   if(phase==="l2_question"){const q=l2Questions[l2QIdx];return(<><Head><title>Level 2 Quiz · Throughline</title></Head><style>{GLOBAL_STYLES}</style><div style={{height:"100dvh",overflow:"hidden",position:"fixed",width:"100%",top:0,left:0,background:C.bg,color:C.parchment,display:"flex",flexDirection:"column"}}><button onClick={()=>router.back()} style={{position:"absolute",top:20,left:24,fontFamily:"'Figtree',sans-serif",fontSize:13,color:"#a89d88",background:"none",border:"none",cursor:"pointer",padding:"4px 0",touchAction:"manipulation",zIndex:10}}>← Back</button><QuestionScreen key={`l2-${l2QIdx}`} q={q} qIndex={l2QIdx} total={l2Questions.length} level={2} onAnswer={handleL2Answer} onBack={handleL2Back} onSkip={handleL2Skip} skippedCount={l2Skipped} previousAnswer={l2AnswerIndices[l2Questions[l2QIdx]?.dimension]??null}/></div></>);}
