@@ -1,17 +1,42 @@
 // pages/api/call/lookup-zip.js
-// GET ?zip=XXXXX — returns up to 3 legislators for that ZIP (2 senators + 1 rep)
+// GET ?zip=XXXXX — returns senators and house rep for that ZIP
+// Uses zccd.csv (OpenSourceActivismTech) for ZIP→district, legislators-current.json for names.
 
 import fs from "fs";
 import path from "path";
 
+// ── Lazy-loaded data (parsed once per cold start) ─────────────────────────────
+let _legislators = null;
+let _zipIndex = null;  // Map: "52001" → [{ state: "IA", district: 2 }, ...]
+
 function getLegislators() {
+  if (_legislators) return _legislators;
   const filePath = path.join(process.cwd(), "public", "legislators-current.json");
-  const raw = fs.readFileSync(filePath, "utf8");
-  return JSON.parse(raw);
+  _legislators = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  return _legislators;
 }
 
-// ── ZIP 3-digit prefix → state abbreviation ───────────────────────────────────
-// Covers all 50 states. Not every edge ZIP is listed — good enough for launch.
+function getZipIndex() {
+  if (_zipIndex) return _zipIndex;
+  const filePath = path.join(process.cwd(), "public", "zip-to-district.csv");
+  const raw = fs.readFileSync(filePath, "utf8");
+  const index = new Map();
+  const lines = raw.split("\n");
+  for (let i = 1; i < lines.length; i++) {   // skip header
+    const line = lines[i].trim();
+    if (!line) continue;
+    const [, state_abbr, zcta, cd] = line.split(",");
+    if (!state_abbr || !zcta || !cd) continue;
+    const zip = zcta.padStart(5, "0");
+    const district = parseInt(cd, 10);
+    if (!index.has(zip)) index.set(zip, []);
+    index.get(zip).push({ state: state_abbr, district });
+  }
+  _zipIndex = index;
+  return _zipIndex;
+}
+
+// ── ZIP 3-digit prefix → state abbreviation (fallback) ───────────────────────
 const ZIP_PREFIX_TO_STATE = {
   "005":"NY","006":"PR","007":"PR","008":"PR","009":"PR",
   "010":"MA","011":"MA","012":"MA","013":"MA","014":"MA","015":"MA","016":"MA","017":"MA","018":"MA","019":"MA",
@@ -121,18 +146,16 @@ const ZIP_PREFIX_TO_STATE = {
   "995":"AK","996":"AK","997":"AK","998":"AK","999":"AK",
 };
 
-// ── Exported helpers ──────────────────────────────────────────────────────────
-
 export function zipToState(zip) {
   if (!zip || zip.length < 3) return null;
   return ZIP_PREFIX_TO_STATE[zip.slice(0, 3)] || null;
 }
 
-export function lookupRepsForZip(zip) {
-  const state = zipToState(zip);
-  if (!state) return [];
+// ── Core lookup ───────────────────────────────────────────────────────────────
 
+export function lookupRepsForZip(zip) {
   const legislators = getLegislators();
+  const zipIndex    = getZipIndex();
 
   const getMostRecentTerm = (terms) => terms[terms.length - 1];
 
@@ -145,34 +168,62 @@ export function lookupRepsForZip(zip) {
       party:        term.party === "Democrat" ? "D" : term.party === "Republican" ? "R" : "I",
       chamber:      term.type === "sen" ? "Senate" : "House",
       state:        term.state,
-      district:     term.district || null,
+      district:     term.district ?? null,
       phone:        term.phone || null,
       contact_form: term.contact_form || null,
       url:          term.url || null,
     };
   };
 
-  const result = [];
+  // ── Resolve state + district from CSV index ───────────────────────────────
+  const zipNorm = zip.padStart(5, "0");
+  const districts = zipIndex.get(zipNorm) || [];
 
-  // Senators (up to 2)
-  const senators = legislators.filter(l => {
-    const t = getMostRecentTerm(l.terms);
-    return t.type === "sen" && t.state === state;
-  });
-  senators.slice(0, 2).forEach(l =>
-    result.push(formatLeg(l, getMostRecentTerm(l.terms)))
-  );
+  // state: prefer CSV, fall back to prefix table
+  const state = districts.length > 0
+    ? districts[0].state
+    : zipToState(zip);
 
-  // House rep (1 — best effort, first rep for state)
-  const reps = legislators.filter(l => {
-    const t = getMostRecentTerm(l.terms);
-    return t.type === "rep" && t.state === state;
-  });
-  if (reps.length > 0) {
-    result.push(formatLeg(reps[0], getMostRecentTerm(reps[0].terms)));
+  if (!state) return { senators: [], rep: null, districtFallback: true };
+
+  // Senators (always state-level)
+  const senators = legislators
+    .filter(l => {
+      const t = getMostRecentTerm(l.terms);
+      return t.type === "sen" && t.state === state;
+    })
+    .slice(0, 2)
+    .map(l => formatLeg(l, getMostRecentTerm(l.terms)));
+
+  // House rep
+  let rep = null;
+  let districtFallback = false;
+
+  if (districts.length > 0) {
+    // Try each district entry (some ZIPs span boundaries) — take first match
+    for (const { district } of districts) {
+      const match = legislators.find(l => {
+        const t = getMostRecentTerm(l.terms);
+        return t.type === "rep" && t.state === state && t.district === district;
+      });
+      if (match) {
+        rep = formatLeg(match, getMostRecentTerm(match.terms));
+        break;
+      }
+    }
   }
 
-  return result;
+  if (!rep) {
+    // Fallback: first House rep for state
+    districtFallback = true;
+    const fallback = legislators.find(l => {
+      const t = getMostRecentTerm(l.terms);
+      return t.type === "rep" && t.state === state;
+    });
+    if (fallback) rep = formatLeg(fallback, getMostRecentTerm(fallback.terms));
+  }
+
+  return { senators, rep, districtFallback };
 }
 
 // ── API handler ───────────────────────────────────────────────────────────────
@@ -189,8 +240,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const reps = lookupRepsForZip(zip);
-    return res.status(200).json({ reps, state: zipToState(zip) });
+    const { senators, rep, districtFallback } = lookupRepsForZip(zip);
+    return res.status(200).json({
+      senators,
+      rep,
+      state: zipToState(zip),
+      districtFallback,
+    });
   } catch (err) {
     console.error("[lookup-zip] error:", err.message);
     return res.status(500).json({ error: "Could not look up representatives for that ZIP" });

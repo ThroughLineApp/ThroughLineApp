@@ -22,8 +22,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    const reps = lookupRepsForZip(String(zip_code));
-    const bioguide_ids = reps.map((r) => r.bioguide_id).filter(Boolean);
+    const { senators, rep } = lookupRepsForZip(String(zip_code));
+    const bioguide_ids = [...(senators || []), rep]
+      .filter(Boolean)
+      .map((r) => r.bioguide_id)
+      .filter(Boolean);
 
     // Only write to DB if we have a logged-in user
     if (user_id) {
@@ -45,7 +48,7 @@ export default async function handler(req, res) {
       }
     }
 
-    return res.status(200).json({ success: true, reps });
+    return res.status(200).json({ success: true, senators, rep });
   } catch (err) {
     console.error("[save-zip] error:", err.message);
     return res.status(500).json({ error: "Could not save ZIP code" });
