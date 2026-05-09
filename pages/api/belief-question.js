@@ -102,11 +102,11 @@ export default async function handler(req, res) {
       );
 
     if (error) {
-      console.error("belief-question POST error:", error.message);
-      return res.status(500).json({ error: error.message });
+      console.error("belief-question POST error FULL:", JSON.stringify(error));
+      return res.status(500).json({ error: error.message, details: JSON.stringify(error) });
     }
 
-    return res.status(200).json({ success: true });
+    return res.status(200).json({ success: true, debug: "row written" });
   }
 
   return res.status(405).end();
