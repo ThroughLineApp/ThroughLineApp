@@ -13,15 +13,15 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     const { user_id } = req.query;
 
-    // Fetch all responses the user has already submitted (skip if no user_id)
     let answeredIds = [];
     let lastAnsweredQuestionId = null;
+
     if (user_id) {
       const { data: answered, error: answeredError } = await supabase
         .from("user_question_responses")
         .select("question_id, answered_at")
         .eq("user_id", user_id)
-        .order("answered_at", { ascending: false });
+        .order("answered_at", { ascending: false, nullsFirst: false });
 
       if (answeredError) {
         console.error("belief-question GET error (answered):", answeredError.message);
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
       lastAnsweredQuestionId = answered?.[0]?.question_id ?? null;
     }
 
-    // If the user's last answer was to a basic question, check for a pending follow-up
+    // If last answer was basic, check for a pending follow-up
     if (lastAnsweredQuestionId) {
       const { data: lastQ } = await supabase
         .from("questions")
@@ -92,7 +92,12 @@ export default async function handler(req, res) {
     const { error } = await supabase
       .from("user_question_responses")
       .upsert(
-        { user_id, question_id, response, answered_at: new Date().toISOString() },
+        {
+          user_id,
+          question_id,
+          response,
+          answered_at: new Date().toISOString(),
+        },
         { onConflict: "user_id,question_id" }
       );
 
