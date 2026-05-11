@@ -126,24 +126,35 @@ export default async function handler(req, res) {
       }
     }
 
-    let query = supabase
-      .from("questions")
-      .select("id, question_text, category, sub_issue, dimension, difficulty")
-      .eq("difficulty", "basic")
-      .order("dimension", { ascending: true })
-      .limit(1);
+    const { prefer_dimension } = req.query;
 
-    if (answeredIds.length > 0) {
-      query = query.not("id", "in", `(${answeredIds.join(",")})`);
-    }
+    const tryFetch = async (dimFilter) => {
+      let q = supabase
+        .from("questions")
+        .select("id, question_text, category, sub_issue, dimension, difficulty")
+        .eq("difficulty", "basic")
+        .order("dimension", { ascending: true })
+        .limit(1);
+      if (dimFilter) q = q.eq("dimension", dimFilter);
+      if (answeredIds.length > 0) q = q.not("id", "in", `(${answeredIds.join(",")})`);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data?.[0] || null;
+    };
 
-    const { data: questions, error: qError } = await query;
-    if (qError) {
+    try {
+      let question = null;
+      if (prefer_dimension) {
+        question = await tryFetch(prefer_dimension);
+      }
+      if (!question) {
+        question = await tryFetch(null);
+      }
+      return res.status(200).json({ question });
+    } catch (qError) {
       console.error("belief-question GET error (questions):", qError.message);
       return res.status(500).json({ error: qError.message });
     }
-
-    return res.status(200).json({ question: questions?.[0] || null });
   }
 
   if (req.method === "POST") {

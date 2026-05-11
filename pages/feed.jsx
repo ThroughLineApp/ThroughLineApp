@@ -341,18 +341,33 @@ export default function FeedPage() {
     setLandingDone(true);
   };
 
-  // ── Insert belief question or quiz nudge ──────────────────────────────────
+  // ── Insert belief questions every 10 cards + quiz nudge for logged-out ────
   const nudgedFeed = useMemo(() => {
     if (!receipts.length) return [];
     if (authLoading) return receipts;
     const cards = [...receipts];
     if (user) {
-      cards.splice(0, 0, { __type: "belief_question", id: "belief-question" });
+      // Insert belief card at position 0, then every 10 receipt cards after
+      const positions = [];
+      let receiptCount = 0;
+      for (let i = 0; i < cards.length; i++) {
+        if (receiptCount === 0 || receiptCount % 10 === 0) {
+          positions.push(i);
+        }
+        receiptCount++;
+      }
+      // Insert in reverse so earlier positions don't shift
+      for (let i = positions.length - 1; i >= 0; i--) {
+        cards.splice(positions[i], 0, {
+          __type: "belief_question",
+          id: `belief-question-${positions[i]}`,
+        });
+      }
     } else {
       cards.splice(4, 0, { __type: "quiz_nudge", id: "quiz-nudge" });
     }
     return cards;
-  }, [receipts, user?.id, authLoading, profile?.quiz_completed, profile?.quiz_level]);
+  }, [receipts, user?.id, authLoading]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER
@@ -407,8 +422,8 @@ export default function FeedPage() {
           {nudgedFeed.map((item) => {
             if (item.__type === "belief_question") {
               return (
-                <div key={`belief-${user?.id}`} style={{ minHeight: 140, marginBottom: 16 }}>
-                  <BeliefQuestionCard user={user} />
+                <div key={item.id} style={{ marginBottom: 16 }}>
+                  <BeliefQuestionCard user={user} profile={profile} />
                 </div>
               );
             }
