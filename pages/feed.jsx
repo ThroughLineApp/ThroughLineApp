@@ -267,6 +267,17 @@ export default function FeedPage() {
       if (user && profile?.followed_politicians?.length > 0) {
         params.set("follows", profile.followed_politicians.join(","));
       }
+      if (user && profile) {
+        const DIMS = ["economic","healthcare","climate","criminal","immigration","foreign","education","freedom","guns","housing","tech","voting"];
+        const scores = {};
+        for (const k of DIMS) {
+          const v = profile[`score_${k}`];
+          if (v != null) scores[k] = v;
+        }
+        if (Object.keys(scores).length > 0) {
+          params.set("scores", JSON.stringify(scores));
+        }
+      }
 
       const res = await fetch(`/api/feed?${params.toString()}`);
       const data = await res.json();

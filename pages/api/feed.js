@@ -140,9 +140,23 @@ export default async function handler(req, res) {
       if (finalEvents.length >= PAGE_SIZE) break;
     }
 
-    // Sort user's state reps to top
+    // Sort by personalized relevance when scores provided, otherwise state-first
     let sorted = finalEvents;
-    if (state && !follows) {
+    let userScores = null;
+    try {
+      if (req.query.scores) userScores = JSON.parse(req.query.scores);
+    } catch (_) {}
+
+    if (userScores && typeof userScores === "object") {
+      sorted = [...finalEvents].sort((a, b) => {
+        const relA = a.dimension && userScores[a.dimension] != null
+          ? Math.abs(userScores[a.dimension] - 50) : 0;
+        const relB = b.dimension && userScores[b.dimension] != null
+          ? Math.abs(userScores[b.dimension] - 50) : 0;
+        if (relB !== relA) return relB - relA;
+        return (b.corruption_contribution ?? 0) - (a.corruption_contribution ?? 0);
+      });
+    } else if (state && !follows) {
       sorted = [
         ...deduped.filter(e => e.state === state),
         ...deduped.filter(e => e.state !== state),
