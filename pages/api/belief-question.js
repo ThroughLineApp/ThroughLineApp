@@ -71,7 +71,7 @@ async function recalculateScores(user_id) {
     // Seed weight decays from 10 to 0 as belief count grows (min 0)
     const seedWeight = Math.max(0, 10 - count);
     const beliefWeight = count;
-    const blended = (seedNormalized * beliefWeight + beliefAvg * beliefWeight) / (seedWeight + beliefWeight);
+    const blended = (seedNormalized * seedWeight + beliefAvg * beliefWeight) / (seedWeight + beliefWeight);
 
     // Convert back to 0-100 scale
     updates[col] = Math.round(((blended / 20) * 50) + 50);
