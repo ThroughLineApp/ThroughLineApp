@@ -247,14 +247,13 @@ export default function ReceiptCard({ event, isMyRep = false }) {
     ? new Date(vote_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     : null;
 
-  // 4 chip dimensions: card's dimension first, fill from priority list
-  const chipDims = [
-    dimension,
-    ...CHIP_PRIORITY.filter(d => d !== dimension),
-  ].filter(Boolean).slice(0, 4);
-  while (chipDims.length < 4) {
-    chipDims.push(CHIP_PRIORITY[chipDims.length - 1] || "economic");
-  }
+  const ALL_DIMS = ["economic","healthcare","climate","criminal","immigration","foreign","education","freedom","guns","housing","tech","voting"];
+  const chipDims = ALL_DIMS
+    .filter(dim => {
+      const a = getAlignment(voteIsYes, userDimScores?.[dim]);
+      return a === "aligned" || a === "conflict";
+    })
+    .slice(0, 4);
 
   const handleCardClick = () => {
     if (politician_slug) {
@@ -560,80 +559,70 @@ export default function ReceiptCard({ event, isMyRep = false }) {
             </div>
           )}
 
-          {/* Issue chips grid */}
-          <div onClick={(e) => e.stopPropagation()}>
-            <div style={{
-              fontFamily: "Arial",
-              fontSize: 9,
-              color: T.text2,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              marginBottom: 8,
-            }}>
-              Your alignment on key issues
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 14 }}>
-              {chipDims.map((dim) => {
-                const userScore = userDimScores?.[dim];
-                // Full alignment logic only for the card's primary dimension
-                const alignment = dim === dimension
-                  ? getAlignment(voteIsYes, userScore)
-                  : "neutral";
-                const label = DIMENSION_LABELS[dim] || dim;
-                const emoji = DIM_EMOJI[dim] || "📊";
-                const chipColor =
-                  alignment === "aligned" ? T.green :
-                  alignment === "conflict" ? T.red : T.text2;
-                const chipBg =
-                  alignment === "aligned" ? "rgba(76,175,125,0.12)" :
-                  alignment === "conflict" ? "rgba(224,92,75,0.12)" : T.surface2;
-                const chipBorder =
-                  alignment === "aligned" ? "rgba(76,175,125,0.25)" :
-                  alignment === "conflict" ? "rgba(224,92,75,0.25)" :
-                  "rgba(255,255,255,0.06)";
-                const alignLabel =
-                  alignment === "aligned" ? "Aligned" :
-                  alignment === "conflict" ? "Conflict" : "Neutral";
-                const barPct = userScore ?? 50;
+          {/* Issue chips grid — only shown when at least one aligned/conflict dim exists */}
+          {chipDims.length > 0 && (
+            <div onClick={(e) => e.stopPropagation()}>
+              <div style={{
+                fontFamily: "Arial",
+                fontSize: 9,
+                color: T.text2,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                marginBottom: 8,
+              }}>
+                Your alignment on key issues
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 14 }}>
+                {chipDims.map((dim) => {
+                  const userScore = userDimScores?.[dim];
+                  const alignment = getAlignment(voteIsYes, userScore);
+                  const label = DIMENSION_LABELS[dim] || dim;
+                  const emoji = DIM_EMOJI[dim] || "📊";
+                  const chipColor = alignment === "aligned" ? T.green : T.red;
+                  const chipBg = alignment === "aligned" ? "rgba(76,175,125,0.12)" : "rgba(224,92,75,0.12)";
+                  const chipBorder = alignment === "aligned" ? "rgba(76,175,125,0.25)" : "rgba(224,92,75,0.25)";
+                  const alignLabel = alignment === "aligned" ? "Aligned" : "Conflict";
+                  const barPct = userScore ?? 50;
 
-                return (
-                  <div
-                    key={dim}
-                    onClick={() => setActiveIssue(dim)}
-                    style={{
-                      background: chipBg,
-                      border: `0.5px solid ${chipBorder}`,
-                      borderRadius: 8,
-                      padding: "9px 11px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div style={{
-                      fontFamily: "Arial",
-                      fontSize: 12,
-                      fontWeight: "bold",
-                      color: chipColor,
-                      marginBottom: 2,
-                    }}>
-                      {emoji} {label}
+                  return (
+                    <div
+                      key={dim}
+                      onClick={() => setActiveIssue(dim)}
+                      style={{
+                        background: chipBg,
+                        border: `0.5px solid ${chipBorder}`,
+                        borderRadius: 8,
+                        padding: "9px 11px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <div style={{
+                        fontFamily: "Arial",
+                        fontSize: 12,
+                        fontWeight: "bold",
+                        color: chipColor,
+                        marginBottom: 2,
+                      }}>
+                        {emoji} {label}
+                      </div>
+                      <div style={{
+                        fontFamily: "Arial",
+                        fontSize: 10,
+                        fontWeight: "bold",
+                        color: chipColor,
+                        marginBottom: 4,
+                      }}>
+                        {alignLabel}
+                      </div>
+                      <div style={{ height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 2 }}>
+                        <div style={{ height: 3, width: `${barPct}%`, background: chipColor, borderRadius: 2 }} />
+                      </div>
                     </div>
-                    <div style={{
-                      fontFamily: "Arial",
-                      fontSize: 10,
-                      fontWeight: "bold",
-                      color: chipColor,
-                      marginBottom: 4,
-                    }}>
-                      {alignLabel}
-                    </div>
-                    <div style={{ height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 2 }}>
-                      <div style={{ height: 3, width: `${barPct}%`, background: chipColor, borderRadius: 2 }} />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Footer: share + save icons, right-aligned, no labels, no borders */}
           <div
