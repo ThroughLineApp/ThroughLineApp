@@ -243,15 +243,153 @@ function BadgeScreen({earnedBadges,onContinue,continueLabel}){
   );
 }
 
-function MatchesSection(){
-  return(
-    <div style={{width:"100%",maxWidth:480,marginBottom:32}}>
-      <div style={{background:"#11131a",border:"1px solid rgba(201,168,76,0.35)",borderRadius:8,padding:"28px 24px"}}>
-        <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:13,fontWeight:700,letterSpacing:"0.2em",color:"#c9a84c",textTransform:"uppercase",marginBottom:16}}>
+function MatchesSection({ scores }) {
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchMatches() {
+      try {
+        const { data, error } = await supabase
+          .from("politicians")
+          .select("id, name, party, chamber, slug, is_priority, search_rank, bioguide_id, wikipedia_photo_url, score_climate, score_economic, score_education, score_guns")
+          .or("score_climate.not.is.null,score_economic.not.is.null,score_education.not.is.null,score_guns.not.is.null");
+
+        if (error || !data) return;
+
+        const DIMENSION_MAP = [
+          { userKey: "climate",   dbKey: "score_climate"   },
+          { userKey: "economic",  dbKey: "score_economic"  },
+          { userKey: "education", dbKey: "score_education" },
+          { userKey: "guns",      dbKey: "score_guns"      },
+        ];
+
+        const scored = data.map(pol => {
+          let sumSq = 0;
+          let counted = 0;
+          for (const { userKey, dbKey } of DIMENSION_MAP) {
+            const userScore = scores[userKey];
+            const polScore = pol[dbKey];
+            if (userScore == null || polScore == null) continue;
+            const userNorm = userScore;
+            const diff = userNorm - polScore;
+            sumSq += diff * diff;
+            counted++;
+          }
+          if (counted === 0) return null;
+          const distance = Math.sqrt(sumSq);
+          const maxDist = Math.sqrt(counted * 100 * 100);
+          const match = Math.round(100 - (distance / maxDist) * 100);
+          return { ...pol, match };
+        }).filter(Boolean);
+
+        scored.sort((a, b) => {
+          const matchDiff = b.match - a.match;
+          if (Math.abs(matchDiff) > 2) return matchDiff;
+          return (a.search_rank ?? 999) - (b.search_rank ?? 999);
+        });
+        setMatches(scored.slice(0, 5));
+      } catch (e) {
+        console.error("Match fetch error:", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    const hasScores = scores && Object.values(scores).some(v => v !== 0);
+    if (hasScores) fetchMatches();
+    else setLoading(false);
+  }, []);
+
+  const PARTY_COLOR = { D: "#4c78c9", R: "#c94c4c", I: "#8e4cc9" };
+
+  if (loading) return (
+    <div style={{ width: "100%", maxWidth: 480, marginBottom: 32 }}>
+      <div style={{ background: "#11131a", border: "1px solid rgba(201,168,76,0.35)", borderRadius: 8, padding: "28px 24px" }}>
+        <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "0.2em", color: "#c9a84c", textTransform: "uppercase", marginBottom: 16 }}>
           POLITICIAN MATCHES
         </div>
-        <div style={{fontFamily:"'Playfair Display',serif",fontStyle:"italic",fontSize:16,color:"#e8dfc8",lineHeight:1.6}}>
-          We're building the ideology scoring pipeline. Real matches based on actual voting records are coming soon.
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: "#a89d88" }}>
+          Calculating your matches...
+        </div>
+      </div>
+    </div>
+  );
+
+  if (!matches.length) return (
+    <div style={{ width: "100%", maxWidth: 480, marginBottom: 32 }}>
+      <div style={{ background: "#11131a", border: "1px solid rgba(201,168,76,0.35)", borderRadius: 8, padding: "28px 24px" }}>
+        <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "0.2em", color: "#c9a84c", textTransform: "uppercase", marginBottom: 16 }}>
+          POLITICIAN MATCHES
+        </div>
+        <div style={{ fontFamily: "'Playfair Display',serif", fontStyle: "italic", fontSize: 16, color: "#e8dfc8", lineHeight: 1.6 }}>
+          Complete the quiz to see your matches.
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ width: "100%", maxWidth: 480, marginBottom: 32 }}>
+      <div style={{ background: "#11131a", border: "1px solid rgba(201,168,76,0.35)", borderRadius: 8, padding: "28px 24px" }}>
+        <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "0.2em", color: "#c9a84c", textTransform: "uppercase", marginBottom: 16 }}>
+          POLITICIAN MATCHES
+        </div>
+        {matches.map((pol, i) => (
+          <div
+            key={pol.id}
+            onClick={() => pol.slug && (window.location.href = `/politician/${pol.slug}`)}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "12px 0",
+              borderBottom: i < matches.length - 1 ? "1px solid rgba(201,168,76,0.12)" : "none",
+              cursor: pol.slug ? "pointer" : "default",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              {(pol.wikipedia_photo_url || pol.bioguide_id) ? (
+                <img
+                  src={pol.wikipedia_photo_url || `https://bioguide.congress.gov/bioguide/photo/${pol.bioguide_id[0]}/${pol.bioguide_id}.jpg`}
+                  alt={pol.name}
+                  referrerPolicy="no-referrer"
+                  onError={e => {
+                    e.target.style.display = "none";
+                    e.target.nextSibling.style.display = "flex";
+                  }}
+                  style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+                />
+              ) : null}
+              <div style={{
+                width: 36, height: 36, borderRadius: "50%",
+                background: "#1a2340",
+                display: (pol.wikipedia_photo_url || pol.bioguide_id) ? "none" : "flex",
+                alignItems: "center", justifyContent: "center",
+                fontFamily: "'Barlow Condensed',sans-serif",
+                fontWeight: 700, fontSize: 14, color: "#c9a84c",
+                flexShrink: 0,
+              }}>
+                {pol.party}
+              </div>
+              <div>
+                <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 600, fontSize: 15, color: "#e8dfc8" }}>
+                  {pol.name}
+                </div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: "#a89d88", marginTop: 2 }}>
+                  {pol.chamber}
+                </div>
+              </div>
+            </div>
+            <div style={{
+              fontFamily: "'Barlow Condensed',sans-serif",
+              fontWeight: 700, fontSize: 22,
+              color: "#c9a84c",
+            }}>
+              {pol.match}%
+            </div>
+          </div>
+        ))}
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: "#a89d88", marginTop: 16, fontStyle: "italic" }}>
+          Based on climate, economic, education, and gun policy scores. More dimensions coming.
         </div>
       </div>
     </div>
@@ -317,7 +455,7 @@ function ResultsScreen({scores,onStartL2,onRetake,onContinueToL2,onExplore,user,
           </div>
         )}
         <div style={{animation:"fadeSlideIn 0.6s ease forwards 0.6s",opacity:0}}>
-          <MatchesSection />
+          <MatchesSection scores={scores} />
           {isL1&&onContinueToL2&&(
             <button onClick={onContinueToL2}
               style={{width:"100%",maxWidth:480,fontFamily:"'Barlow Condensed',sans-serif",fontSize:18,fontWeight:700,letterSpacing:"0.2em",color:"#0a0b0d",background:"#c9a84c",border:"none",borderRadius:2,padding:"16px",cursor:"pointer",marginBottom:16,display:"block"}}>
