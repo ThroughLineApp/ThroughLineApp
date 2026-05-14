@@ -1,33 +1,52 @@
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import supabase from "../../lib/supabase";
 
 const PAGE_SIZE = 10;
 
-const BAD_BILL_PATTERNS = [
-  /^On the Cloture Motion/i,
-  /^On the Motion/i,
-  /^On Cloture/i,
-  /^On the Nomination/i,
-  /^On the Conference Report/i,
-  /^On the Joint Resolution/i,
-  /^On Passage of the Bill/i,
-  /^On the Amendment/i,
-  /^On the Resolution/i,
-  /^PN\d/i,
-];
-
-function isBadBillName(name) {
-  if (!name) return true;
-  return BAD_BILL_PATTERNS.some(p => p.test(name.trim()));
+function isRawPacId(str) {
+  return /^C\d{8}$/.test(str ?? "");
 }
 
-function isRawPacId(name) {
-  if (!name) return true;
-  return /^C\d{8}$/.test(name.trim());
+function cleanBillName(enriched, raw, dimension) {
+  if (enriched && enriched.length > 0) return enriched;
+  if (!raw) return "Federal Legislation";
+  const cleaned = raw
+    .replace(/^On Motion to Suspend the Rules and (Pass|Agree)/i, "Vote on")
+    .replace(/^On Motion to Recommit/i, "Motion to Recommit")
+    .replace(/^On Passage/i, "Final Passage Vote")
+    .replace(/^On Agreeing to the Amendment/i, "Amendment Vote")
+    .replace(/^On the Resolution/i, "Resolution Vote")
+    .replace(/^On the Conference Report/i, "Conference Report Vote")
+    .replace(/^On Cloture/i, "Cloture Vote")
+    .replace(/^On the Nomination/i, "Nomination Vote")
+    .replace(/^On the Joint Resolution/i, "Joint Resolution Vote");
+  if (cleaned !== raw) {
+    const dimLabel = {
+      economic:    "Economic Policy",
+      healthcare:  "Healthcare",
+      climate:     "Climate & Energy",
+      criminal:    "Criminal Justice",
+      immigration: "Immigration",
+      foreign:     "Foreign Policy",
+      education:   "Education",
+      freedom:     "Personal Freedom",
+      guns:        "Gun Policy",
+      housing:     "Housing & Urban",
+      tech:        "Tech & Privacy",
+      voting:      "Electoral Rights",
+    }[dimension] || dimension;
+    return dimLabel ? `${cleaned} — ${dimLabel}` : cleaned;
+  }
+  return cleaned;
+}
+
+function buildFallbackImpact(row) {
+  const voted = row.how_voted === "Yea" ? "voted in favor" : "voted against";
+  const bill = cleanBillName(row.bill_name_enriched, row.bill_name, row.dimension);
+  const days = row.days_between ? `${row.days_between} days` : "shortly";
+  const amount = row.donation_amount
+    ? `$${Number(row.donation_amount).toLocaleString()}`
+    : "a significant donation";
+  return `This politician ${voted} on ${bill}, ${days} after receiving ${amount} from this donor.`;
 }
 
 export default async function handler(req, res) {
@@ -35,146 +54,117 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { state, follows, page = "0" } = req.query;
-  const pageNum = parseInt(page, 10) || 0;
-
   try {
-    const fetchSize = PAGE_SIZE * 20;
-    const from = pageNum * fetchSize;
-    const to = from + fetchSize - 1;
+    const { state, follows, page: pageParam = "0" } = req.query;
+    const page = parseInt(pageParam, 10) || 0;
 
+    let userScores = null;
+    if (req.query.scores) {
+      try { userScores = JSON.parse(req.query.scores); } catch (_) {}
+    }
+
+    const followsArray = follows
+      ? follows.split(",").map(s => s.trim()).filter(Boolean)
+      : [];
+
+    // ── Build query against the view ──────────────────────────────────────
     let query = supabase
       .from("feed_events_deduped")
       .select(`
-        id,
-        politician_id,
-        donor_name,
-        donor_industry,
-        donor_pac_name,
-        donation_amount,
-        donation_date,
-        bill_name,
-        bill_name_enriched,
-        bill_link,
-        vote_date,
-        how_voted,
-        days_between,
-        vote_impact,
-        dimension,
-        corruption_contribution,
-        confidence_score,
-        politicians (
-          id,
-          name,
-          party,
-          state,
-          slug,
-          donor_alignment_score,
-          bioguide_id,
-          wikipedia_photo_url
-        )
+        id, politician_id, donor_name, donor_industry, donor_pac_name,
+        donation_amount, donation_date, bill_name, bill_name_enriched,
+        bill_link, vote_date, how_voted, days_between, vote_impact,
+        dimension, corruption_contribution,
+        politicians!inner(name, party, state, chamber, bioguide_id, slug, donor_alignment_score)
       `)
-      .order("vote_date", { ascending: false });
+      .not("donation_date", "is", null)
+      .not("vote_date", "is", null);
 
-    if (follows) {
-      const followList = follows.split(",").filter(Boolean);
-      if (followList.length > 0) {
-        query = query.in("politician_id", followList);
-      }
+    if (followsArray.length > 0) {
+      query = query.in("politician_id", followsArray);
+    } else if (state) {
+      query = query.eq("politicians.state", state);
     }
 
-    const { data, error } = await Promise.race([
-      query.range(from, to),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("Feed query timeout")), 5000))
-    ]);
+    query = query
+      .order("vote_date", { ascending: false })
+      .range(page * PAGE_SIZE * 3, (page + 1) * PAGE_SIZE * 3 - 1);
+
+    const { data, error } = await query;
     if (error) throw error;
 
-    // Flatten join
-    let events = (data || []).map(e => ({
-      ...e,
-      politician_name: e.politicians?.name,
-      party: e.politicians?.party,
-      state: e.politicians?.state,
-      politician_slug: e.politicians?.slug,
-      donor_alignment_score: e.politicians?.donor_alignment_score,
-      bioguide_id: e.politicians?.bioguide_id,
-      wikipedia_photo_url: e.politicians?.wikipedia_photo_url,
-      bill_name: e.bill_name_enriched || e.bill_name,
-      days_before_vote: e.days_between,
-      vote_impact: e.vote_impact
-        ? e.vote_impact.replace(/^#+\s*/gm, "").replace(/\n+/g, " ").trim()
-        : null,
-      donor_display: isRawPacId(e.donor_pac_name)
-        ? (isRawPacId(e.donor_name)
-            ? (e.donor_industry || "PAC donor")
-            : e.donor_name)
-        : e.donor_pac_name,
+    const rows = data || [];
+
+    // ── Deduplicate: one row per (politician_id, donor_name) ──────────────
+    const seen = new Map();
+    for (const row of rows) {
+      const key = `${row.politician_id}|${row.donor_name}`;
+      if (!seen.has(key)) {
+        seen.set(key, row);
+      } else {
+        const existing = seen.get(key);
+        if (row.vote_date > existing.vote_date) {
+          seen.set(key, row);
+        }
+      }
+    }
+    let deduped = Array.from(seen.values());
+
+    // ── Sort by dimension relevance if user scores provided ───────────────
+    if (userScores && typeof userScores === "object") {
+      deduped.sort((a, b) => {
+        const relA = Math.abs((userScores[a.dimension] ?? 50) - 50);
+        const relB = Math.abs((userScores[b.dimension] ?? 50) - 50);
+        return relB - relA;
+      });
+    }
+
+    // ── Slice to PAGE_SIZE ────────────────────────────────────────────────
+    const hasMore = deduped.length > PAGE_SIZE;
+    const sliced = deduped.slice(0, PAGE_SIZE);
+
+    // ── Shape response ────────────────────────────────────────────────────
+    const shaped = sliced.map(row => ({
+      id:                      row.id,
+      politician_id:           row.politician_id,
+      politician_name:         row.politicians.name,
+      politician_party:        row.politicians.party,
+      politician_state:        row.politicians.state,
+      politician_chamber:      row.politicians.chamber,
+      politician_slug:         row.politicians.slug,
+      politician_bioguide_id:  row.politicians.bioguide_id,
+      donor_alignment_score:   row.politicians.donor_alignment_score,
+      donor_name: (() => {
+        const name = row.donor_pac_name || row.donor_name;
+        if (isRawPacId(name)) {
+          return row.donor_industry
+            ? row.donor_industry.charAt(0).toUpperCase() + row.donor_industry.slice(1) + " Industry PAC"
+            : "PAC Donor";
+        }
+        return name;
+      })(),
+      donor_industry:          row.donor_industry,
+      donation_amount:         row.donation_amount,
+      donation_date:           row.donation_date,
+      bill_name:               cleanBillName(row.bill_name_enriched, row.bill_name, row.dimension),
+      bill_link:               row.bill_link,
+      vote_date:               row.vote_date,
+      how_voted:               row.how_voted,
+      days_between:            row.days_between,
+      vote_impact:             row.vote_impact || buildFallbackImpact(row),
+      dimension:               row.dimension,
+      corruption_contribution: row.corruption_contribution,
     }));
 
-    // Filter — only remove truly bad data, keep everything else
-    events = events.filter(e =>
-      e.politician_name &&
-      e.bioguide_id
-    );
-
-    // Deduplicate — one card per (politician, donation_date) combination
-    const seenEvents = new Set();
-    const deduped = [];
-    for (const e of events) {
-      const key = `${e.politician_id}|${e.donation_date}`;
-      if (!seenEvents.has(key)) {
-        seenEvents.add(key);
-        deduped.push(e);
-      }
-      if (deduped.length >= PAGE_SIZE) break;
-    }
-
-    // One card per politician per page
-    const seenPoliticians = new Set();
-    const finalEvents = [];
-    for (const e of deduped) {
-      if (!seenPoliticians.has(e.politician_id)) {
-        seenPoliticians.add(e.politician_id);
-        finalEvents.push(e);
-      }
-      if (finalEvents.length >= PAGE_SIZE) break;
-    }
-
-    // Sort by personalized relevance when scores provided, otherwise state-first
-    let sorted = finalEvents;
-    let userScores = null;
-    try {
-      if (req.query.scores) userScores = JSON.parse(req.query.scores);
-    } catch (_) {}
-
-    if (userScores && typeof userScores === "object") {
-      sorted = [...finalEvents].sort((a, b) => {
-        const relA = a.dimension && userScores[a.dimension] != null
-          ? Math.abs(userScores[a.dimension] - 50) : 0;
-        const relB = b.dimension && userScores[b.dimension] != null
-          ? Math.abs(userScores[b.dimension] - 50) : 0;
-        if (relB !== relA) return relB - relA;
-        return (b.corruption_contribution ?? 0) - (a.corruption_contribution ?? 0);
-      });
-    } else if (state && !follows) {
-      sorted = [
-        ...deduped.filter(e => e.state === state),
-        ...deduped.filter(e => e.state !== state),
-      ];
-    }
-
     return res.status(200).json({
-      events: sorted,
-      hasMore: sorted.length === PAGE_SIZE,
-      total: null,
+      events:   shaped,
+      hasMore,
+      page,
+      fallback: false,
     });
+
   } catch (err) {
     console.error("Feed API error:", err.message);
-    return res.status(200).json({
-      events: [],
-      hasMore: false,
-      total: 0,
-      fallback: true,
-    });
+    return res.status(200).json({ events: [], hasMore: false, fallback: true });
   }
 }

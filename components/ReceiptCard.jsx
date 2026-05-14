@@ -209,9 +209,9 @@ export default function ReceiptCard({ event, isMyRep = false }) {
     politician_id,
     politician_name,
     politician_slug,
-    bioguide_id,
-    party,
-    state,
+    politician_bioguide_id,
+    politician_party,
+    politician_state,
     donor_alignment_score,
     donation_amount,
     donor_industry,
@@ -226,7 +226,6 @@ export default function ReceiptCard({ event, isMyRep = false }) {
     dimension,
     corruption_contribution,
     source_url,
-    wikipedia_photo_url,
   } = event;
 
   const voteIsYes = how_voted === "Yes" || how_voted === "Yea";
@@ -293,7 +292,7 @@ export default function ReceiptCard({ event, isMyRep = false }) {
       alignment === "aligned" ? "align with" :
       alignment === "conflict" ? "conflict with" :
       "are unrelated to";
-    const osUrl = `https://www.opensecrets.org/members-of-congress/summary?cid=${bioguide_id}`;
+    const osUrl = `https://www.opensecrets.org/members-of-congress/summary?cid=${politician_bioguide_id}`;
 
     return (
       <div style={{
@@ -443,10 +442,10 @@ export default function ReceiptCard({ event, isMyRep = false }) {
       >
         {/* ── Hero ── */}
         <HeroSection
-          photoUrl={wikipedia_photo_url || bioguideUrl(bioguide_id)}
+          photoUrl={bioguideUrl(politician_bioguide_id)}
           politician_name={politician_name}
-          party={party}
-          state={state}
+          party={politician_party}
+          state={politician_state}
           donor_alignment_score={donor_alignment_score}
           isMyRep={isMyRep}
           onDasClick={(e) => { e.stopPropagation(); setShowDasModal(true); }}
@@ -640,7 +639,7 @@ export default function ReceiptCard({ event, isMyRep = false }) {
       {showDasModal && (
         <DasModal
           politician_name={politician_name}
-          bioguide_id={bioguide_id}
+          bioguide_id={politician_bioguide_id}
           donor_alignment_score={donor_alignment_score}
           donation_amount={donation_amount}
           donor_industry={donor_industry}
