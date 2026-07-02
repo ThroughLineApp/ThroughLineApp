@@ -384,7 +384,7 @@ export default function FeedPage() {
   // RENDER
   // ═══════════════════════════════════════════════════════════════════════════
   return (
-    <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "Arial, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'Figtree', sans-serif" }}>
 
       <Nav />
 
@@ -411,13 +411,13 @@ export default function FeedPage() {
           {/* Feed header */}
           <div style={{ marginBottom: 20 }}>
             <div style={{
-              fontFamily: "Arial Black, Arial",
+              fontFamily: "'Barlow Condensed', sans-serif",
               fontWeight: 900,
               fontSize: 22,
               color: T.text,
               marginBottom: 4,
             }}>The Receipt Feed</div>
-            <div style={{ fontFamily: "Arial", fontSize: 13, color: T.text2 }}>
+            <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: T.text2 }}>
               {user && profile?.followed_politicians?.length > 0
                 ? "Politicians you follow — latest donation-to-vote connections"
                 : "Highest-dollar donation-to-vote connections, nationwide"}
@@ -455,7 +455,7 @@ export default function FeedPage() {
 
           {/* Loading */}
           {loading && (
-            <div style={{ textAlign: "center", padding: "24px 0", color: T.text2, fontFamily: "Arial", fontSize: 13 }}>
+            <div style={{ textAlign: "center", padding: "24px 0", color: T.text2, fontFamily: "'Figtree', sans-serif", fontSize: 13 }}>
               Loading receipts…
             </div>
           )}
@@ -467,7 +467,7 @@ export default function FeedPage() {
           {!hasMore && !loading && receipts.length > 0 && (
             <div style={{
               textAlign: "center", padding: "32px 0",
-              fontFamily: "Arial", fontSize: 13, color: T.text2,
+              fontFamily: "'Figtree', sans-serif", fontSize: 13, color: T.text2,
               fontStyle: "italic",
             }}>
               You've seen all receipts. More data added as pipeline runs.
@@ -553,7 +553,7 @@ function LandingSequence({ onComplete, zip, setZip, onZipSave, followedInSession
       <div style={{ textAlign: "right", marginBottom: 8 }}>
         <button onClick={onComplete} style={{
           background: "none", border: "none",
-          fontFamily: "Arial", fontSize: 12, color: T.text2, cursor: "pointer",
+          fontFamily: "'Figtree', sans-serif", fontSize: 12, color: T.text2, cursor: "pointer",
         }}>
           Skip to feed →
         </button>
@@ -612,7 +612,7 @@ function Card1NASCARJacket({ onNext }) {
           style={{
             position: "absolute", top: 16, right: 16, zIndex: 10,
             background: "transparent", border: "none",
-            color: T.text2, fontFamily: "Arial", fontSize: 13,
+            color: T.text2, fontFamily: "'Figtree', sans-serif", fontSize: 13,
             cursor: "pointer", padding: "8px 12px",
             textShadow: "0 1px 4px rgba(0,0,0,0.8)",
           }}>Skip</button>
@@ -621,7 +621,7 @@ function Card1NASCARJacket({ onNext }) {
         <div style={{
           position: "absolute", top: 20, left: 0, right: 0, zIndex: 10,
           textAlign: "center",
-          fontFamily: "Arial Black, Arial", fontWeight: 900,
+          fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900,
           fontSize: 20, color: T.gold, letterSpacing: "0.08em",
           textShadow: "0 1px 8px rgba(0,0,0,0.9)",
         }}>THROUGHLINE</div>
@@ -635,7 +635,7 @@ function Card1NASCARJacket({ onNext }) {
           {/* Tagline */}
           <div style={{
             textAlign: "center",
-            fontFamily: "Arial Black, Arial", fontWeight: 900,
+            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900,
             fontSize: 16, color: T.gold, letterSpacing: "0.04em",
             textShadow: "0 1px 8px rgba(0,0,0,0.9)",
             marginBottom: 4,
@@ -645,7 +645,7 @@ function Card1NASCARJacket({ onNext }) {
           <button onClick={onNext} style={{
             width: "100%", padding: "16px",
             background: T.gold, border: "none", borderRadius: 12,
-            fontFamily: "Arial Black, Arial", fontWeight: 900,
+            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900,
             fontSize: 15, color: T.bg,
             cursor: "pointer", letterSpacing: "0.02em",
           }}>See the Receipts →</button>
@@ -655,7 +655,7 @@ function Card1NASCARJacket({ onNext }) {
             width: "100%", padding: "14px",
             background: "transparent",
             border: `1px solid ${T.gold}88`, borderRadius: 12,
-            fontFamily: "Arial Black, Arial", fontWeight: 900,
+            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900,
             fontSize: 15, color: T.gold,
             cursor: "pointer", letterSpacing: "0.02em",
           }}>Take the Quiz →</button>
@@ -664,7 +664,7 @@ function Card1NASCARJacket({ onNext }) {
             width: "100%", padding: "14px",
             background: "transparent",
             border: `1px solid ${T.border}`, borderRadius: 12,
-            fontFamily: "Arial", fontWeight: 700,
+            fontFamily: "'Figtree', sans-serif", fontWeight: 700,
             fontSize: 15, color: T.text2,
             cursor: "pointer",
           }}>Browse Politicians →</button>
@@ -696,7 +696,7 @@ function Card1NASCARJacket({ onNext }) {
         {/* Throughline logo — top left */}
         <div style={{
           position: "absolute", top: 16, left: 16,
-          fontFamily: "Arial Black, Arial", fontWeight: 900,
+          fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900,
           fontSize: 18, color: T.gold, letterSpacing: "0.08em",
           textShadow: "0 1px 6px rgba(0,0,0,0.8)",
         }}>THROUGHLINE</div>
@@ -705,7 +705,7 @@ function Card1NASCARJacket({ onNext }) {
         <div style={{
           position: "absolute", bottom: 16, left: 0, right: 0,
           textAlign: "center",
-          fontFamily: "Arial Black, Arial", fontWeight: 900,
+          fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900,
           fontSize: 16, color: T.gold, letterSpacing: "0.04em",
           textShadow: "0 1px 8px rgba(0,0,0,0.9)",
           padding: "0 16px",
@@ -732,16 +732,16 @@ function Card2StockTracker({ onNext }) {
   return (
     <LandingCard>
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontFamily: "Arial", fontSize: 11, color: T.text2, letterSpacing: "0.1em", marginBottom: 8 }}>CONGRESSIONAL FINANCES</div>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: T.text2, letterSpacing: "0.1em", marginBottom: 8 }}>CONGRESSIONAL FINANCES</div>
         <div style={{
-          fontFamily: "Arial Black, Arial",
+          fontFamily: "'Barlow Condensed', sans-serif",
           fontWeight: 900,
           fontSize: 26,
           color: T.text,
           lineHeight: 1.2,
           marginBottom: 8,
         }}>The numbers that make everyone angry</div>
-        <div style={{ fontFamily: "Arial", fontSize: 13, color: T.text2 }}>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: T.text2 }}>
           Congressional portfolios outperform S&P 500 by <span style={{ color: T.gold, fontWeight: 700 }}>57x</span>. Both parties. We track it all.
         </div>
       </div>
@@ -764,16 +764,16 @@ function Card2StockTracker({ onNext }) {
                 background: partyColor(s.party) + "22",
                 border: `1.5px solid ${partyColor(s.party)}44`,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "Arial Black, Arial", fontWeight: 900,
+                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900,
                 fontSize: 12, color: partyColor(s.party),
               }}>{s.name[0]}</div>
               <div>
-                <div style={{ fontFamily: "Arial Black, Arial", fontWeight: 900, fontSize: 14, color: T.text }}>{s.name}</div>
-                <div style={{ fontFamily: "Arial", fontSize: 11, color: T.text2 }}>{s.detail}</div>
+                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 14, color: T.text }}>{s.name}</div>
+                <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: T.text2 }}>{s.detail}</div>
               </div>
             </div>
             <div style={{
-              fontFamily: "Arial Black, Arial",
+              fontFamily: "'Barlow Condensed', sans-serif",
               fontWeight: 900,
               fontSize: 18,
               color: s.color,
@@ -787,7 +787,7 @@ function Card2StockTracker({ onNext }) {
         border: `0.5px solid ${T.goldBorder}`,
         borderRadius: 8,
         padding: "10px 14px",
-        fontFamily: "Arial",
+        fontFamily: "'Figtree', sans-serif",
         fontSize: 12,
         color: T.text2,
         marginBottom: 24,
@@ -806,9 +806,9 @@ function Card3Massie({ onNext }) {
   return (
     <LandingCard>
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontFamily: "Arial", fontSize: 11, color: T.green, letterSpacing: "0.1em", marginBottom: 8 }}>AN UNEXPECTED REPUBLICAN</div>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: T.green, letterSpacing: "0.1em", marginBottom: 8 }}>AN UNEXPECTED REPUBLICAN</div>
         <div style={{
-          fontFamily: "Arial Black, Arial",
+          fontFamily: "'Barlow Condensed', sans-serif",
           fontWeight: 900,
           fontSize: 26,
           color: T.text,
@@ -830,11 +830,11 @@ function Card3Massie({ onNext }) {
             background: T.red + "22",
             border: `2px solid ${T.red}44`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontFamily: "Arial Black, Arial", fontWeight: 900, fontSize: 22, color: T.red,
+            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 22, color: T.red,
           }}>M</div>
           <div>
-            <div style={{ fontFamily: "Arial Black, Arial", fontWeight: 900, fontSize: 18, color: T.text }}>Thomas Massie</div>
-            <div style={{ fontFamily: "Arial", fontSize: 12, color: partyColor("R"), fontWeight: 700 }}>Republican · Kentucky</div>
+            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 18, color: T.text }}>Thomas Massie</div>
+            <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: partyColor("R"), fontWeight: 700 }}>Republican · Kentucky</div>
           </div>
         </div>
 
@@ -845,7 +845,7 @@ function Card3Massie({ onNext }) {
         </div>
 
         <div style={{
-          fontFamily: "Arial",
+          fontFamily: "'Figtree', sans-serif",
           fontSize: 13,
           color: T.text2,
           lineHeight: 1.6,
@@ -861,7 +861,7 @@ function Card3Massie({ onNext }) {
         border: `0.5px solid ${T.border}`,
         borderRadius: 8,
         padding: "12px 14px",
-        fontFamily: "Arial",
+        fontFamily: "'Figtree', sans-serif",
         fontSize: 12,
         color: T.text2,
         marginBottom: 24,
@@ -880,9 +880,9 @@ function Card4Pelosi({ onNext }) {
   return (
     <LandingCard>
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontFamily: "Arial", fontSize: 11, color: T.gold, letterSpacing: "0.1em", marginBottom: 8 }}>THE TRADE THAT MADE HEADLINES</div>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: T.gold, letterSpacing: "0.1em", marginBottom: 8 }}>THE TRADE THAT MADE HEADLINES</div>
         <div style={{
-          fontFamily: "Arial Black, Arial",
+          fontFamily: "'Barlow Condensed', sans-serif",
           fontWeight: 900,
           fontSize: 26,
           color: T.text,
@@ -924,7 +924,7 @@ function Card4Pelosi({ onNext }) {
           border: `0.5px solid ${T.goldBorder}`,
           borderRadius: 8,
           padding: "10px 14px",
-          fontFamily: "Arial",
+          fontFamily: "'Figtree', sans-serif",
           fontSize: 13,
           color: T.text,
           lineHeight: 1.5,
@@ -939,7 +939,7 @@ function Card4Pelosi({ onNext }) {
         border: `0.5px solid ${T.border}`,
         borderRadius: 8,
         padding: "12px 14px",
-        fontFamily: "Arial",
+        fontFamily: "'Figtree', sans-serif",
         fontSize: 12,
         color: T.text2,
         marginBottom: 24,
@@ -960,16 +960,16 @@ function Card5Explainer({ onNext }) {
   return (
     <LandingCard>
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontFamily: "Arial", fontSize: 11, color: T.gold, letterSpacing: "0.1em", marginBottom: 8 }}>WHAT IS THROUGHLINE?</div>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: T.gold, letterSpacing: "0.1em", marginBottom: 8 }}>WHAT IS THROUGHLINE?</div>
         <div style={{
-          fontFamily: "Arial Black, Arial",
+          fontFamily: "'Barlow Condensed', sans-serif",
           fontWeight: 900,
           fontSize: 26,
           color: T.text,
           lineHeight: 1.2,
           marginBottom: 12,
         }}>We follow the money. You decide what it means.</div>
-        <div style={{ fontFamily: "Arial", fontSize: 14, color: T.text2, lineHeight: 1.6 }}>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 14, color: T.text2, lineHeight: 1.6 }}>
           Not left. Not right. Throughline maps PAC and corporate donations to the exact votes they appear to influence.
         </div>
       </div>
@@ -982,10 +982,10 @@ function Card5Explainer({ onNext }) {
         padding: "18px",
         marginBottom: 16,
       }}>
-        <div style={{ fontFamily: "Arial Black, Arial", fontWeight: 900, fontSize: 15, color: T.text, marginBottom: 12 }}>
+        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 15, color: T.text, marginBottom: 12 }}>
           The Donor Alignment Score (DAS)
         </div>
-        <div style={{ fontFamily: "Arial", fontSize: 13, color: T.text2, lineHeight: 1.6, marginBottom: 14 }}>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: T.text2, lineHeight: 1.6, marginBottom: 14 }}>
           Every politician gets a score from 0–100 measuring how often their votes align with their donors' financial interests.
         </div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -995,14 +995,14 @@ function Card5Explainer({ onNext }) {
         </div>
 
         {expanded && (
-          <div style={{ marginTop: 14, fontFamily: "Arial", fontSize: 12, color: T.text2, lineHeight: 1.6 }}>
+          <div style={{ marginTop: 14, fontFamily: "'Figtree', sans-serif", fontSize: 12, color: T.text2, lineHeight: 1.6 }}>
             Score factors: donation amount, proximity to vote (days before), PAC industry vs bill subject match, and multi-source confirmation. Every data point links back to FEC.gov or the official congressional vote record. We never show a score without a verifiable source.
           </div>
         )}
 
         <button onClick={() => setExpanded(!expanded)} style={{
           background: "none", border: "none",
-          fontFamily: "Arial", fontSize: 12, color: T.gold,
+          fontFamily: "'Figtree', sans-serif", fontSize: 12, color: T.gold,
           cursor: "pointer", marginTop: 10, padding: 0,
         }}>
           {expanded ? "Show less ↑" : "How is this calculated? ↓"}
@@ -1021,16 +1021,16 @@ function Card6Quiz({ onNext }) {
   return (
     <LandingCard>
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontFamily: "Arial", fontSize: 11, color: T.purple, letterSpacing: "0.1em", marginBottom: 8 }}>YOUR POLITICAL IDENTITY</div>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: T.purple, letterSpacing: "0.1em", marginBottom: 8 }}>YOUR POLITICAL IDENTITY</div>
         <div style={{
-          fontFamily: "Arial Black, Arial",
+          fontFamily: "'Barlow Condensed', sans-serif",
           fontWeight: 900,
           fontSize: 26,
           color: T.text,
           lineHeight: 1.2,
           marginBottom: 12,
         }}>How well does your rep represent you?</div>
-        <div style={{ fontFamily: "Arial", fontSize: 14, color: T.text2, lineHeight: 1.6 }}>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 14, color: T.text2, lineHeight: 1.6 }}>
           12 questions across 12 policy dimensions. Your political thumbprint compared to every member of Congress.
         </div>
       </div>
@@ -1052,7 +1052,7 @@ function Card6Quiz({ onNext }) {
             border: `0.5px solid ${T.border}`,
             borderRadius: 20,
             padding: "4px 10px",
-            fontFamily: "Arial",
+            fontFamily: "'Figtree', sans-serif",
             fontSize: 11,
             color: T.text2,
           }}>{b}</div>
@@ -1068,7 +1068,7 @@ function Card6Quiz({ onNext }) {
             border: "none",
             borderRadius: 8,
             padding: "14px 0",
-            fontFamily: "Arial Black, Arial",
+            fontFamily: "'Barlow Condensed', sans-serif",
             fontWeight: 900,
             fontSize: 15,
             color: "#0A0B0D",
@@ -1081,13 +1081,13 @@ function Card6Quiz({ onNext }) {
           border: `0.5px solid ${T.border}`,
           borderRadius: 8,
           padding: "14px 0",
-          fontFamily: "Arial",
+          fontFamily: "'Figtree', sans-serif",
           fontSize: 13,
           color: T.text2,
           cursor: "pointer",
         }}>Keep browsing</button>
       </div>
-      <div style={{ fontFamily: "Arial", fontSize: 11, color: T.text2, textAlign: "center" }}>~4 minutes · no login required</div>
+      <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: T.text2, textAlign: "center" }}>~4 minutes · no login required</div>
     </LandingCard>
   );
 }
@@ -1114,16 +1114,16 @@ function Card7Local({ onNext, zip, setZip, onZipSave }) {
   return (
     <LandingCard>
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontFamily: "Arial", fontSize: 11, color: T.teal, letterSpacing: "0.1em", marginBottom: 8 }}>YOUR REPRESENTATIVES</div>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: T.teal, letterSpacing: "0.1em", marginBottom: 8 }}>YOUR REPRESENTATIVES</div>
         <div style={{
-          fontFamily: "Arial Black, Arial",
+          fontFamily: "'Barlow Condensed', sans-serif",
           fontWeight: 900,
           fontSize: 26,
           color: T.text,
           lineHeight: 1.2,
           marginBottom: 12,
         }}>Who actually represents you?</div>
-        <div style={{ fontFamily: "Arial", fontSize: 14, color: T.text2, lineHeight: 1.6 }}>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 14, color: T.text2, lineHeight: 1.6 }}>
           Enter your zip code. See your full rep stack — federal, state, and local — with their DAS scores.
         </div>
       </div>
@@ -1145,7 +1145,7 @@ function Card7Local({ onNext, zip, setZip, onZipSave }) {
                 border: `0.5px solid ${T.border}`,
                 borderRadius: 8,
                 padding: "14px 16px",
-                fontFamily: "Arial",
+                fontFamily: "'Figtree', sans-serif",
                 fontSize: 15,
                 color: T.text,
                 outline: "none",
@@ -1156,14 +1156,14 @@ function Card7Local({ onNext, zip, setZip, onZipSave }) {
               border: "none",
               borderRadius: 8,
               padding: "14px 20px",
-              fontFamily: "Arial Black, Arial",
+              fontFamily: "'Barlow Condensed', sans-serif",
               fontWeight: 900,
               fontSize: 14,
               color: "#0A0B0D",
               cursor: "pointer",
             }}>GO</button>
           </div>
-          <div style={{ fontFamily: "Arial", fontSize: 11, color: T.text2, textAlign: "center" }}>
+          <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: T.text2, textAlign: "center" }}>
             Stored locally only — we never send your zip without an account
           </div>
 
@@ -1175,7 +1175,7 @@ function Card7Local({ onNext, zip, setZip, onZipSave }) {
             padding: "14px",
             marginTop: 16,
           }}>
-            <div style={{ fontFamily: "Arial", fontSize: 11, color: T.text2, marginBottom: 10 }}>EXAMPLE — AUSTIN, TX (78701)</div>
+            <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: T.text2, marginBottom: 10 }}>EXAMPLE — AUSTIN, TX (78701)</div>
             {exampleReps.map((r, i) => (
               <div key={i} style={{
                 display: "flex",
@@ -1185,11 +1185,11 @@ function Card7Local({ onNext, zip, setZip, onZipSave }) {
                 borderBottom: i < exampleReps.length - 1 ? `0.5px solid ${T.border}` : "none",
               }}>
                 <div>
-                  <div style={{ fontFamily: "Arial", fontSize: 13, color: T.text }}>{r.name}</div>
-                  <div style={{ fontFamily: "Arial", fontSize: 11, color: T.text2 }}>{r.level} · <span style={{ color: partyColor(r.party) }}>{r.party}</span></div>
+                  <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: T.text }}>{r.name}</div>
+                  <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: T.text2 }}>{r.level} · <span style={{ color: partyColor(r.party) }}>{r.party}</span></div>
                 </div>
                 <div style={{
-                  fontFamily: "Arial Black, Arial",
+                  fontFamily: "'Barlow Condensed', sans-serif",
                   fontWeight: 900,
                   fontSize: 16,
                   color: dasColor(r.das),
@@ -1207,8 +1207,8 @@ function Card7Local({ onNext, zip, setZip, onZipSave }) {
           marginBottom: 24,
           textAlign: "center",
         }}>
-          <div style={{ fontFamily: "Arial Black, Arial", fontWeight: 900, fontSize: 18, color: T.green, marginBottom: 4 }}>✓ Zip saved</div>
-          <div style={{ fontFamily: "Arial", fontSize: 13, color: T.text2 }}>Your feed will surface your reps' receipts first.</div>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 18, color: T.green, marginBottom: 4 }}>✓ Zip saved</div>
+          <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: T.text2 }}>Your feed will surface your reps' receipts first.</div>
         </div>
       )}
 
@@ -1229,16 +1229,16 @@ function Card8Follow({ onNext, followedInSession, onFollow }) {
   return (
     <LandingCard>
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontFamily: "Arial", fontSize: 11, color: T.gold, letterSpacing: "0.1em", marginBottom: 8 }}>FOLLOW POLITICIANS</div>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: T.gold, letterSpacing: "0.1em", marginBottom: 8 }}>FOLLOW POLITICIANS</div>
         <div style={{
-          fontFamily: "Arial Black, Arial",
+          fontFamily: "'Barlow Condensed', sans-serif",
           fontWeight: 900,
           fontSize: 26,
           color: T.text,
           lineHeight: 1.2,
           marginBottom: 12,
         }}>Track who you care about</div>
-        <div style={{ fontFamily: "Arial", fontSize: 14, color: T.text2, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 14, color: T.text2, lineHeight: 1.5 }}>
           Follow any politician to get their receipts first in your feed.
         </div>
       </div>
@@ -1263,12 +1263,12 @@ function Card8Follow({ onNext, followedInSession, onFollow }) {
                   background: partyColor(p.party) + "22",
                   border: `1.5px solid ${partyColor(p.party)}44`,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontFamily: "Arial Black, Arial", fontWeight: 900,
+                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900,
                   fontSize: 16, color: partyColor(p.party),
                 }}>{p.name[0]}</div>
                 <div>
-                  <div style={{ fontFamily: "Arial Black, Arial", fontWeight: 900, fontSize: 14, color: T.text }}>{p.name}</div>
-                  <div style={{ fontFamily: "Arial", fontSize: 11, color: T.text2 }}>
+                  <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 14, color: T.text }}>{p.name}</div>
+                  <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: T.text2 }}>
                     <span style={{ color: partyColor(p.party) }}>{p.party}</span> · {p.state} ·{" "}
                     <span style={{ color: dasColor(p.das) }}>DAS {p.das}</span>
                   </div>
@@ -1281,7 +1281,7 @@ function Card8Follow({ onNext, followedInSession, onFollow }) {
                   border: `1px solid ${followed ? T.gold : T.border}`,
                   borderRadius: 20,
                   padding: "6px 16px",
-                  fontFamily: "Arial",
+                  fontFamily: "'Figtree', sans-serif",
                   fontSize: 12,
                   color: followed ? T.gold : T.text2,
                   cursor: "pointer",
@@ -1322,16 +1322,16 @@ function Card9Issues({ onNext }) {
   return (
     <LandingCard>
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontFamily: "Arial", fontSize: 11, color: T.gold, letterSpacing: "0.1em", marginBottom: 8 }}>FOLLOW ISSUES</div>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: T.gold, letterSpacing: "0.1em", marginBottom: 8 }}>FOLLOW ISSUES</div>
         <div style={{
-          fontFamily: "Arial Black, Arial",
+          fontFamily: "'Barlow Condensed', sans-serif",
           fontWeight: 900,
           fontSize: 26,
           color: T.text,
           lineHeight: 1.2,
           marginBottom: 12,
         }}>What do you care about?</div>
-        <div style={{ fontFamily: "Arial", fontSize: 14, color: T.text2, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 14, color: T.text2, lineHeight: 1.5 }}>
           Select issues to filter your feed. No sign-in required.
         </div>
       </div>
@@ -1348,7 +1348,7 @@ function Card9Issues({ onNext }) {
                 border: `1px solid ${active ? iss.color : T.border}`,
                 borderRadius: 20,
                 padding: "8px 14px",
-                fontFamily: "Arial",
+                fontFamily: "'Figtree', sans-serif",
                 fontSize: 13,
                 color: active ? iss.color : T.text2,
                 cursor: "pointer",
@@ -1379,9 +1379,9 @@ function Card10Signin({ onNext, onSignup }) {
   return (
     <LandingCard>
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontFamily: "Arial", fontSize: 11, color: T.gold, letterSpacing: "0.1em", marginBottom: 8 }}>LIVE NOW</div>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: T.gold, letterSpacing: "0.1em", marginBottom: 8 }}>LIVE NOW</div>
         <div style={{
-          fontFamily: "Arial Black, Arial",
+          fontFamily: "'Barlow Condensed', sans-serif",
           fontWeight: 900,
           fontSize: 26,
           color: T.text,
@@ -1407,7 +1407,7 @@ function Card10Signin({ onNext, onSignup }) {
           borderBottom: `0.5px solid ${T.border}`,
         }}>
           <div style={{
-            fontFamily: "Arial Black, Arial",
+            fontFamily: "'Barlow Condensed', sans-serif",
             fontWeight: 900,
             fontSize: 48,
             color: T.red,
@@ -1415,8 +1415,8 @@ function Card10Signin({ onNext, onSignup }) {
           }}>$287M</div>
         </div>
         <div style={{ padding: "14px" }}>
-          <div style={{ fontFamily: "Arial", fontSize: 12, color: T.text2, marginBottom: 6 }}>Reuters · 3 hours ago</div>
-          <div style={{ fontFamily: "Arial Black, Arial", fontWeight: 900, fontSize: 15, color: T.text, lineHeight: 1.3 }}>
+          <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: T.text2, marginBottom: 6 }}>Reuters · 3 hours ago</div>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 15, color: T.text, lineHeight: 1.3 }}>
             Senate drug pricing vote expected this week — pharma has spent $287M on lobbying this session
           </div>
         </div>
@@ -1430,10 +1430,10 @@ function Card10Signin({ onNext, onSignup }) {
         padding: "14px",
         marginBottom: 24,
       }}>
-        <div style={{ fontFamily: "Arial Black, Arial", fontWeight: 900, fontSize: 14, color: T.gold, marginBottom: 6 }}>
+        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 14, color: T.gold, marginBottom: 6 }}>
           Sign in to see your alignment
         </div>
-        <div style={{ fontFamily: "Arial", fontSize: 13, color: T.text2, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: T.text2, lineHeight: 1.5 }}>
           Based on your quiz results, see exactly how your senators' pharma votes compare to what you believe — before they vote this week.
         </div>
       </div>
@@ -1447,7 +1447,7 @@ function Card10Signin({ onNext, onSignup }) {
             border: "none",
             borderRadius: 8,
             padding: "14px 0",
-            fontFamily: "Arial Black, Arial",
+            fontFamily: "'Barlow Condensed', sans-serif",
             fontWeight: 900,
             fontSize: 15,
             color: "#0A0B0D",
@@ -1460,7 +1460,7 @@ function Card10Signin({ onNext, onSignup }) {
           border: `0.5px solid ${T.border}`,
           borderRadius: 8,
           padding: "14px 0",
-          fontFamily: "Arial",
+          fontFamily: "'Figtree', sans-serif",
           fontSize: 13,
           color: T.text2,
           cursor: "pointer",
@@ -1498,7 +1498,7 @@ function NextButton({ onClick, label = "Next →" }) {
         border: "none",
         borderRadius: 8,
         padding: "14px 0",
-        fontFamily: "Arial Black, Arial",
+        fontFamily: "'Barlow Condensed', sans-serif",
         fontWeight: 900,
         fontSize: 15,
         color: "#0A0B0D",
@@ -1519,9 +1519,9 @@ function StatBox({ label, value, color, subtitle }) {
       padding: "10px 12px",
       textAlign: "center",
     }}>
-      <div style={{ fontFamily: "Arial Black, Arial", fontWeight: 900, fontSize: 20, color, lineHeight: 1 }}>{value}</div>
-      {subtitle && <div style={{ fontFamily: "Arial", fontSize: 10, color, opacity: 0.7, marginTop: 1 }}>{subtitle}</div>}
-      <div style={{ fontFamily: "Arial", fontSize: 10, color: T.text2, marginTop: 4 }}>{label}</div>
+      <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 20, color, lineHeight: 1 }}>{value}</div>
+      {subtitle && <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 10, color, opacity: 0.7, marginTop: 1 }}>{subtitle}</div>}
+      <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 10, color: T.text2, marginTop: 4 }}>{label}</div>
     </div>
   );
 }
@@ -1536,8 +1536,8 @@ function ScoreBadge({ score, label, color }) {
       padding: "8px",
       textAlign: "center",
     }}>
-      <div style={{ fontFamily: "Arial Black, Arial", fontWeight: 900, fontSize: 13, color, lineHeight: 1 }}>{score}</div>
-      <div style={{ fontFamily: "Arial", fontSize: 10, color: T.text2, marginTop: 3 }}>{label}</div>
+      <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 13, color, lineHeight: 1 }}>{score}</div>
+      <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 10, color: T.text2, marginTop: 3 }}>{label}</div>
     </div>
   );
 }
@@ -1550,8 +1550,8 @@ function TimelineEvent({ date, label, color, isFirst, isLast }) {
         {!isLast && <div style={{ width: 1, flex: 1, background: T.border, marginTop: 4 }} />}
       </div>
       <div style={{ paddingBottom: isLast ? 0 : 4 }}>
-        <div style={{ fontFamily: "Arial", fontSize: 11, color: color, marginBottom: 2 }}>{date}</div>
-        <div style={{ fontFamily: "Arial", fontSize: 13, color: T.text, lineHeight: 1.4 }}>{label}</div>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: color, marginBottom: 2 }}>{date}</div>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: T.text, lineHeight: 1.4 }}>{label}</div>
       </div>
     </div>
   );
@@ -1607,11 +1607,11 @@ function RepStrip({ zip }) {
       alignItems: "center",
       justifyContent: "space-between",
     }}>
-      <div style={{ fontFamily: "Arial", fontSize: 12, color: T.text2 }}>
+      <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: T.text2 }}>
         Your reps ({state}) appear first in your feed
       </div>
       <div style={{
-        fontFamily: "Arial",
+        fontFamily: "'Figtree', sans-serif",
         fontSize: 11,
         color: T.gold,
         background: T.gold + "14",
@@ -1654,7 +1654,7 @@ function SignupSheet({ trigger, message, onClose, onSignIn }) {
             border: `0.5px solid ${T.goldBorder}`,
             borderRadius: 8,
             padding: "12px 14px",
-            fontFamily: "Arial",
+            fontFamily: "'Figtree', sans-serif",
             fontSize: 13,
             color: T.text2,
             marginBottom: 20,
@@ -1662,13 +1662,13 @@ function SignupSheet({ trigger, message, onClose, onSignIn }) {
           }}>{message}</div>
         )}
 
-        <div style={{ fontFamily: "Arial Black, Arial", fontWeight: 900, fontSize: 22, color: T.text, marginBottom: 8, lineHeight: 1.2 }}>
+        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 22, color: T.text, marginBottom: 8, lineHeight: 1.2 }}>
           {trigger === "save" ? "Save receipts to your account" :
            trigger === "follow" ? "Follow politicians" :
            trigger === "call" ? "Get your call script" :
            "Join Throughline"}
         </div>
-        <div style={{ fontFamily: "Arial", fontSize: 13, color: T.text2, marginBottom: 24, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: T.text2, marginBottom: 24, lineHeight: 1.5 }}>
           Free forever. No ads. We never sell your data.
         </div>
 
@@ -1680,7 +1680,7 @@ function SignupSheet({ trigger, message, onClose, onSignIn }) {
             border: "none",
             borderRadius: 10,
             padding: "16px 0",
-            fontFamily: "Arial Black, Arial",
+            fontFamily: "'Barlow Condensed', sans-serif",
             fontWeight: 900,
             fontSize: 16,
             color: "#0A0B0D",
@@ -1695,7 +1695,7 @@ function SignupSheet({ trigger, message, onClose, onSignIn }) {
           border: `0.5px solid ${T.border}`,
           borderRadius: 10,
           padding: "14px 0",
-          fontFamily: "Arial",
+          fontFamily: "'Figtree', sans-serif",
           fontSize: 14,
           color: T.text2,
           cursor: "pointer",
@@ -1706,7 +1706,7 @@ function SignupSheet({ trigger, message, onClose, onSignIn }) {
           width: "100%",
           background: "transparent",
           border: "none",
-          fontFamily: "Arial",
+          fontFamily: "'Figtree', sans-serif",
           fontSize: 13,
           color: T.text2,
           cursor: "pointer",
@@ -1753,7 +1753,7 @@ function UpcomingEventsStrip({ events }) {
           onClick={() => router.push("/events")}
           style={{
             background: "none", border: "none",
-            fontFamily: "Arial", fontSize: 12,
+            fontFamily: "'Figtree', sans-serif", fontSize: 12,
             color: T.gold, cursor: "pointer",
           }}
         >
@@ -1800,7 +1800,7 @@ function UpcomingEventsStrip({ events }) {
               }}>
                 {ev.title}
               </div>
-              <div style={{ fontFamily: "Arial", fontSize: 11, color: T.gold }}>
+              <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: T.gold }}>
                 {days === 0 ? "Today" : days === 1 ? "Tomorrow" : `${days} days away`}
               </div>
             </div>

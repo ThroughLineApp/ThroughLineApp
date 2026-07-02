@@ -4,6 +4,7 @@ import Head from "next/head";
 import supabase from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import Nav from "../components/Nav";
+import { PRIMARY, SECONDARY } from "../lib/buttons";
 
 /* ─── Design tokens ─────────────────────────────────────────── */
 const C = {
@@ -344,11 +345,11 @@ export default function ProfilePage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%", maxWidth: 280 }}>
           <button
             onClick={() => router.push("/quiz")}
-            style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 14, letterSpacing: "0.12em", color: C.bg, background: C.gold, border: "none", borderRadius: 4, padding: "14px 24px", cursor: "pointer" }}
+            style={{ ...PRIMARY, fontSize: 14, padding: "14px 24px" }}
           >FIND YOUR SHAPE →</button>
           <button
             onClick={() => setShowAuthModal(true)}
-            style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 14, letterSpacing: "0.12em", color: C.gold, background: "transparent", border: `1px solid rgba(201,168,76,0.35)`, borderRadius: 4, padding: "14px 24px", cursor: "pointer" }}
+            style={{ ...SECONDARY, fontSize: 14, padding: "14px 24px" }}
           >SIGN IN</button>
         </div>
 
@@ -470,13 +471,13 @@ export default function ProfilePage() {
                 <div style={{ marginTop: 18, display: "flex", gap: 10 }}>
                   <button
                     onClick={() => router.push("/quiz")}
-                    style={{ fontFamily: "'Figtree',sans-serif", fontWeight: 600, fontSize: 12, color: C.parchmentDim, background: "transparent", border: `1px solid rgba(201,168,76,0.2)`, borderRadius: 4, padding: "7px 14px", cursor: "pointer" }}
+                    style={{ fontFamily: "'Figtree',sans-serif", fontWeight: 400, fontSize: 12, color: "#a89d88", background: "transparent", border: "none", textDecoration: "underline", cursor: "pointer", padding: "4px 0" }}
                   >Retake the Quiz</button>
                   {profile?.quiz_level === 1 && (
                     <button
                       onClick={() => router.push("/quiz?level=2")}
-                      style={{ fontFamily: "'Figtree',sans-serif", fontWeight: 700, fontSize: 12, color: C.bg, background: C.gold, border: "none", borderRadius: 4, padding: "7px 16px", cursor: "pointer" }}
-                    >Level 2 →</button>
+                      style={{ ...PRIMARY, fontSize: 12, padding: "7px 16px" }}
+                    >LEVEL 2 →</button>
                   )}
                 </div>
               </div>
@@ -490,8 +491,8 @@ export default function ProfilePage() {
                 </div>
                 <button
                   onClick={() => router.push("/quiz")}
-                  style={{ fontFamily: "'Figtree',sans-serif", fontWeight: 800, fontSize: 15, color: C.bg, background: C.gold, border: "none", borderRadius: 4, padding: "13px 36px", cursor: "pointer" }}
-                >Take the Quiz →</button>
+                  style={{ ...PRIMARY, fontSize: 15, padding: "13px 36px" }}
+                >TAKE THE QUIZ →</button>
               </div>
             )}
           </div>
@@ -526,8 +527,8 @@ export default function ProfilePage() {
                 </div>
                 <button
                   onClick={() => router.push("/explore")}
-                  style={{ fontFamily: "'Figtree',sans-serif", fontWeight: 700, fontSize: 13, color: C.bg, background: C.gold, border: "none", borderRadius: 4, padding: "10px 24px", cursor: "pointer" }}
-                >Explore Politicians →</button>
+                  style={{ ...PRIMARY, fontSize: 13, padding: "10px 24px" }}
+                >EXPLORE POLITICIANS →</button>
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -546,8 +547,8 @@ export default function ProfilePage() {
                 </div>
                 <button
                   onClick={() => router.push("/")}
-                  style={{ fontFamily: "'Figtree',sans-serif", fontWeight: 700, fontSize: 13, color: C.bg, background: C.gold, border: "none", borderRadius: 4, padding: "10px 24px", cursor: "pointer" }}
-                >Go to Feed →</button>
+                  style={{ ...PRIMARY, fontSize: 13, padding: "10px 24px" }}
+                >GO TO FEED →</button>
               </div>
             ) : (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -592,10 +593,10 @@ export default function ProfilePage() {
                   onClick={handleAddFriend}
                   disabled={friendAdding || !friendInput.trim()}
                   style={{
-                    fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700,
-                    fontSize: 12, letterSpacing: "0.08em",
-                    color: C.bg, background: friendAdding || !friendInput.trim() ? "rgba(201,168,76,0.35)" : C.gold,
-                    border: "none", borderRadius: 4, padding: "10px 18px",
+                    ...PRIMARY,
+                    fontSize: 12,
+                    background: friendAdding || !friendInput.trim() ? "rgba(201,168,76,0.35)" : C.gold,
+                    padding: "10px 18px",
                     cursor: friendAdding || !friendInput.trim() ? "default" : "pointer",
                     whiteSpace: "nowrap", touchAction: "manipulation",
                   }}
@@ -642,7 +643,7 @@ export default function ProfilePage() {
                           ) : (
                             <button
                               onClick={() => handleAcceptFriend(f.id)}
-                              style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: "0.1em", color: C.bg, background: C.gold, border: "none", borderRadius: 3, padding: "5px 12px", cursor: "pointer", touchAction: "manipulation" }}
+                              style={{ ...PRIMARY, fontSize: 11, padding: "5px 12px", touchAction: "manipulation" }}
                             >ACCEPT</button>
                           )
                         ) : null}
@@ -701,8 +702,8 @@ export default function ProfilePage() {
                       <button
                         onClick={handleSaveZip}
                         disabled={zipSaving || zipValue.length !== 5}
-                        style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 12, fontWeight: 700, color: C.bg, background: zipValue.length === 5 ? C.gold : "rgba(201,168,76,0.3)", border: "none", borderRadius: 4, padding: "6px 14px", cursor: zipValue.length === 5 ? "pointer" : "default" }}
-                      >{zipSaving ? "Saving…" : "Save"}</button>
+                        style={{ ...PRIMARY, fontSize: 12, background: zipValue.length === 5 ? C.gold : "rgba(201,168,76,0.3)", padding: "6px 14px", cursor: zipValue.length === 5 ? "pointer" : "default" }}
+                      >{zipSaving ? "SAVING…" : "SAVE"}</button>
                       <button
                         onClick={() => { setZipEdit(false); setZipValue(profile?.zip_code || ""); }}
                         style={{ fontFamily: "'Figtree',sans-serif", fontSize: 12, color: C.parchmentDim, background: "transparent", border: "none", cursor: "pointer", padding: "6px 4px" }}

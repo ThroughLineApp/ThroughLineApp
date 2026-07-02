@@ -1,6 +1,7 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
 import Nav from "../components/Nav";
+import { SECONDARY } from "../lib/buttons";
 
 export default function NewsPage() {
   const router = useRouter();
@@ -23,7 +24,8 @@ export default function NewsPage() {
         }}>
           {/* Wordmark */}
           <div style={{
-            fontFamily: "Arial Black, sans-serif",
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontWeight: 700,
             fontSize: 13,
             letterSpacing: "0.25em",
             color: "#c9a84c",
@@ -69,17 +71,7 @@ export default function NewsPage() {
           {/* Back button */}
           <button
             onClick={() => router.push("/")}
-            style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 13,
-              letterSpacing: "0.15em",
-              color: "#c9a84c",
-              background: "none",
-              border: "1px solid rgba(201,168,76,0.35)",
-              borderRadius: 4,
-              padding: "9px 24px",
-              cursor: "pointer",
-            }}
+            style={{ ...SECONDARY, fontSize: 13, padding: "9px 24px" }}
           >← BACK TO FEED</button>
         </div>
       </div>

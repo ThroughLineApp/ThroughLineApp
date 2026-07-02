@@ -4,6 +4,7 @@ import Head from "next/head";
 import supabase from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import ZipPrompt from "../components/ZipPrompt";
+import { PRIMARY, SECONDARY } from "../lib/buttons";
 
 
 const C={bg:"#0a0b0d",bgCard:"#11131a",bgDeep:"#0d0f14",gold:"#c9a84c",goldBorder:"rgba(201,168,76,0.35)",goldBorderDim:"rgba(201,168,76,0.12)",parchment:"#e8dfc8",parchmentDim:"#a89d88",green:"#4ca87c",red:"#c94c4c",blue:"#4c78c9",purple:"#8e4cc9"};
@@ -63,13 +64,21 @@ const L2_QUESTIONS={
   voting:{"0-20":{label:"Electoral Rights",scenario:"Several states have passed voter ID laws. Supporters say it protects election integrity. Critics say it suppresses turnout among certain groups.",question:"Where do you stand?",answers:[{text:"Support voter ID — you need ID for everything else in life, voting should be no different.",score:18},{text:"Support it with free government-issued ID provided to anyone who needs one.",score:28},{text:"Strongly support it — election integrity is the foundation everything else rests on.",score:12},{text:"Support ID alongside same-day registration — make both voting and verification easier.",score:38},{text:"The fraud voter ID prevents is essentially nonexistent — it's suppression dressed as security.",score:75}]},"21-40":{label:"Electoral Rights",scenario:"The Electoral College means a presidential candidate can lose the popular vote by millions and still win the presidency.",question:"Should it be reformed?",answers:[{text:"Keep it — it protects smaller states from being ignored and candidates from only campaigning in big cities.",score:25},{text:"Keep it but allocate electors by congressional district — more proportional representation.",score:35},{text:"Reform it through the National Popular Vote Interstate Compact — no constitutional amendment needed.",score:55},{text:"Abolish it — the president should be chosen by the most votes, full stop.",score:72},{text:"The bigger problem is gerrymandering — fix that first before touching the Electoral College.",score:48}]},"41-60":{label:"Electoral Rights",scenario:"Voter turnout in the US is consistently lower than in most other wealthy democracies. A lot of people, especially younger and lower-income voters, simply don't vote.",question:"What's the best way to change that?",answers:[{text:"Automatic voter registration at 18 — opt out rather than opt in.",score:68},{text:"Election Day as a national holiday — working people can't always get to the polls on a Tuesday.",score:72},{text:"Ranked-choice voting — more choices means more people feel their vote actually matters.",score:62},{text:"Civic education reform — engagement starts in schools, not at the polling place.",score:52},{text:"Low turnout is rational disengagement — fix the broken system and people will participate.",score:75}]},"61-80":{label:"Electoral Rights",scenario:"Political maps are drawn by whichever party is in power, often creating districts where one party wins by enormous margins and representatives face no real competition.",question:"What should be done about gerrymandering?",answers:[{text:"Independent redistricting commissions in every state — remove politicians from the process entirely.",score:75},{text:"Federal standards for fair maps — the Supreme Court has abdicated, Congress must act.",score:72},{text:"Mathematical fairness standards — maps should reflect how people actually live.",score:68},{text:"Ranked-choice voting reduces the impact of gerrymandering regardless of district shape.",score:70},{text:"The single-member district system itself produces gerrymandering — switch to proportional representation.",score:80}]},"81-100":{label:"Electoral Rights",scenario:"After a series of Supreme Court rulings, unlimited money from corporations and billionaires now funds most political advertising. Much of it comes from anonymous donors.",question:"What does a healthy democracy require?",answers:[{text:"A constitutional amendment to overturn those rulings — money is not speech.",score:92},{text:"Full public financing of elections — candidates get equal funds, outside money banned.",score:90},{text:"Real-time disclosure of all political spending — transparency is the absolute minimum.",score:80},{text:"The corruption of democracy by money is an emergency — treat it with that urgency.",score:88},{text:"Representative democracy is incompatible with unlimited political spending — structural reform or accept oligarchy.",score:94}]}},
 };
 
+const BADGE_ICONS={
+  voter:(<svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h10M7 13h6"/></svg>),
+  informed:(<svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>),
+  wonk:(<svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>),
+  activist:(<svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>),
+  engaged:(<svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>),
+  analyst:(<svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>),
+};
 const BADGES=[
-  {id:"voter",icon:"🗳️",label:"Voter",desc:"Completed Level 1 quiz"},
-  {id:"informed",icon:"📊",label:"Informed",desc:"Completed Level 2 quiz"},
-  {id:"wonk",icon:"🏛️",label:"Wonk",desc:"Completed Level 3 quiz"},
-  {id:"activist",icon:"✊",label:"Activist",desc:"Following 5+ politicians"},
-  {id:"engaged",icon:"🔔",label:"Engaged",desc:"Quiz taken + 3+ issues followed"},
-  {id:"analyst",icon:"🔍",label:"Analyst",desc:"Retaken the quiz 3+ times"},
+  {id:"voter",icon:BADGE_ICONS.voter,label:"Voter",desc:"Completed Level 1 quiz"},
+  {id:"informed",icon:BADGE_ICONS.informed,label:"Informed",desc:"Completed Level 2 quiz"},
+  {id:"wonk",icon:BADGE_ICONS.wonk,label:"Wonk",desc:"Completed Level 3 quiz"},
+  {id:"activist",icon:BADGE_ICONS.activist,label:"Activist",desc:"Following 5+ politicians"},
+  {id:"engaged",icon:BADGE_ICONS.engaged,label:"Engaged",desc:"Quiz taken + 3+ issues followed"},
+  {id:"analyst",icon:BADGE_ICONS.analyst,label:"Analyst",desc:"Retaken the quiz 3+ times"},
 ];
 
 function getScoreBand(s){if(s<=20)return"0-20";if(s<=40)return"21-40";if(s<=60)return"41-60";if(s<=80)return"61-80";return"81-100";}
@@ -176,11 +185,14 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
         <button
           onClick={()=>setNuanceOpen(true)}
           style={{width:"100%",fontSize:12,color:"#9A9488",background:"none",border:"none",cursor:"pointer",padding:"6px 0 2px",fontFamily:"'Figtree',sans-serif",textAlign:"center",touchAction:"manipulation"}}>
-          {sel===null?"✏️ Write my own response":"✏️ Add nuance to my answer"}
+          <span style={{display:"inline-flex",alignItems:"center",gap:5}}>
+            <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            {sel===null?"Write my own response":"Add nuance to my answer"}
+          </span>
         </button>
         <div style={{display:"flex",gap:10,alignItems:"center"}}>
-          <button onClick={handleNext} disabled={!canProceed} style={{flex:1,fontFamily:"Arial",fontWeight:800,fontSize:15,color:canProceed?"#0A0B0D":"#9A9488",background:canProceed?"#C9A84C":"rgba(201,168,76,0.08)",border:"none",borderRadius:4,padding:15,cursor:canProceed?"pointer":"not-allowed",opacity:canProceed?1:0.35,transition:"all 0.2s ease",touchAction:"manipulation"}}>Submit Answer →</button>
-          {!skipWarn&&skippedCount<MAX_SKIPS&&<button onClick={handleSkip} style={{fontFamily:"Arial",fontWeight:600,fontSize:12,color:"#9A9488",background:"transparent",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,padding:"13px 14px",cursor:"pointer",flexShrink:0,touchAction:"manipulation"}}>Skip</button>}
+          <button onClick={handleNext} disabled={!canProceed} style={{...PRIMARY,flex:1,fontSize:15,padding:15,opacity:canProceed?1:0.35,background:canProceed?"#C9A84C":"rgba(201,168,76,0.08)",color:canProceed?"#0A0B0D":"#9A9488",cursor:canProceed?"pointer":"not-allowed",transition:"all 0.2s ease",touchAction:"manipulation"}}>SUBMIT ANSWER →</button>
+          {!skipWarn&&skippedCount<MAX_SKIPS&&<button onClick={handleSkip} style={{...SECONDARY,fontSize:11,padding:"13px 14px",flexShrink:0,touchAction:"manipulation"}}>SKIP</button>}
         </div>
       </div>
 
@@ -195,16 +207,16 @@ function QuestionScreen({q,qIndex,total,level,onAnswer,onBack,onSkip,skippedCoun
             <div style={{display:"flex",gap:10,marginBottom:16}}>
               <button
                 onClick={()=>{if(!nuanceText.trim()){setNuanceError(true);return;}setSel("own");setOwnText(nuanceText);setNuanceError(false);setNuanceOpen(false);}}
-                style={{flex:1,fontFamily:"Arial Black",fontSize:13,color:"#0A0B0D",background:C.gold,border:"none",borderRadius:8,padding:"12px 16px",cursor:"pointer",letterSpacing:"0.04em"}}>
+                style={{...PRIMARY,flex:1,fontSize:13,padding:"12px 16px",borderRadius:8}}>
                 USE THIS RESPONSE →
               </button>
               <button
                 onClick={()=>{setNuanceText("");setNuanceError(false);setNuanceOpen(false);}}
-                style={{flex:0,fontFamily:"Arial Black",fontSize:13,color:C.gold,background:"transparent",border:`1px solid ${C.goldBorder}`,borderRadius:8,padding:"12px 16px",cursor:"pointer",whiteSpace:"nowrap"}}>
+                style={{...SECONDARY,flex:0,fontSize:13,padding:"12px 16px",borderRadius:8,whiteSpace:"nowrap"}}>
                 CANCEL
               </button>
             </div>
-            <div style={{fontFamily:"Arial Black",fontSize:15,color:C.gold,marginBottom:16}}>Add your own response</div>
+            <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:16,letterSpacing:"0.1em",color:C.gold,marginBottom:16,textTransform:"uppercase"}}>Add your own response</div>
             <textarea
               placeholder="Type your response or add nuance..."
               value={nuanceText}
@@ -237,7 +249,7 @@ function BadgeScreen({earnedBadges,onContinue,continueLabel}){
             </div>
           ))}
         </div>
-        <button onClick={onContinue} style={{fontFamily:"'Figtree',sans-serif",fontWeight:800,fontSize:16,color:C.bg,background:C.gold,border:"none",borderRadius:4,padding:"16px 40px",cursor:"pointer"}}>{continueLabel}</button>
+        <button onClick={onContinue} style={{...PRIMARY,fontSize:16,padding:"16px 40px"}}>{continueLabel}</button>
       </div>
     </div>
   );
@@ -309,7 +321,7 @@ function MatchesSection({ scores }) {
         <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "0.2em", color: "#c9a84c", textTransform: "uppercase", marginBottom: 16 }}>
           POLITICIAN MATCHES
         </div>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: "#a89d88" }}>
+        <div style={{ fontFamily: "'Figtree',sans-serif", fontSize: 12, color: "#a89d88" }}>
           Calculating your matches...
         </div>
       </div>
@@ -374,7 +386,7 @@ function MatchesSection({ scores }) {
                 <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 600, fontSize: 15, color: "#e8dfc8" }}>
                   {pol.name}
                 </div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: "#a89d88", marginTop: 2 }}>
+                <div style={{ fontFamily: "'Figtree',sans-serif", fontSize: 10, color: "#a89d88", marginTop: 2 }}>
                   {pol.chamber}
                 </div>
               </div>
@@ -388,7 +400,7 @@ function MatchesSection({ scores }) {
             </div>
           </div>
         ))}
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: "#a89d88", marginTop: 16, fontStyle: "italic" }}>
+        <div style={{ fontFamily: "'Figtree',sans-serif", fontSize: 10, color: "#a89d88", marginTop: 16, fontStyle: "italic" }}>
           Based on climate, economic, education, and gun policy scores. More dimensions coming.
         </div>
       </div>
@@ -407,7 +419,7 @@ function ResultsScreen({scores,onStartL2,onRetake,onContinueToL2,onExplore,user,
       <div style={{maxWidth:580,margin:"0 auto",padding:"44px 24px 80px"}}>
         {isReturningUser&&(
           <div style={{marginBottom:24,padding:"12px 18px",background:"rgba(201,168,76,0.08)",border:"1px solid rgba(201,168,76,0.25)",borderRadius:4,display:"flex",alignItems:"center",gap:12,animation:"fadeSlideIn 0.5s ease forwards"}}>
-            <span style={{fontSize:18}}>👋</span>
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
             <div>
               <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,fontWeight:700,letterSpacing:"0.12em",color:C.gold,marginBottom:2}}>WELCOME BACK</div>
               <div style={{fontFamily:"'Figtree',sans-serif",fontSize:13,color:C.parchmentDim}}>Here are your saved results. Retake the quiz anytime to update your thumbprint.</div>
@@ -468,16 +480,16 @@ function ResultsScreen({scores,onStartL2,onRetake,onContinueToL2,onExplore,user,
             <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:10,letterSpacing:"0.3em",color:C.gold,marginBottom:10}}>SAVE YOUR THUMBPRINT</div>
             <div style={{fontFamily:"'Figtree',sans-serif",fontWeight:700,fontSize:18,color:C.parchment,marginBottom:8}}>Don't lose your results.</div>
             <div style={{fontFamily:"'Figtree',sans-serif",fontSize:13,color:C.parchmentDim,lineHeight:1.7,marginBottom:20}}>Create a free account to save your thumbprint, follow politicians, and get alerts.</div>
-            <button onClick={onSignUp} style={{fontFamily:"'Figtree',sans-serif",fontWeight:800,fontSize:15,color:C.bg,background:C.gold,border:"none",borderRadius:4,padding:"14px 36px",cursor:"pointer"}}>Create Free Account →</button>
+            <button onClick={onSignUp} style={{...SECONDARY,fontSize:14,padding:"14px 36px"}}>CREATE FREE ACCOUNT →</button>
           </div>
         )}
         <div style={{display:"flex",flexDirection:"column",gap:10,animation:"fadeSlideIn 0.6s ease forwards 0.8s",opacity:0}}>
-          <button onClick={onExplore} style={{fontFamily:"'Figtree',sans-serif",fontWeight:800,fontSize:15,color:C.bg,background:C.gold,border:"none",borderRadius:4,padding:15,cursor:"pointer"}}>Explore Politicians →</button>
+          <button onClick={onExplore} style={{...SECONDARY,fontSize:14,padding:15,width:"100%"}}>EXPLORE POLITICIANS →</button>
           {level===1&&(
             <div style={{padding:22,background:C.bgDeep,border:`1px solid ${C.goldBorderDim}`,borderRadius:4,textAlign:"center"}}>
               <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:800,fontSize:13,letterSpacing:"0.12em",color:C.gold,marginBottom:8}}>WANT A MORE ACCURATE PICTURE?</div>
               <div style={{fontFamily:"'Figtree',sans-serif",fontSize:13,color:C.parchmentDim,lineHeight:1.7,marginBottom:16}}>Answer 12 more targeted questions to refine your thumbprint. Level 2 selects questions specifically tailored to your results.</div>
-              <button onClick={onStartL2} style={{fontFamily:"'Figtree',sans-serif",fontWeight:700,fontSize:14,color:C.bg,background:C.gold,border:"none",borderRadius:4,padding:"12px 28px",cursor:"pointer"}}>Start Level 2 →</button>
+              <button onClick={onStartL2} style={{...PRIMARY,fontSize:14,padding:"12px 28px"}}>START LEVEL 2 →</button>
             </div>
           )}
           {level===2&&(
@@ -486,7 +498,7 @@ function ResultsScreen({scores,onStartL2,onRetake,onContinueToL2,onExplore,user,
               <div style={{fontFamily:"'Figtree',sans-serif",fontSize:13,color:C.parchmentDim,lineHeight:1.7}}>Level 3 goes deeper on the dimensions where your views are most nuanced. Questions are in development.</div>
             </div>
           )}
-          <button onClick={onRetake} style={{fontFamily:"'Figtree',sans-serif",fontWeight:600,fontSize:13,color:C.parchmentDim,background:"transparent",border:"1px solid rgba(255,255,255,0.1)",borderRadius:4,padding:13,cursor:"pointer"}}>Retake the Quiz</button>
+          <button onClick={onRetake} style={{fontFamily:"'Figtree',sans-serif",fontWeight:400,fontSize:13,color:"#a89d88",background:"transparent",border:"none",textDecoration:"underline",cursor:"pointer",padding:"6px 0"}}>Retake the Quiz</button>
         </div>
       </div>
     </div>
@@ -923,7 +935,7 @@ export default function QuizPage(){
           </h1>
           <p style={{fontFamily:"'Figtree',sans-serif",fontSize:15,color:C.parchmentDim,lineHeight:1.8,marginBottom:12}}>12 real-world scenarios. No political jargon. No right or wrong answers.<br/>We'll map your beliefs across 12 policy dimensions and show you which members of Congress actually represent your values.</p>
           <p style={{fontFamily:"'Figtree',sans-serif",fontSize:13,color:C.parchmentDim,lineHeight:1.6,marginBottom:40,opacity:0.65}}>No ideology labels. Just your thumbprint.</p>
-          <button onClick={()=>setPhase("l1_question")} style={{fontFamily:"'Figtree',sans-serif",fontWeight:800,fontSize:16,color:C.bg,background:C.gold,border:"none",borderRadius:4,padding:"16px 52px",cursor:"pointer",marginBottom:14,animation:"pulseGold 2.8s ease-in-out infinite"}}>Start the Quiz →</button>
+          <button onClick={()=>setPhase("l1_question")} style={{...PRIMARY,fontSize:16,padding:"16px 52px",marginBottom:14,animation:"pulseGold 2.8s ease-in-out infinite"}}>START THE QUIZ →</button>
           <div style={{fontFamily:"'Figtree',sans-serif",fontSize:12,color:C.parchmentDim,opacity:0.65}}>~5 minutes · No account required · Skip any question</div>
         </div>
       </div>

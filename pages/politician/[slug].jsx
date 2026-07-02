@@ -5,6 +5,7 @@ import supabase from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import AuthModal from "../../components/AuthModal";
 import Nav from "../../components/Nav";
+import { PRIMARY, SECONDARY } from "../../lib/buttons";
 
 const C = {
   bg:            "#0a0b0d",
@@ -50,7 +51,7 @@ const DIMENSION_LABELS = {
 const DIMS = Object.keys(DIMENSION_COLORS);
 
 const GLOBAL_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;800&family=Playfair+Display:ital,wght@1,400;1,700&family=Inter:wght@400;500&family=Figtree:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;800&family=Playfair+Display:ital,wght@1,400;1,700&family=Figtree:wght@400;500;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #0a0b0d; }
   @keyframes tlTravel {
@@ -159,7 +160,7 @@ function EmptyState({ icon, title, body }) {
     <div style={{ padding: "48px 24px", textAlign: "center", animation: "fadeSlideIn 0.4s ease forwards" }}>
       <div style={{ fontSize: 36, marginBottom: 16 }}>{icon}</div>
       <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 20, color: C.parchmentDim, marginBottom: 10 }}>{title}</div>
-      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7, maxWidth: 340, margin: "0 auto" }}>{body}</div>
+      <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7, maxWidth: 340, margin: "0 auto" }}>{body}</div>
     </div>
   );
 }
@@ -214,7 +215,7 @@ function TabReceipt({ politicianId }) {
 
   if (loading) {
     return (
-      <div style={{ padding: "40px 0", textAlign: "center", fontFamily: "'Inter', sans-serif", fontSize: 13, color: C.parchmentDim }}>
+      <div style={{ padding: "40px 0", textAlign: "center", fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.parchmentDim }}>
         Loading donor data…
       </div>
     );
@@ -223,7 +224,7 @@ function TabReceipt({ politicianId }) {
   if (donors.length === 0) {
     return (
       <EmptyState
-        icon="🧾"
+        icon={<svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>}
         title="No Receipts Yet"
         body="We haven't matched donor contributions to votes for this politician yet. FEC data is being processed — check back soon."
       />
@@ -247,8 +248,8 @@ function TabReceipt({ politicianId }) {
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
                   <div>
                     <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 15, color: C.parchment, marginBottom: 2 }}>{d.pac}</div>
-                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color, marginBottom: 4 }}>{d.industry}</div>
-                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim, lineHeight: 1.5 }}>
+                    <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color, marginBottom: 4 }}>{d.industry}</div>
+                    <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.parchmentDim, lineHeight: 1.5 }}>
                       {d.eventCount} donation-vote {d.eventCount === 1 ? "match" : "matches"} tracked
                     </div>
                   </div>
@@ -263,7 +264,7 @@ function TabReceipt({ politicianId }) {
 
       <div style={{ background: C.bgDeep, border: `1px solid ${C.goldBorderDim}`, borderRadius: 2, padding: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, letterSpacing: "0.1em", textTransform: "uppercase" }}>Top {donors.length} Donor Total</div>
+          <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: C.parchmentDim, letterSpacing: "0.1em", textTransform: "uppercase" }}>Top {donors.length} Donor Total</div>
           <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 28, color: C.gold }}>{formatAmount(total)}</div>
         </div>
         <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 12, color: C.parchmentDim, lineHeight: 1.5 }}>
@@ -332,7 +333,7 @@ function TabThroughline({ politicianId }) {
 
   if (loading) {
     return (
-      <div style={{ padding: "40px 0", textAlign: "center", fontFamily: "'Inter', sans-serif", fontSize: 13, color: C.parchmentDim }}>
+      <div style={{ padding: "40px 0", textAlign: "center", fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.parchmentDim }}>
         Loading throughlines…
       </div>
     );
@@ -341,7 +342,7 @@ function TabThroughline({ politicianId }) {
   if (events.length === 0) {
     return (
       <EmptyState
-        icon="📍"
+        icon={<svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>}
         title="No Throughlines Drawn Yet"
         body="We draw a throughline when we can match a PAC donation to a specific vote. Data for this politician is still being processed."
       />
@@ -411,10 +412,10 @@ function TabThroughline({ politicianId }) {
           {formatAmount(tl.donation_amount)} donated
         </div>
         {tl.donor_mission && (
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim, lineHeight: 1.6, marginBottom: 6 }}>{tl.donor_mission}</div>
+          <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.parchmentDim, lineHeight: 1.6, marginBottom: 6 }}>{tl.donor_mission}</div>
         )}
         {tl.donor_goal && (
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchment, lineHeight: 1.6 }}><strong>What they wanted:</strong> {tl.donor_goal}</div>
+          <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.parchment, lineHeight: 1.6 }}><strong>What they wanted:</strong> {tl.donor_goal}</div>
         )}
       </div>
 
@@ -447,7 +448,7 @@ function TabThroughline({ politicianId }) {
         <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 17, color: C.parchment, marginBottom: 4 }}>
           {tl.bill_name || "Unknown Bill"}
         </div>
-        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, marginBottom: 12 }}>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: C.parchmentDim, marginBottom: 12 }}>
           {[tl.bill_section, tl.bill_id, formatDate(tl.vote_date)].filter(Boolean).join(" · ")}
           {tl.bill_link && (
             <> · <a href={tl.bill_link} target="_blank" rel="noopener noreferrer" style={{ color: C.gold, textDecoration: "none" }}>View bill ↗</a></>
@@ -457,7 +458,7 @@ function TabThroughline({ politicianId }) {
           VOTED {howVoted.toUpperCase()}
         </div>
         {tl.vote_impact && (
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: C.parchment, lineHeight: 1.6, marginBottom: 14 }}>{tl.vote_impact}</div>
+          <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.parchment, lineHeight: 1.6, marginBottom: 14 }}>{tl.vote_impact}</div>
         )}
         {tl.relevant_excerpt && (
           <div style={{ borderLeft: `3px solid ${C.gold}`, paddingLeft: 12, fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 12, color: C.parchmentDim, lineHeight: 1.6 }}>{tl.relevant_excerpt}</div>
@@ -497,7 +498,7 @@ function TabThroughline({ politicianId }) {
       {/* No narrative yet — show a note */}
       {!tl.throughline_summary && !tl.vote_impact && (
         <div style={{ padding: "12px 16px", background: C.bgCard, border: `1px solid ${C.goldBorderDim}`, borderRadius: 2 }}>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim, lineHeight: 1.6 }}>
+          <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.parchmentDim, lineHeight: 1.6 }}>
             Narrative analysis for this donation-vote match is being generated. Raw FEC data is verified.
           </div>
         </div>
@@ -556,9 +557,9 @@ function TabCompare({ onRequireAuth, politician }) {
           <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 0, borderBottom: `1px solid ${C.goldBorderDim}`, padding: "12px 0", alignItems: "start" }}>
             <div>
               <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, color: C.gold, marginBottom: 3 }}>{row.issue}</div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim, lineHeight: 1.5 }}>{row.stated}</div>
+              <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.parchmentDim, lineHeight: 1.5 }}>{row.stated}</div>
             </div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchment, lineHeight: 1.5, paddingLeft: 16 }}>{row.actual}</div>
+            <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.parchment, lineHeight: 1.5, paddingLeft: 16 }}>{row.actual}</div>
             <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 11, letterSpacing: "0.1em", padding: "3px 10px", borderRadius: 2, background: row.match ? "rgba(76,168,124,0.12)" : "rgba(201,76,76,0.12)", color: row.match ? C.green : C.red, border: `1px solid ${row.match ? C.green : C.red}44`, whiteSpace: "nowrap" }}>
               {row.match ? "ALIGNED" : "MISMATCH"}
             </div>
@@ -573,7 +574,7 @@ function TabCompare({ onRequireAuth, politician }) {
             <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8 }}>
               {["Economic Policy", "Healthcare", "Climate & Energy"].map(d => (
                 <div key={d} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, width: 120, flexShrink: 0 }}>{d}</div>
+                  <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: C.parchmentDim, width: 120, flexShrink: 0 }}>{d}</div>
                   <div style={{ flex: 1, height: 4, background: C.bgCard, borderRadius: 2 }}><div style={{ width: "60%", height: "100%", background: C.gold, borderRadius: 2 }} /></div>
                 </div>
               ))}
@@ -582,7 +583,7 @@ function TabCompare({ onRequireAuth, politician }) {
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,11,13,0.75)" }}>
             <div style={{ textAlign: "center", padding: 24 }}>
               <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 18, color: C.parchment, marginBottom: 8, lineHeight: 1.3 }}>How well does this politician<br />actually represent <em>you?</em></div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim, marginBottom: 18 }}>Sign in and take the quiz to see your personal match score.</div>
+              <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.parchmentDim, marginBottom: 18 }}>Sign in and take the quiz to see your personal match score.</div>
               <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
                 <button style={btnGold} onMouseEnter={sinkHover} onMouseLeave={sinkLeave} onClick={() => router.push("/quiz")}>TAKE THE QUIZ</button>
                 <button style={{ ...btnWhite, fontSize: 12, padding: "7px 14px" }} onMouseEnter={sinkHover} onMouseLeave={sinkLeave} onClick={onRequireAuth}>SIGN IN</button>
@@ -593,11 +594,11 @@ function TabCompare({ onRequireAuth, politician }) {
       ) : !profile?.quiz_result_id ? (
         <div style={{ padding: 24, background: C.bgDeep, border: `1px solid ${C.goldBorderDim}`, borderRadius: 2, textAlign: "center" }}>
           <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 18, color: C.parchment, marginBottom: 8, lineHeight: 1.3 }}>How well does this politician represent <em>you?</em></div>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim, marginBottom: 18, lineHeight: 1.6 }}>Take the quiz to see your personal match score across all 12 policy dimensions.</div>
+          <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.parchmentDim, marginBottom: 18, lineHeight: 1.6 }}>Take the quiz to see your personal match score across all 12 policy dimensions.</div>
           <button style={btnGold} onMouseEnter={sinkHover} onMouseLeave={sinkLeave} onClick={() => router.push("/quiz")}>TAKE THE QUIZ</button>
         </div>
       ) : loading ? (
-        <div style={{ padding: 24, background: C.bgDeep, border: `1px solid ${C.goldBorderDim}`, borderRadius: 2, textAlign: "center", fontFamily: "'Inter', sans-serif", fontSize: 13, color: C.parchmentDim }}>Loading your match…</div>
+        <div style={{ padding: 24, background: C.bgDeep, border: `1px solid ${C.goldBorderDim}`, borderRadius: 2, textAlign: "center", fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.parchmentDim }}>Loading your match…</div>
       ) : userScores && !hasPolScores ? (
         <div style={{ padding: 24, background: C.bgDeep, border: `1px solid ${C.goldBorderDim}`, borderRadius: 2, animation: "fadeSlideIn 0.4s ease forwards" }}>
           <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 10, letterSpacing: "0.25em", color: C.gold, marginBottom: 12 }}>YOUR THUMBPRINT VS. THIS POLITICIAN</div>
@@ -605,12 +606,12 @@ function TabCompare({ onRequireAuth, politician }) {
             <ThumbprintOverlay userScores={userScores} polScores={Object.fromEntries(DIMS.map(d => [d, 50]))} size={200} />
           </div>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim }}><div style={{ width: 12, height: 2, background: C.green }} /> Your values</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim }}><div style={{ width: 12, height: 2, background: C.red, opacity: 0.6 }} /> Their votes</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "'Figtree', sans-serif", fontSize: 11, color: C.parchmentDim }}><div style={{ width: 12, height: 2, background: C.green }} /> Your values</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "'Figtree', sans-serif", fontSize: 11, color: C.parchmentDim }}><div style={{ width: 12, height: 2, background: C.red, opacity: 0.6 }} /> Their votes</div>
           </div>
           <div style={{ textAlign: "center", padding: "12px 16px", background: C.bgCard, borderRadius: 2, border: `1px solid ${C.goldBorderDim}` }}>
             <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 12, color: C.gold, marginBottom: 4 }}>MATCH SCORE PENDING</div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim, lineHeight: 1.6 }}>Your thumbprint is ready. We're still processing voting record data for this politician — your match % will appear once FEC data is loaded.</div>
+            <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.parchmentDim, lineHeight: 1.6 }}>Your thumbprint is ready. We're still processing voting record data for this politician — your match % will appear once FEC data is loaded.</div>
           </div>
           <div style={{ marginTop: 20 }}>
             <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 10, letterSpacing: "0.2em", color: C.parchmentDim, marginBottom: 12 }}>YOUR SCORES ACROSS 12 DIMENSIONS</div>
@@ -622,7 +623,7 @@ function TabCompare({ onRequireAuth, politician }) {
                   <div key={dim} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid rgba(201,168,76,0.05)" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
-                        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, color: C.parchmentDim }}>{DIMENSION_LABELS[dim]}</span>
+                        <span style={{ fontFamily: "'Figtree', sans-serif", fontSize: 10, color: C.parchmentDim }}>{DIMENSION_LABELS[dim]}</span>
                         <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 12, color, marginLeft: 4 }}>{Math.round(score)}</span>
                       </div>
                       <div style={{ height: 3, background: "rgba(255,255,255,0.05)", borderRadius: 2, overflow: "hidden" }}>
@@ -640,7 +641,7 @@ function TabCompare({ onRequireAuth, politician }) {
           <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 10, letterSpacing: "0.25em", color: C.gold, marginBottom: 16 }}>YOUR THUMBPRINT VS. THIS POLITICIAN</div>
           <div style={{ textAlign: "center", marginBottom: 20 }}>
             <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 56, color: matchPct >= 60 ? C.green : matchPct >= 40 ? C.gold : C.red, lineHeight: 1 }}>{matchPct}%</div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim, marginTop: 4 }}>
+            <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.parchmentDim, marginTop: 4 }}>
               {matchPct >= 70 ? "Strong alignment — they vote like you think." : matchPct >= 50 ? "Moderate alignment — some overlap, some divergence." : "Low alignment — their votes don't reflect your values."}
             </div>
           </div>
@@ -648,8 +649,8 @@ function TabCompare({ onRequireAuth, politician }) {
             <ThumbprintOverlay userScores={userScores} polScores={polScores} size={220} />
           </div>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", marginBottom: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim }}><div style={{ width: 12, height: 2, background: C.green }} /> Your values</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim }}><div style={{ width: 12, height: 2, background: C.red, opacity: 0.6 }} /> Their votes</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "'Figtree', sans-serif", fontSize: 11, color: C.parchmentDim }}><div style={{ width: 12, height: 2, background: C.green }} /> Your values</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "'Figtree', sans-serif", fontSize: 11, color: C.parchmentDim }}><div style={{ width: 12, height: 2, background: C.red, opacity: 0.6 }} /> Their votes</div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px" }}>
             {DIMS.map(dim => {
@@ -661,7 +662,7 @@ function TabCompare({ onRequireAuth, politician }) {
               return (
                 <div key={dim} style={{ padding: "8px 10px", background: C.bgCard, borderRadius: 2, border: `1px solid ${aligned ? "rgba(76,168,124,0.15)" : "rgba(201,76,76,0.1)"}` }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
-                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, color: C.parchmentDim }}>{DIMENSION_LABELS[dim]}</span>
+                    <span style={{ fontFamily: "'Figtree', sans-serif", fontSize: 10, color: C.parchmentDim }}>{DIMENSION_LABELS[dim]}</span>
                     <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 10, color: aligned ? C.green : C.red }}>{aligned ? "ALIGNED" : "GAP"}</span>
                   </div>
                   <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
@@ -721,7 +722,7 @@ function TabVoting({ politicianId }) {
 
   if (loading) {
     return (
-      <div style={{ padding: "40px 0", textAlign: "center", fontFamily: "'Inter', sans-serif", fontSize: 13, color: C.parchmentDim }}>
+      <div style={{ padding: "40px 0", textAlign: "center", fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.parchmentDim }}>
         Loading voting record…
       </div>
     );
@@ -730,7 +731,7 @@ function TabVoting({ politicianId }) {
   if (votes.length === 0) {
     return (
       <EmptyState
-        icon="🗳️"
+        icon={<svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h10M7 13h6"/></svg>}
         title="No Votes on Record Yet"
         body="Voting data for this politician hasn't been matched to donor contributions yet. We're working through the FEC data — check back soon."
       />
@@ -755,7 +756,7 @@ function TabVoting({ politicianId }) {
         ))}
       </div>
 
-      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, marginBottom: 16 }}>
+      <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: C.parchmentDim, marginBottom: 16 }}>
         {filtered.length} {filtered.length === 1 ? "vote" : "votes"} tracked
       </div>
 
@@ -776,11 +777,11 @@ function TabVoting({ politicianId }) {
                   : v.bill_name
                 }
               </div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim, marginBottom: v.vote_impact ? 4 : 0 }}>
+              <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: C.parchmentDim, marginBottom: v.vote_impact ? 4 : 0 }}>
                 {v.bill_id && <span>{v.bill_id} · </span>}{formatDate(v.vote_date)}
               </div>
               {v.vote_impact && (
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim, lineHeight: 1.5 }}>{v.vote_impact}</div>
+                <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.parchmentDim, lineHeight: 1.5 }}>{v.vote_impact}</div>
               )}
             </div>
             {v.dimension && (
@@ -799,7 +800,7 @@ function TabPlaceholder({ label, description }) {
   return (
     <div style={{ padding: "40px 0", textAlign: "center" }}>
       <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 22, color: C.parchmentDim, marginBottom: 8 }}>{label}</div>
-      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: C.parchmentDim, lineHeight: 1.6, maxWidth: 360, margin: "0 auto" }}>{description}</div>
+      <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.parchmentDim, lineHeight: 1.6, maxWidth: 360, margin: "0 auto" }}>{description}</div>
     </div>
   );
 }
@@ -867,7 +868,7 @@ export default function PoliticianPage({ politician }) {
       <div style={{ background: C.bg, minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 24 }}>
         <style>{GLOBAL_STYLES}</style>
         <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 32, color: C.parchment }}>NOT FOUND</div>
-        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: C.parchmentDim, textAlign: "center" }}>This politician isn't in our database yet.</div>
+        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.parchmentDim, textAlign: "center" }}>This politician isn't in our database yet.</div>
         <button onClick={() => router.push("/")} style={btnGold} onMouseEnter={sinkHover} onMouseLeave={sinkLeave}>← BACK TO SEARCH</button>
       </div>
     );
@@ -894,7 +895,7 @@ export default function PoliticianPage({ politician }) {
         <meta name="description" content={`Track ${name}'s donor relationships and voting record. Donor Alignment Score: ${das ?? "pending"}.`} />
       </Head>
       <style>{GLOBAL_STYLES}</style>
-      <div style={{ background: C.bg, color: C.parchment, fontFamily: "'Inter', sans-serif", minHeight: "100vh" }}>
+      <div style={{ background: C.bg, color: C.parchment, fontFamily: "'Figtree', sans-serif", minHeight: "100vh" }}>
 
         <Nav />
 
@@ -905,11 +906,11 @@ export default function PoliticianPage({ politician }) {
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 16, color: C.parchment, lineHeight: 1, marginBottom: 2 }}>{name}</div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.parchmentDim }}>{partyLabel} · {state} · {chamber}</div>
+            <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: C.parchmentDim }}>{partyLabel} · {state} · {chamber}</div>
           </div>
           {das !== null && das !== undefined && (
             <div style={{ textAlign: "center", flexShrink: 0 }}>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: C.parchmentDim }}>DAS</div>
+              <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: C.parchmentDim }}>DAS</div>
               <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 20, color: dasColor(das), lineHeight: 1 }}>{das}</div>
             </div>
           )}
@@ -928,7 +929,7 @@ export default function PoliticianPage({ politician }) {
             <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: "clamp(28px, 6vw, 44px)", color: C.parchment, lineHeight: 1.05, marginBottom: 8 }}>{name}</h1>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.1em", padding: "3px 10px", borderRadius: 2, background: partyColor + "22", color: partyColor, border: `1px solid ${partyColor}44` }}>{partyLabel.toUpperCase()}</div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim }}>{state} · {chamber}</div>
+              <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.parchmentDim }}>{state} · {chamber}</div>
             </div>
           </div>
         </div>
@@ -940,17 +941,22 @@ export default function PoliticianPage({ politician }) {
             borderBottom:  "1px solid rgba(201,168,76,0.3)",
             padding:       "8px 24px",
             textAlign:     "center",
-            fontFamily:    "Arial",
+            fontFamily:    "'Figtree', sans-serif",
             fontSize:      13,
             color:         "#c9a84c",
+            display:       "flex",
+            alignItems:    "center",
+            justifyContent:"center",
+            gap:            6,
           }}>
-            📍 This politician represents you
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            This politician represents you
           </div>
         )}
 
         {/* FOLLOWER ROW */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: `1px solid ${C.goldBorderDim}`, gap: 12 }}>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: C.parchmentDim }}>3,847 followers · FEC data through Q4 2024</div>
+          <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.parchmentDim }}>3,847 followers · FEC data through Q4 2024</div>
           {followButton}
         </div>
 
@@ -959,7 +965,7 @@ export default function PoliticianPage({ politician }) {
           <div style={{ background: C.bgCard, border: `1px solid ${C.goldBorderDim}`, borderRadius: 2, padding: 12, textAlign: "center", cursor: matchPct !== null ? "default" : "pointer" }}
             onClick={() => { if (!user || !profile?.quiz_result_id) setActiveTab("compare"); }}
           >
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: C.parchmentDim, marginBottom: 6 }}>Your Match</div>
+            <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: C.parchmentDim, marginBottom: 6 }}>Your Match</div>
             {matchPct !== null ? (
               <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 22, color: matchPct >= 60 ? C.green : matchPct >= 40 ? C.gold : C.red }}>{matchPct}%</div>
             ) : user && profile?.quiz_result_id ? (
@@ -969,14 +975,14 @@ export default function PoliticianPage({ politician }) {
             )}
           </div>
           <div style={{ background: C.bgCard, border: `1px solid ${C.goldBorderDim}`, borderRadius: 2, padding: 12, textAlign: "center" }}>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: C.parchmentDim, marginBottom: 6 }}>Avg Gift</div>
+            <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: C.parchmentDim, marginBottom: 6 }}>Avg Gift</div>
             {avgDonation != null
               ? <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 22, color: avgDonationColor(avgDonation) }}>{formatAmount(avgDonation)}</div>
               : <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, color: C.parchmentDim }}>— PENDING</div>
             }
           </div>
           <div style={{ background: C.bgCard, border: `1px solid ${C.goldBorderDim}`, borderRadius: 2, padding: 12, textAlign: "center" }}>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: C.parchmentDim, marginBottom: 6 }}>Donor Alignment Score</div>
+            <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: C.parchmentDim, marginBottom: 6 }}>Donor Alignment Score</div>
             {das !== null && das !== undefined
               ? <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 22, color: dasColor(das) }}>{das}</div>
               : <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, color: C.parchmentDim }}>— PENDING</div>

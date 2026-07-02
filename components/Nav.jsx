@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { useAuth } from "../lib/auth";
 import supabase from "../lib/supabase";
+import { PRIMARY } from "../lib/buttons";
 
 
 const NAV_LINKS = [
@@ -112,7 +113,7 @@ export default function Nav() {
     }}>
       {/* Wordmark */}
       <button onClick={() => router.push("/")} style={{
-        fontFamily: "Arial Black", fontSize: 13, letterSpacing: "0.25em",
+        fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.25em",
         color: "#C9A84C", background: "none", border: "none", cursor: "pointer",
       }}>THROUGHLINE</button>
 
@@ -120,10 +121,10 @@ export default function Nav() {
       <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
         {NAV_LINKS.map(({ label, href, gold, bell }) => (
           <button key={label} onClick={() => router.push(href)} style={{
-            fontFamily: "Arial", fontSize: 14,
+            fontFamily: "'Figtree', sans-serif", fontSize: 14,
             color: isActive(href) ? "#C9A84C" : (gold ? "#C9A84C" : "#F0ECE4"),
             background: "none", border: "none", cursor: "pointer",
-            fontWeight: gold ? "bold" : "normal",
+            fontWeight: gold ? "600" : "normal",
             borderBottom: isActive(href) ? "1.5px solid #C9A84C" : "1.5px solid transparent",
             paddingBottom: 2, position: "relative",
           }}>
@@ -148,14 +149,12 @@ export default function Nav() {
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
         {user ? (
           <button onClick={handleSignOut} style={{
-            fontFamily: "Arial", fontSize: 12, color: "#9A9488",
+            fontFamily: "'Figtree', sans-serif", fontSize: 12, color: "#9A9488",
             background: "none", border: "none", cursor: "pointer",
           }}>Sign Out</button>
         ) : (
           <button onClick={openAuth} style={{
-            fontFamily: "Arial Black", fontSize: 12, color: "#0A0B0D",
-            background: "#C9A84C", border: "none", borderRadius: 4,
-            padding: "8px 18px", cursor: "pointer", letterSpacing: "0.06em",
+            ...PRIMARY, fontSize: 12, padding: "8px 18px",
             touchAction: "manipulation",
           }}>SIGN IN</button>
         )}
@@ -173,7 +172,7 @@ export default function Nav() {
     }}>
       {/* Wordmark */}
       <button onClick={() => router.push("/")} style={{
-        fontFamily: "Arial Black", fontSize: 13, letterSpacing: "0.25em",
+        fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.25em",
         color: "#C9A84C", background: "none", border: "none", cursor: "pointer",
       }}>THROUGHLINE</button>
 
@@ -243,7 +242,7 @@ export default function Nav() {
 
         {/* Wordmark */}
         <div style={{
-          fontFamily: "Arial Black", fontSize: 13,
+          fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 13,
           letterSpacing: "0.2em", color: "#C9A84C",
           marginTop: 8, padding: "0 24px",
         }}>THROUGHLINE</div>
@@ -281,13 +280,12 @@ export default function Nav() {
             <button
               onClick={openAuth}
               style={{
+                ...PRIMARY,
                 display: "block", width: "100%",
                 padding: "12px 24px",
-                fontFamily: "Arial Black", fontSize: 14,
-                color: "#0A0B0D", background: "#C9A84C",
-                border: "none", borderLeft: "3px solid transparent",
-                textAlign: "left", cursor: "pointer",
-                letterSpacing: "0.06em",
+                fontSize: 14,
+                borderLeft: "3px solid transparent",
+                textAlign: "left",
                 touchAction: "manipulation",
               }}
             >SIGN IN →</button>

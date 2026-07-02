@@ -9,7 +9,7 @@ const C = {
 };
 
 const GLOBAL_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;800&family=Playfair+Display:ital,wght@1,400&family=Inter:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;800&family=Playfair+Display:ital,wght@1,400&family=Figtree:wght@400;500;600&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #0a0b0d; }
 `;
@@ -53,13 +53,16 @@ export default function ResetPassword() {
 
         {success ? (
           <div>
-            <div style={{ fontSize: 36, marginBottom: 16 }}>✅</div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7 }}>
+            <svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 16, display: "block", margin: "0 auto 16px" }}>
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="9,12 11,14 15,10"/>
+            </svg>
+            <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7 }}>
               Your password has been updated. Redirecting you home…
             </div>
           </div>
         ) : !validSession ? (
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7 }}>
+          <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7 }}>
             This reset link is invalid or has expired.{" "}
             <button onClick={() => router.push("/")} style={{ color: C.gold, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>Go home</button>
           </div>
@@ -70,7 +73,7 @@ export default function ResetPassword() {
               placeholder="New password (6+ characters)"
               value={password}
               onChange={e => { setPassword(e.target.value); setError(null); }}
-              style={{ width: "100%", background: C.bgDeep, border: `1.5px solid ${C.goldBorder}`, borderRadius: 2, padding: "12px 14px", fontSize: 14, color: C.parchment, outline: "none", fontFamily: "'Inter', sans-serif", marginBottom: 10 }}
+              style={{ width: "100%", background: C.bgDeep, border: `1.5px solid ${C.goldBorder}`, borderRadius: 2, padding: "12px 14px", fontSize: 14, color: C.parchment, outline: "none", fontFamily: "'Figtree', sans-serif", marginBottom: 10 }}
             />
             <input
               type="password"
@@ -78,9 +81,9 @@ export default function ResetPassword() {
               value={confirm}
               onChange={e => { setConfirm(e.target.value); setError(null); }}
               onKeyDown={e => e.key === "Enter" && handleReset()}
-              style={{ width: "100%", background: C.bgDeep, border: `1.5px solid ${error ? C.red : C.goldBorder}`, borderRadius: 2, padding: "12px 14px", fontSize: 14, color: C.parchment, outline: "none", fontFamily: "'Inter', sans-serif", marginBottom: 10 }}
+              style={{ width: "100%", background: C.bgDeep, border: `1.5px solid ${error ? C.red : C.goldBorder}`, borderRadius: 2, padding: "12px 14px", fontSize: 14, color: C.parchment, outline: "none", fontFamily: "'Figtree', sans-serif", marginBottom: 10 }}
             />
-            {error && <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: C.red, marginBottom: 10 }}>{error}</div>}
+            {error && <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: C.red, marginBottom: 10 }}>{error}</div>}
             <button onClick={handleReset} disabled={loading}
               style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 15, letterSpacing: "0.12em", color: C.bg, backgroundColor: loading ? C.goldDim : C.gold, border: "none", borderRadius: 2, padding: 13, cursor: loading ? "default" : "pointer", width: "100%" }}>
               {loading ? "UPDATING…" : "UPDATE PASSWORD →"}

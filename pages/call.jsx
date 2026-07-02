@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import Nav from "../components/Nav";
 import { useAuth } from "../lib/auth";
 import supabase from "../lib/supabase";
+import { PRIMARY, SECONDARY } from "../lib/buttons";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const C = {
@@ -21,6 +22,7 @@ const C = {
 };
 
 const GLOBAL_STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;800&family=Figtree:wght@400;500;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #0A0B0D; }
   @keyframes fadeIn  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
@@ -237,14 +239,14 @@ export default function CallPage() {
       marginBottom:  24,
       gap:           12,
     }}>
-      <div style={{ fontFamily: "Arial Black", fontSize: 12, color: C.gold, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{left}</div>
-      {right && <div style={{ fontFamily: "Arial", fontSize: 11, color: C.text2, whiteSpace: "nowrap" }}>{right}</div>}
+      <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 12, color: C.gold, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{left}</div>
+      {right && <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: C.text2, whiteSpace: "nowrap" }}>{right}</div>}
     </div>
   );
 
   // ── Social proof banner ───────────────────────────────────────────────────
   const SocialProof = () => actionCount ? (
-    <div style={{ textAlign: "center", fontFamily: "Arial", fontSize: 12, color: C.gold, marginBottom: 20, opacity: 0.8 }}>
+    <div style={{ textAlign: "center", fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.gold, marginBottom: 20, opacity: 0.8 }}>
       🔥 {actionCount.toLocaleString()} people have contacted their reps through Throughline
     </div>
   ) : null;
@@ -255,17 +257,17 @@ export default function CallPage() {
   const Step0 = () => (
     <div style={{ animation: "fadeIn 0.35s ease forwards" }}>
       <SocialProof />
-      <div style={{ fontFamily: "Arial Black", fontSize: 28, color: C.text, lineHeight: 1.15, marginBottom: 8 }}>
+      <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 28, color: C.text, lineHeight: 1.15, marginBottom: 8 }}>
         Who do you want<br />to contact?
       </div>
-      <div style={{ fontFamily: "Arial", fontSize: 14, color: C.text2, lineHeight: 1.6, marginBottom: 28 }}>
+      <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 14, color: C.text2, lineHeight: 1.6, marginBottom: 28 }}>
         Select one of your representatives to see what they&apos;re voting on.
       </div>
 
       {/* ZIP input — only shown if no reps loaded yet */}
       {reps.length === 0 && (
         <div style={{ marginBottom: 24 }}>
-          <div style={{ fontFamily: "Arial", fontSize: 13, color: C.text2, marginBottom: 10 }}>
+          <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.text2, marginBottom: 10 }}>
             Enter your ZIP code to find your representatives.
           </div>
           <div style={{ display: "flex", gap: 8 }}>
@@ -283,7 +285,7 @@ export default function CallPage() {
                 border:      `1.5px solid ${zipError ? C.red : C.border}`,
                 borderRadius:10,
                 padding:     "13px 16px",
-                fontFamily:  "Arial",
+                fontFamily:  "'Figtree', sans-serif",
                 fontSize:    15,
                 color:       C.text,
                 outline:     "none",
@@ -300,7 +302,7 @@ export default function CallPage() {
                 border:      "none",
                 borderRadius:10,
                 padding:     "13px 20px",
-                fontFamily:  "Arial Black",
+                fontFamily:  "'Barlow Condensed', sans-serif",
                 fontSize:    13,
                 color:       "#0A0B0D",
                 cursor:      zip.length >= 5 && !zipLoading ? "pointer" : "default",
@@ -311,7 +313,7 @@ export default function CallPage() {
             </button>
           </div>
           {zipError && (
-            <div style={{ fontFamily: "Arial", fontSize: 12, color: C.red, marginTop: 8 }}>{zipError}</div>
+            <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.red, marginTop: 8 }}>{zipError}</div>
           )}
         </div>
       )}
@@ -356,7 +358,7 @@ export default function CallPage() {
                     display:     "flex",
                     alignItems:  "center",
                     justifyContent:"center",
-                    fontFamily:  "Arial Black",
+                    fontFamily:  "'Barlow Condensed', sans-serif",
                     fontSize:    18,
                     color:       partyColor(rep.party),
                   }}>
@@ -375,10 +377,10 @@ export default function CallPage() {
                   {/* Info */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-                      <div style={{ fontFamily: "Arial Black", fontSize: 15, color: C.text }}>{rep.name}</div>
+                      <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 15, color: C.text }}>{rep.name}</div>
                       {isMyRep && (
                         <div style={{
-                          fontFamily:    "Arial Black",
+                          fontFamily:    "'Barlow Condensed', sans-serif",
                           fontSize:      9,
                           letterSpacing: "0.1em",
                           color:         C.gold,
@@ -391,7 +393,7 @@ export default function CallPage() {
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <div style={{
-                        fontFamily:    "Arial Black",
+                        fontFamily:    "'Barlow Condensed', sans-serif",
                         fontSize:      10,
                         letterSpacing: "0.08em",
                         color:         partyColor(rep.party),
@@ -400,7 +402,7 @@ export default function CallPage() {
                         borderRadius:  20,
                         padding:       "2px 8px",
                       }}>{rep.party}</div>
-                      <div style={{ fontFamily: "Arial", fontSize: 12, color: C.text2 }}>
+                      <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.text2 }}>
                         {rep.chamber} · {rep.state}
                       </div>
                     </div>
@@ -439,7 +441,7 @@ export default function CallPage() {
               border:        "none",
               borderRadius:  10,
               padding:       "15px 0",
-              fontFamily:    "Arial Black",
+              fontFamily:    "'Barlow Condensed', sans-serif",
               fontSize:      14,
               letterSpacing: "0.06em",
               cursor:        selectedRep ? "pointer" : "default",
@@ -463,27 +465,27 @@ export default function CallPage() {
         right={`${selectedRep?.party} · ${selectedRep?.chamber}`}
       />
 
-      <div style={{ fontFamily: "Arial Black", fontSize: 24, color: C.text, lineHeight: 1.2, marginBottom: 8 }}>
+      <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 24, color: C.text, lineHeight: 1.2, marginBottom: 8 }}>
         What do you want<br />to talk about?
       </div>
-      <div style={{ fontFamily: "Arial", fontSize: 14, color: C.text2, lineHeight: 1.6, marginBottom: 24 }}>
+      <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 14, color: C.text2, lineHeight: 1.6, marginBottom: 24 }}>
         These are bills {selectedRep?.name?.split(" ").pop()} has voted on recently.
       </div>
 
       {billsLoading && (
-        <div style={{ textAlign: "center", padding: "40px 0", fontFamily: "Arial", fontSize: 14, color: C.text2, animation: "pulse 1.5s ease infinite" }}>
+        <div style={{ textAlign: "center", padding: "40px 0", fontFamily: "'Figtree', sans-serif", fontSize: 14, color: C.text2, animation: "pulse 1.5s ease infinite" }}>
           Loading recent votes…
         </div>
       )}
 
       {billsError && (
         <div style={{ textAlign: "center", padding: "32px 0" }}>
-          <div style={{ fontFamily: "Arial", fontSize: 14, color: C.red, marginBottom: 16 }}>
+          <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 14, color: C.red, marginBottom: 16 }}>
             {billsError}
           </div>
           <button
             onClick={() => fetchBills(selectedRep.bioguide_id)}
-            style={{ fontFamily: "Arial Black", fontSize: 12, color: C.gold, background: "transparent", border: `1px solid ${C.gold}`, borderRadius: 8, padding: "10px 20px", cursor: "pointer" }}
+            style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 12, color: C.gold, background: "transparent", border: `1px solid ${C.gold}`, borderRadius: 8, padding: "10px 20px", cursor: "pointer" }}
           >
             Try Again
           </button>
@@ -519,20 +521,20 @@ export default function CallPage() {
 
                   <div style={{ flex: 1, padding: "14px 14px 14px 12px" }}>
                     {/* Title */}
-                    <div style={{ fontFamily: "Arial", fontWeight: "bold", fontSize: 14, color: C.text, lineHeight: 1.4, marginBottom: 8 }}>
+                    <div style={{ fontFamily: "'Figtree', sans-serif", fontWeight: "bold", fontSize: 14, color: C.text, lineHeight: 1.4, marginBottom: 8 }}>
                       {bill.title}
                     </div>
 
                     {/* Meta row */}
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       {bill.vote_date && (
-                        <div style={{ fontFamily: "Arial", fontSize: 11, color: C.text2 }}>
+                        <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: C.text2 }}>
                           {new Date(bill.vote_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                         </div>
                       )}
                       {bill.how_voted && (
                         <div style={{
-                          fontFamily:    "Arial Black",
+                          fontFamily:    "'Barlow Condensed', sans-serif",
                           fontSize:      9,
                           letterSpacing: "0.1em",
                           color:         voteColor,
@@ -545,7 +547,7 @@ export default function CallPage() {
                         </div>
                       )}
                       <div style={{
-                        fontFamily:    "Arial Black",
+                        fontFamily:    "'Barlow Condensed', sans-serif",
                         fontSize:      9,
                         letterSpacing: "0.08em",
                         color:         dimColor,
@@ -574,7 +576,7 @@ export default function CallPage() {
               border:        "none",
               borderRadius:  10,
               padding:       "15px 0",
-              fontFamily:    "Arial Black",
+              fontFamily:    "'Barlow Condensed', sans-serif",
               fontSize:      14,
               letterSpacing: "0.06em",
               cursor:        selectedBill ? "pointer" : "default",
@@ -587,7 +589,7 @@ export default function CallPage() {
       )}
 
       {!billsLoading && !billsError && bills.length === 0 && (
-        <div style={{ textAlign: "center", padding: "40px 0", fontFamily: "Arial", fontSize: 14, color: C.text2 }}>
+        <div style={{ textAlign: "center", padding: "40px 0", fontFamily: "'Figtree', sans-serif", fontSize: 14, color: C.text2 }}>
           No recent votes found for this representative.
         </div>
       )}
@@ -595,7 +597,7 @@ export default function CallPage() {
       {/* Back link */}
       <button
         onClick={() => { setStep(0); setSelectedRep(null); setBills([]); setSelectedBill(null); }}
-        style={{ background: "none", border: "none", fontFamily: "Arial", fontSize: 13, color: C.text2, cursor: "pointer", padding: 0, textDecoration: "underline" }}
+        style={{ background: "none", border: "none", fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.text2, cursor: "pointer", padding: 0, textDecoration: "underline" }}
       >
         ← Choose a different rep
       </button>
@@ -616,13 +618,13 @@ export default function CallPage() {
           right={trunc(selectedBill?.title, 40)}
         />
 
-        <div style={{ fontFamily: "Arial Black", fontSize: 24, color: C.text, lineHeight: 1.2, marginBottom: 28 }}>
+        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 24, color: C.text, lineHeight: 1.2, marginBottom: 28 }}>
           A few quick questions.
         </div>
 
         {/* Q1: Call or email? */}
         <div style={{ marginBottom: 24 }}>
-          <div style={{ fontFamily: "Arial Black", fontSize: 14, color: C.text, marginBottom: 12 }}>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 14, color: C.text, marginBottom: 12 }}>
             How do you want to contact them?
           </div>
           <div style={{ display: "flex", gap: 10 }}>
@@ -647,8 +649,8 @@ export default function CallPage() {
                   }}
                 >
                   <div style={{ fontSize: 24, marginBottom: 6 }}>{opt.icon}</div>
-                  <div style={{ fontFamily: "Arial Black", fontSize: 13, color: sel ? C.gold : C.text, marginBottom: 4 }}>{opt.label}</div>
-                  <div style={{ fontFamily: "Arial", fontSize: 11, color: C.text2, lineHeight: 1.4 }}>{opt.sub}</div>
+                  <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 13, color: sel ? C.gold : C.text, marginBottom: 4 }}>{opt.label}</div>
+                  <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 11, color: C.text2, lineHeight: 1.4 }}>{opt.sub}</div>
                 </button>
               );
             })}
@@ -657,13 +659,13 @@ export default function CallPage() {
 
         {/* Q2: Support or oppose? */}
         <div style={{ marginBottom: 24 }}>
-          <div style={{ fontFamily: "Arial Black", fontSize: 14, color: C.text, marginBottom: 12 }}>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 14, color: C.text, marginBottom: 12 }}>
             Do you support or oppose this bill?
           </div>
           <div style={{ display: "flex", gap: 10 }}>
             {[
-              { key: "support", icon: "✅", label: "SUPPORT", bg: C.gold + "18", borderColor: C.gold, labelColor: C.gold },
-              { key: "oppose",  icon: "❌", label: "OPPOSE",  bg: C.red  + "18", borderColor: C.red,  labelColor: C.red  },
+              { key: "support", icon: (<svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9,12 11,14 15,10"/></svg>), label: "SUPPORT", bg: C.gold + "18", borderColor: C.gold, labelColor: C.gold },
+              { key: "oppose",  icon: (<svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={C.red}  strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>), label: "OPPOSE",  bg: C.red  + "18", borderColor: C.red,  labelColor: C.red  },
             ].map(opt => {
               const sel = position === opt.key;
               return (
@@ -682,7 +684,7 @@ export default function CallPage() {
                   }}
                 >
                   <div style={{ fontSize: 24, marginBottom: 6 }}>{opt.icon}</div>
-                  <div style={{ fontFamily: "Arial Black", fontSize: 13, color: sel ? opt.labelColor : C.text }}>{opt.label}</div>
+                  <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 13, color: sel ? opt.labelColor : C.text }}>{opt.label}</div>
                 </button>
               );
             })}
@@ -691,8 +693,8 @@ export default function CallPage() {
 
         {/* Q3: Reason (optional) */}
         <div style={{ marginBottom: 24 }}>
-          <div style={{ fontFamily: "Arial Black", fontSize: 14, color: C.text, marginBottom: 12 }}>
-            Anything specific you want to say? <span style={{ fontFamily: "Arial", fontWeight: "normal", color: C.text2 }}>(optional)</span>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 14, color: C.text, marginBottom: 12 }}>
+            Anything specific you want to say? <span style={{ fontFamily: "'Figtree', sans-serif", fontWeight: "normal", color: C.text2 }}>(optional)</span>
           </div>
           <textarea
             value={reason}
@@ -704,7 +706,7 @@ export default function CallPage() {
               border:      `1px solid ${C.border}`,
               borderRadius:8,
               padding:     "12px 14px",
-              fontFamily:  "Arial",
+              fontFamily:  "'Figtree', sans-serif",
               fontSize:    14,
               color:       C.text,
               resize:      "vertical",
@@ -719,8 +721,8 @@ export default function CallPage() {
 
         {/* Q4: First name (optional) */}
         <div style={{ marginBottom: 32 }}>
-          <div style={{ fontFamily: "Arial Black", fontSize: 14, color: C.text, marginBottom: 12 }}>
-            Your first name? <span style={{ fontFamily: "Arial", fontWeight: "normal", color: C.text2 }}>(optional — personalizes the script)</span>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 14, color: C.text, marginBottom: 12 }}>
+            Your first name? <span style={{ fontFamily: "'Figtree', sans-serif", fontWeight: "normal", color: C.text2 }}>(optional — personalizes the script)</span>
           </div>
           <input
             type="text"
@@ -733,7 +735,7 @@ export default function CallPage() {
               border:      `1px solid ${C.border}`,
               borderRadius:8,
               padding:     "12px 14px",
-              fontFamily:  "Arial",
+              fontFamily:  "'Figtree', sans-serif",
               fontSize:    14,
               color:       C.text,
               outline:     "none",
@@ -745,7 +747,7 @@ export default function CallPage() {
 
         {/* Generate button */}
         {scriptError && (
-          <div style={{ fontFamily: "Arial", fontSize: 13, color: C.red, marginBottom: 12 }}>{scriptError}</div>
+          <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.red, marginBottom: 12 }}>{scriptError}</div>
         )}
         <button
           onClick={generateScript}
@@ -757,7 +759,7 @@ export default function CallPage() {
             border:        "none",
             borderRadius:  10,
             padding:       "16px 0",
-            fontFamily:    "Arial Black",
+            fontFamily:    "'Barlow Condensed', sans-serif",
             fontSize:      15,
             letterSpacing: "0.06em",
             cursor:        canGenerate && !scriptLoading ? "pointer" : "default",
@@ -770,7 +772,7 @@ export default function CallPage() {
         {/* Back link */}
         <button
           onClick={() => { setStep(1); setSelectedBill(null); }}
-          style={{ background: "none", border: "none", fontFamily: "Arial", fontSize: 13, color: C.text2, cursor: "pointer", padding: 0, textDecoration: "underline" }}
+          style={{ background: "none", border: "none", fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.text2, cursor: "pointer", padding: 0, textDecoration: "underline" }}
         >
           ← Choose a different bill
         </button>
@@ -798,7 +800,7 @@ export default function CallPage() {
       return (
         <div key={i} style={{ marginBottom: 4 }}>
           {isLabel
-            ? <strong style={{ color: C.gold, fontFamily: "Arial Black", fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase" }}>{line}</strong>
+            ? <strong style={{ color: C.gold, fontFamily: "'Barlow Condensed', sans-serif", fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase" }}>{line}</strong>
             : <span>{line || <br />}</span>
           }
         </div>
@@ -825,24 +827,24 @@ export default function CallPage() {
           {isCall ? (
             rep_phone ? (
               <>
-                <div style={{ fontFamily: "Arial", fontSize: 12, color: C.text2, marginBottom: 6 }}>Phone number</div>
+                <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.text2, marginBottom: 6 }}>Phone number</div>
                 <a
                   href={`tel:${rep_phone}`}
-                  style={{ fontFamily: "Arial Black", fontSize: 26, color: C.gold, textDecoration: "none", display: "block", marginBottom: 8 }}
+                  style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 26, color: C.gold, textDecoration: "none", display: "block", marginBottom: 8 }}
                 >
                   {rep_phone}
                 </a>
-                <div style={{ fontFamily: "Arial", fontSize: 12, color: C.text2 }}>Tap to call</div>
+                <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.text2 }}>Tap to call</div>
               </>
             ) : (
-              <div style={{ fontFamily: "Arial", fontSize: 13, color: C.text2 }}>
+              <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.text2 }}>
                 Phone number not available for this representative.
               </div>
             )
           ) : (
             rep_contact_form ? (
               <>
-                <div style={{ fontFamily: "Arial", fontSize: 12, color: C.text2, marginBottom: 12 }}>
+                <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.text2, marginBottom: 12 }}>
                   Send your email via their contact form
                 </div>
                 <a
@@ -851,7 +853,7 @@ export default function CallPage() {
                   rel="noopener noreferrer"
                   style={{
                     display:       "inline-block",
-                    fontFamily:    "Arial Black",
+                    fontFamily:    "'Barlow Condensed', sans-serif",
                     fontSize:      13,
                     color:         "#0A0B0D",
                     background:    C.gold,
@@ -866,7 +868,7 @@ export default function CallPage() {
                 </a>
               </>
             ) : (
-              <div style={{ fontFamily: "Arial", fontSize: 13, color: C.text2 }}>
+              <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.text2 }}>
                 Contact form not available — search for {selectedRep?.name} at congress.gov.
               </div>
             )
@@ -882,7 +884,7 @@ export default function CallPage() {
           marginBottom:  20,
         }}>
           <div style={{
-            fontFamily:    "Arial Black",
+            fontFamily:    "'Barlow Condensed', sans-serif",
             fontSize:      10,
             letterSpacing: "0.2em",
             color:         C.gold,
@@ -891,7 +893,7 @@ export default function CallPage() {
           }}>
             Your Script
           </div>
-          <div style={{ fontFamily: "Arial", fontSize: 15, color: C.text, lineHeight: 1.7 }}>
+          <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 15, color: C.text, lineHeight: 1.7 }}>
             {formattedScript}
           </div>
         </div>
@@ -905,7 +907,7 @@ export default function CallPage() {
             border:        `1.5px solid ${copied ? C.green : C.border}`,
             borderRadius:  10,
             padding:       "14px 0",
-            fontFamily:    "Arial Black",
+            fontFamily:    "'Barlow Condensed', sans-serif",
             fontSize:      13,
             color:         copied ? "#0A0B0D" : C.text,
             cursor:        "pointer",
@@ -926,7 +928,7 @@ export default function CallPage() {
             border:        confirmed ? `1.5px solid ${C.green}` : "none",
             borderRadius:  10,
             padding:       "14px 0",
-            fontFamily:    "Arial Black",
+            fontFamily:    "'Barlow Condensed', sans-serif",
             fontSize:      13,
             color:         confirmed ? C.green : "#0A0B0D",
             cursor:        confirmed ? "default" : "pointer",
@@ -939,7 +941,7 @@ export default function CallPage() {
         </button>
 
         {confirmed && (
-          <div style={{ fontFamily: "Arial", fontSize: 13, color: C.green, textAlign: "center", marginBottom: 20 }}>
+          <div style={{ fontFamily: "'Figtree', sans-serif", fontSize: 13, color: C.green, textAlign: "center", marginBottom: 20 }}>
             Thank you. Your voice matters.
           </div>
         )}
@@ -948,7 +950,7 @@ export default function CallPage() {
         <div style={{ textAlign: "center", marginTop: 8 }}>
           <button
             onClick={reset}
-            style={{ background: "none", border: "none", fontFamily: "Arial", fontSize: 12, color: C.text2, cursor: "pointer", textDecoration: "underline" }}
+            style={{ background: "none", border: "none", fontFamily: "'Figtree', sans-serif", fontSize: 12, color: C.text2, cursor: "pointer", textDecoration: "underline" }}
           >
             Start over
           </button>
@@ -964,7 +966,7 @@ export default function CallPage() {
     <>
       <Head><title>Call Your Rep — Throughline</title></Head>
       <style>{GLOBAL_STYLES}</style>
-      <div style={{ background: C.bg, minHeight: "100vh", color: C.text, fontFamily: "Arial" }}>
+      <div style={{ background: C.bg, minHeight: "100vh", color: C.text, fontFamily: "'Figtree', sans-serif" }}>
         <Nav />
         <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 20px 80px" }}>
 

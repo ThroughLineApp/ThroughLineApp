@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabase";
 import ZipPrompt from "./ZipPrompt";
+import { PRIMARY } from "../lib/buttons";
 
 const C = {
   bg: "#0A0B0D",
@@ -163,12 +164,12 @@ export default function AuthModal({ message, onDismiss }) {
         width: "90%", textAlign: "center",
       }}>
         <div style={{
-          fontFamily: "Arial Black", fontSize: 11,
+          fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 11,
           letterSpacing: "0.25em", color: C.gold, marginBottom: 10,
         }}>THROUGHLINE</div>
 
         {mode === "signin" && (<>
-          <div style={{ fontFamily: "Arial Black", fontSize: 18, color: C.parchment, marginBottom: 6 }}>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 20, letterSpacing: "0.05em", color: C.parchment, marginBottom: 6 }}>
             {message || "Sign in to Throughline"}
           </div>
           <p style={{ fontFamily: "Arial", fontSize: 12, color: C.parchmentDim, marginBottom: 20, lineHeight: 1.5 }}>
@@ -193,10 +194,10 @@ export default function AuthModal({ message, onDismiss }) {
           </div>
           {error && <div style={{ fontFamily: "Arial", fontSize: 11, color: C.red, marginBottom: 10 }}>{error}</div>}
           <button onClick={handleSignIn} disabled={loading} style={{
-            fontFamily: "Arial Black", fontSize: 14, letterSpacing: "0.08em",
-            color: C.bg, background: loading ? C.goldDim : C.gold,
-            border: "none", borderRadius: 4, padding: "13px 0",
-            cursor: loading ? "default" : "pointer", width: "100%",
+            ...PRIMARY, fontSize: 14,
+            background: loading ? C.goldDim : C.gold,
+            padding: "13px 0", width: "100%",
+            cursor: loading ? "default" : "pointer",
             marginBottom: 12, touchAction: "manipulation",
           }}>{loading ? "SIGNING IN…" : "SIGN IN →"}</button>
           <button onClick={() => { setMode("forgot"); setError(null); }} style={{
@@ -211,7 +212,7 @@ export default function AuthModal({ message, onDismiss }) {
         </>)}
 
         {mode === "signup" && (<>
-          <div style={{ fontFamily: "Arial Black", fontSize: 18, color: C.parchment, marginBottom: 6 }}>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 20, letterSpacing: "0.05em", color: C.parchment, marginBottom: 6 }}>
             Create your free account
           </div>
           <p style={{ fontFamily: "Arial", fontSize: 12, color: C.parchmentDim, marginBottom: 20, lineHeight: 1.5 }}>
@@ -235,10 +236,10 @@ export default function AuthModal({ message, onDismiss }) {
           </div>
           {error && <div style={{ fontFamily: "Arial", fontSize: 11, color: C.red, marginBottom: 10 }}>{error}</div>}
           <button onClick={handleSignUp} disabled={loading} style={{
-            fontFamily: "Arial Black", fontSize: 14, letterSpacing: "0.08em",
-            color: C.bg, background: loading ? C.goldDim : C.gold,
-            border: "none", borderRadius: 4, padding: "13px 0",
-            cursor: loading ? "default" : "pointer", width: "100%",
+            ...PRIMARY, fontSize: 14,
+            background: loading ? C.goldDim : C.gold,
+            padding: "13px 0", width: "100%",
+            cursor: loading ? "default" : "pointer",
             marginBottom: 12, touchAction: "manipulation",
           }}>{loading ? "CREATING ACCOUNT…" : "CREATE ACCOUNT →"}</button>
           <button onClick={() => { setMode("signin"); setError(null); }} style={{
@@ -249,7 +250,7 @@ export default function AuthModal({ message, onDismiss }) {
 
         {mode === "signup_success" && (<>
           <div style={{ fontSize: 32, color: C.green, marginBottom: 12 }}>✓</div>
-          <div style={{ fontFamily: "Arial Black", fontSize: 16, color: C.parchment, marginBottom: 8 }}>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: "0.05em", color: C.parchment, marginBottom: 8 }}>
             Account created.
           </div>
           <div style={{ fontFamily: "Arial", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7, marginBottom: 12 }}>
@@ -261,9 +262,8 @@ export default function AuthModal({ message, onDismiss }) {
             Once you confirm your email and sign in, we'll ask for your ZIP to find your representatives.
           </div>
           <button onClick={onDismiss} style={{
-            fontFamily: "Arial Black", fontSize: 13, color: C.bg,
-            background: C.gold, border: "none",
-            borderRadius: 4, padding: "11px 24px", cursor: "pointer", width: "100%",
+            ...PRIMARY, fontSize: 13,
+            padding: "11px 24px", width: "100%",
           }}>OK, GOT IT</button>
         </>)}
 
@@ -276,17 +276,17 @@ export default function AuthModal({ message, onDismiss }) {
         )}
 
         {mode === "forgot" && (<>
-          <div style={{ fontFamily: "Arial Black", fontSize: 18, color: C.parchment, marginBottom: 20 }}>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 20, letterSpacing: "0.05em", color: C.parchment, marginBottom: 20 }}>
             Reset your password
           </div>
           <input type="email" placeholder="Your email address" value={identifier}
             onChange={e => { setIdentifier(e.target.value); setError(null); }} style={inputStyle} />
           {error && <div style={{ fontFamily: "Arial", fontSize: 11, color: C.red, marginBottom: 10 }}>{error}</div>}
           <button onClick={handleForgot} disabled={loading} style={{
-            fontFamily: "Arial Black", fontSize: 14, color: C.bg,
-            background: loading ? C.goldDim : C.gold, border: "none",
-            borderRadius: 4, padding: "13px 0",
-            cursor: loading ? "default" : "pointer", width: "100%",
+            ...PRIMARY, fontSize: 14,
+            background: loading ? C.goldDim : C.gold,
+            padding: "13px 0", width: "100%",
+            cursor: loading ? "default" : "pointer",
             marginBottom: 12, touchAction: "manipulation",
           }}>{loading ? "SENDING…" : "SEND RESET LINK →"}</button>
           <button onClick={() => { setMode("signin"); setError(null); }} style={{
@@ -296,16 +296,18 @@ export default function AuthModal({ message, onDismiss }) {
         </>)}
 
         {mode === "forgot_sent" && (<>
-          <div style={{ fontSize: 36, marginBottom: 16 }}>📬</div>
+          <svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 16 }}>
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
           <div style={{ fontFamily: "Arial", fontSize: 13, color: C.parchmentDim, lineHeight: 1.7, marginBottom: 24 }}>
             We sent a reset link to{" "}
             <strong style={{ color: C.parchment }}>{identifier}</strong>.
             Click it to set a new password.
           </div>
           <button onClick={onDismiss} style={{
-            fontFamily: "Arial Black", fontSize: 13, color: C.bg,
-            background: C.gold, border: "none", borderRadius: 4,
-            padding: "11px 24px", cursor: "pointer", width: "100%",
+            ...PRIMARY, fontSize: 13,
+            padding: "11px 24px", width: "100%",
           }}>GOT IT</button>
         </>)}
       </div>
