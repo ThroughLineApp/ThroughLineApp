@@ -45,18 +45,25 @@ export default function AuthModal({ message, onDismiss }) {
 
     let emailToUse = trimmedId;
     if (!trimmedId.includes("@")) {
-      // Treat as username — look up the email
-      const { data: profileRow } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("username", trimmedId.toLowerCase())
-        .maybeSingle();
-      if (!profileRow?.email) {
+      // Treat as username — look up the email via server route
+      try {
+        const res = await fetch("/api/auth/username", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "resolve", username: trimmedId }),
+        });
+        if (!res.ok) {
+          setLoading(false);
+          setError("No account found with that username.");
+          return;
+        }
+        const data = await res.json();
+        emailToUse = data.email;
+      } catch {
         setLoading(false);
-        setError("No account found with that username.");
+        setError("Sign in failed. Please try again.");
         return;
       }
-      emailToUse = profileRow.email;
     }
 
     const { error: signInError } = await supabase.auth.signInWithPassword({ email: emailToUse, password });
@@ -100,9 +107,28 @@ export default function AuthModal({ message, onDismiss }) {
     if (!password || password.length < 6) { setError("Password must be 6+ characters."); return; }
     setLoading(true);
 
-    const { data: existing } = await supabase
-      .from("profiles").select("id").eq("username", trimmedUsername).maybeSingle();
-    if (existing) { setLoading(false); setError("That username is taken. Try another."); return; }
+    try {
+      const res = await fetch("/api/auth/username", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "check", username: trimmedUsername }),
+      });
+      if (!res.ok) {
+        setLoading(false);
+        setError("Username check failed. Please try again.");
+        return;
+      }
+      const data = await res.json();
+      if (data.available === false) {
+        setLoading(false);
+        setError("That username is taken. Try another.");
+        return;
+      }
+    } catch {
+      setLoading(false);
+      setError("Username check failed. Please try again.");
+      return;
+    }
 
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: identifier, password,
